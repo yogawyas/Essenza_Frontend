@@ -6,6 +6,7 @@ import {
 
 const { width } = Dimensions.get('window');
 
+//tes
 // ── Brand Colors ──────────────────────────────────────────────
 const C = {
   green:       '#163B2C',
