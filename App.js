@@ -1,14 +1,12 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   StyleSheet, View, Text, TextInput, TouchableOpacity,
-  ScrollView, StatusBar, Dimensions, Platform, Modal, ActivityIndicator,
+  ScrollView, StatusBar, Platform, Modal, ActivityIndicator,
   Alert, Switch,
 } from 'react-native';
 import { InferenceService } from './src/services/InferenceService';
 import { DatabaseService } from './src/services/DatabaseService';
 
-
-const { width } = Dimensions.get('window');
 
 // ── Brand Colors ──────────────────────────────────────────────
 const C = {
@@ -30,6 +28,9 @@ const C = {
   textMuted:   '#7A8C84',
   textFaint:   '#B0BDB8',
   divider:     '#E8EDE0',
+  cream:       '#F3EFE3',
+  ink:         '#10281F',
+  success:     '#2E7D5B',
 };
 
 // ── Data: Scent Mixology Categories ────────────────────────────
@@ -75,6 +76,8 @@ const GoldButton = ({ onPress, disabled, children, style }) => (
   <TouchableOpacity
     onPress={onPress}
     disabled={disabled}
+    accessibilityRole="button"
+    accessibilityState={{ disabled: Boolean(disabled) }}
     activeOpacity={0.78}
     style={[styles.goldBtn, disabled && styles.goldBtnDisabled, style]}
   >
@@ -84,71 +87,134 @@ const GoldButton = ({ onPress, disabled, children, style }) => (
   </TouchableOpacity>
 );
 
-const Header = ({ mode, onModeToggle }) => (
+const Header = ({ mode }) => (
   <View style={styles.header}>
-    <View style={styles.headerGoldLine} />
     <View style={styles.headerContent}>
       <View style={styles.headerIconBox}>
-        <Text style={styles.headerEmoji}>🧪</Text>
+        <Text style={styles.headerMonogram}>E</Text>
       </View>
       <View style={{ flex: 1 }}>
         <Text style={styles.headerTitle}>ESSENZA</Text>
-        <Text style={styles.headerSubtitle}>Scent Profile Predictor</Text>
+        <Text style={styles.headerSubtitle}>
+          {mode === 'explorer' ? 'Perfume discovery' : 'Molecular scent analysis'}
+        </Text>
       </View>
-      <TouchableOpacity style={styles.modeToggle} onPress={onModeToggle} activeOpacity={0.8}>
-        <Text style={styles.modeToggleText}>{mode === 'explorer' ? '⚗️ Pro' : '🌸 Easy'}</Text>
-      </TouchableOpacity>
+      <View style={styles.systemBadge}>
+        <View style={styles.systemDot} />
+        <Text style={styles.systemBadgeText}>HYBRID ML</Text>
+      </View>
     </View>
     <View style={styles.headerBottomShimmer} />
   </View>
 );
 
+const BottomNav = ({ screen, onSelect }) => {
+  const items = [
+    { key: 'explorer', icon: '⌕', label: 'Discover' },
+    { key: 'onboarding', icon: '◇', label: 'Home' },
+    { key: 'chemist', icon: '⌬', label: 'Analyze' },
+  ];
+
+  return (
+    <View style={styles.bottomNav}>
+      {items.map(item => {
+        const active = screen === item.key;
+        return (
+          <TouchableOpacity
+            key={item.key}
+            style={[styles.bottomNavItem, active && styles.bottomNavItemActive]}
+            onPress={() => onSelect(item.key)}
+            accessibilityRole="button"
+            accessibilityState={{ selected: active }}
+            activeOpacity={0.75}
+          >
+            <Text style={[styles.bottomNavIcon, active && styles.bottomNavIconActive]}>{item.icon}</Text>
+            <Text style={[styles.bottomNavLabel, active && styles.bottomNavLabelActive]}>{item.label}</Text>
+          </TouchableOpacity>
+        );
+      })}
+    </View>
+  );
+};
+
 // ── SCREEN: Mode Selector (Onboarding) ───────────────────────
 const ModeSelector = ({ onSelect }) => (
-  <View style={styles.onboardingContainer}>
+  <ScrollView
+    style={styles.onboardingContainer}
+    contentContainerStyle={styles.onboardingContent}
+    showsVerticalScrollIndicator={false}
+  >
     <StatusBar translucent backgroundColor="transparent" barStyle="light-content" />
     <View style={styles.onboardingHeader}>
-      <Text style={styles.onboardingEmoji}>🧪</Text>
+      <View style={styles.onboardingMark}>
+        <Text style={styles.onboardingMarkText}>E</Text>
+      </View>
+      <View style={styles.eyebrowBadge}>
+        <View style={styles.eyebrowDot} />
+        <Text style={styles.eyebrowText}>HYBRID MACHINE LEARNING</Text>
+      </View>
       <Text style={styles.onboardingTitle}>ESSENZA</Text>
-      <Text style={styles.onboardingSubtitle}>Discover your scent identity</Text>
+      <Text style={styles.onboardingSubtitle}>Understand scent from molecule to perfume.</Text>
+    </View>
+
+    <View style={styles.architectureStrip}>
+      <View style={styles.architectureItem}>
+        <Text style={styles.architectureValue}>RDKit</Text>
+        <Text style={styles.architectureLabel}>Online features</Text>
+      </View>
+      <Text style={styles.architectureArrow}>→</Text>
+      <View style={styles.architectureItem}>
+        <Text style={styles.architectureValue}>110 ONNX</Text>
+        <Text style={styles.architectureLabel}>Offline models</Text>
+      </View>
+      <Text style={styles.architectureArrow}>→</Text>
+      <View style={styles.architectureItem}>
+        <Text style={styles.architectureValue}>Private</Text>
+        <Text style={styles.architectureLabel}>Local inference</Text>
+      </View>
     </View>
 
     <View style={styles.onboardingCards}>
       {/* Explorer Card */}
       <TouchableOpacity style={styles.modeCard} onPress={() => onSelect('explorer')} activeOpacity={0.85}>
-        <View style={styles.modeCardIconBg}>
-          <Text style={styles.modeCardIcon}>🌸</Text>
+        <View style={styles.modeCardTopRow}>
+          <View style={styles.modeCardIconBg}>
+            <Text style={styles.modeCardIcon}>✦</Text>
+          </View>
+          <View style={styles.modeCardBadge}>
+            <Text style={styles.modeCardBadgeText}>OFFLINE DATABASE</Text>
+          </View>
         </View>
         <Text style={styles.modeCardTitle}>Explorer</Text>
         <Text style={styles.modeCardDesc}>
-          Pick your favorite scent notes and find the perfect perfume for you.
+          Search perfumes, filter by scent family, and build your personal fragrance lab.
         </Text>
-        <View style={styles.modeCardBadge}>
-          <Text style={styles.modeCardBadgeText}>✅ Available</Text>
-        </View>
         <GoldButton onPress={() => onSelect('explorer')} style={{ marginTop: 16 }}>
-          Explore Scents →
+          Discover perfumes  →
         </GoldButton>
       </TouchableOpacity>
 
       {/* Chemist Card */}
       <TouchableOpacity style={[styles.modeCard, styles.modeCardDark]} onPress={() => onSelect('chemist')} activeOpacity={0.85}>
-        <View style={[styles.modeCardIconBg, styles.modeCardIconBgDark]}>
-          <Text style={styles.modeCardIcon}>⚗️</Text>
+        <View style={styles.modeCardTopRow}>
+          <View style={[styles.modeCardIconBg, styles.modeCardIconBgDark]}>
+            <Text style={styles.modeCardIcon}>⌬</Text>
+          </View>
+          <View style={[styles.modeCardBadge, styles.modeCardBadgeDark]}>
+            <Text style={[styles.modeCardBadgeText, { color: C.green }]}>THESIS LAB</Text>
+          </View>
         </View>
-        <Text style={[styles.modeCardTitle, styles.modeCardTitleLight]}>Chemist</Text>
+        <Text style={[styles.modeCardTitle, styles.modeCardTitleLight]}>Molecule Analyzer</Text>
         <Text style={[styles.modeCardDesc, styles.modeCardDescLight]}>
-          Enter a SMILES string to predict odor labels using XGBoost + ONNX on-device inference.
+          Convert SMILES into an odor profile using online RDKit features and private on-device ONNX inference.
         </Text>
-        <View style={[styles.modeCardBadge, styles.modeCardBadgeDark]}>
-          <Text style={[styles.modeCardBadgeText, { color: C.green }]}>✅ Available</Text>
-        </View>
         <GoldButton onPress={() => onSelect('chemist')} style={{ marginTop: 16 }}>
-          Open Lab →
+          Open molecule lab  →
         </GoldButton>
       </TouchableOpacity>
     </View>
-  </View>
+    <Text style={styles.onboardingFootnote}>Undergraduate thesis prototype · Essenza 1.0</Text>
+  </ScrollView>
 );
 
 // ── SCREEN: Explorer Mode (Offline + CRUD) ──────────────────
@@ -269,14 +335,17 @@ const ExplorerScreen = () => {
     <TouchableOpacity
       key={item.pid ?? item.id}
       style={styles.explorerCard}
-      onPress={() => openEdit(item)}
+      onPress={item.id !== undefined ? () => openEdit(item) : undefined}
       activeOpacity={0.85}
     >
       <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+        <View style={styles.perfumeMonogram}>
+          <Text style={styles.perfumeMonogramText}>{(item.name || '?').charAt(0).toUpperCase()}</Text>
+        </View>
         <View style={{ flex: 1 }}>
-          <Text style={styles.explorerCardBrand}>{item.brand || '🧪 Custom'}</Text>
+          <Text style={styles.explorerCardBrand}>{item.brand || 'CUSTOM FORMULA'}</Text>
           <Text style={styles.explorerCardName}>{item.name}</Text>
-          <Text style={styles.explorerCardAccords}>🌸 {item.top_accords}</Text>
+          <Text style={styles.explorerCardAccords}>{item.top_accords}</Text>
         </View>
         {showSimilarity && item.similarityScore !== undefined && (
           <View style={styles.explorerScoreBadge}>
@@ -308,29 +377,49 @@ const ExplorerScreen = () => {
           <TouchableOpacity key={t} style={[styles.explorerTab, tab===t && styles.explorerTabActive]}
             onPress={() => setTab(t)}>
             <Text style={[styles.explorerTabText, tab===t && styles.explorerTabTextActive]}>
-              {t==='search' ? '🔍 Search' : t==='filter' ? '🏷️ By Label' : '🧪 My Lab'}
+              {t==='search' ? 'Search' : t==='filter' ? 'Scent filter' : 'My lab'}
             </Text>
           </TouchableOpacity>
         ))}
       </View>
 
-      <ScrollView contentContainerStyle={{ padding: 16, paddingBottom: 40 }}>
+      <ScrollView contentContainerStyle={{ padding: 16, paddingBottom: 28 }} showsVerticalScrollIndicator={false}>
+
+        <View style={styles.explorerHero}>
+          <Text style={styles.explorerHeroEyebrow}>YOUR OFFLINE SCENT LIBRARY</Text>
+          <Text style={styles.explorerHeroTitle}>Find a fragrance that feels like you.</Text>
+          <Text style={styles.explorerHeroDesc}>Search the curated collection or combine scent labels to surface your closest matches.</Text>
+        </View>
 
         {/* ── TAB: Search ────────────────────────────── */}
         {tab === 'search' && (
           <View>
-            <TextInput
-              style={styles.explorerSearch}
-              placeholder="Search perfume name or brand..."
-              placeholderTextColor={C.textFaint}
-              value={searchQuery}
-              onChangeText={handleSearch}
-            />
+            <View style={styles.searchField}>
+              <Text style={styles.searchIcon}>⌕</Text>
+              <TextInput
+                style={styles.explorerSearch}
+                placeholder="Search perfume or brand"
+                placeholderTextColor={C.textFaint}
+                value={searchQuery}
+                onChangeText={handleSearch}
+                returnKeyType="search"
+                accessibilityLabel="Search perfume or brand"
+              />
+              {searchQuery.length > 0 && (
+                <TouchableOpacity onPress={() => handleSearch('')} style={styles.searchClear}>
+                  <Text style={styles.searchClearText}>×</Text>
+                </TouchableOpacity>
+              )}
+            </View>
             {searchResults.length > 0
               ? searchResults.map(p => renderPerfumeCard(p))
               : searchQuery.length >= 2
                 ? <Text style={styles.explorerEmpty}>No results for "{searchQuery}"</Text>
-                : <Text style={styles.explorerHint}>Type at least 2 characters to search from 2,000+ perfumes.</Text>
+                : <View style={styles.explorerEmptyCard}>
+                    <Text style={styles.explorerEmptyIcon}>✦</Text>
+                    <Text style={styles.explorerEmptyTitle}>Start with a name or brand</Text>
+                    <Text style={styles.explorerHint}>Enter at least two characters. Everything here works offline.</Text>
+                  </View>
             }
           </View>
         )}
@@ -338,7 +427,13 @@ const ExplorerScreen = () => {
         {/* ── TAB: Filter by Label ───────────────────── */}
         {tab === 'filter' && (
           <View>
-            <Text style={styles.explorerSectionTitle}>Select Scent Labels</Text>
+            <View style={styles.sectionHeadingRow}>
+              <View>
+                <Text style={styles.explorerSectionTitle}>Build your scent profile</Text>
+                <Text style={styles.sectionSubtitle}>Choose one or more families</Text>
+              </View>
+              <View style={styles.selectionBadge}><Text style={styles.selectionBadgeText}>{filterLabels.length} selected</Text></View>
+            </View>
             <View style={styles.labelChipWrap}>
               {ALL_LABELS.map(label => (
                 <TouchableOpacity key={label}
@@ -374,8 +469,12 @@ const ExplorerScreen = () => {
         {/* ── TAB: My Lab (CRUD) ────────────────────── */}
         {tab === 'custom' && (
           <View>
+            <View style={styles.myLabIntro}>
+              <Text style={styles.myLabIntroTitle}>Your personal fragrance lab</Text>
+              <Text style={styles.myLabIntroText}>Save custom scent profiles locally and compare them with the offline collection.</Text>
+            </View>
             <GoldButton onPress={openCreate} style={{ marginBottom: 16 }}>
-              + Add Custom Perfume
+              +  Create a custom perfume
             </GoldButton>
             {userPerfumes.length === 0
               ? <Text style={styles.explorerHint}>
@@ -489,7 +588,7 @@ const ChemistScreen = () => {
     setMoleculeInfo(null);
     setWarningText(null);
     try {
-      setStatusText('Calculating molecular fingerprint via API...');
+      setStatusText('Connecting to the RDKit fingerprint service...');
       const fpData = await InferenceService.getFingerprint(smilesInput.trim());
 
       setMoleculeInfo({
@@ -501,7 +600,7 @@ const ChemistScreen = () => {
         setWarningText(fpData.warning);
       }
 
-      setStatusText('Running XGBoost on-device models...');
+      setStatusText('Running 110 XGBoost models securely on-device...');
       const results = await InferenceService.predict(fpData.fingerprint);
       setPredictions(results);
     } catch (e) {
@@ -509,9 +608,9 @@ const ChemistScreen = () => {
       if (msg.includes('timed out')) {
         setErrorModal({
           visible: true,
-          title: '⏳ Server Waking Up',
+          title: '⏳ Service Is Waking Up',
           reason: msg,
-          tip: 'The Railway server may be in sleep mode. Wait 10–15 seconds and try again.',
+          tip: 'The Hugging Face Space may be starting or waiting in the free queue. Keep the app open, then try once more.',
         });
       } else if (msg.includes('No network')) {
         setErrorModal({
@@ -555,36 +654,71 @@ const ChemistScreen = () => {
     setWarningText(null);
   };
 
+  const handleSmilesChange = (value) => {
+    setSmilesInput(value);
+    // Never leave a result on screen after its source molecule has changed.
+    if (predictions || moleculeInfo || warningText) {
+      setPredictions(null);
+      setMoleculeInfo(null);
+      setWarningText(null);
+    }
+  };
+
   return (
     <>
       <ScrollView style={styles.scrollView} contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
 
-        <View style={styles.card}>
-          <View style={styles.cardAccent} />
-          <View style={styles.cardInner}>
-            <Text style={styles.cardTitle}>Molecule Analysis ⚗️</Text>
-            <Text style={styles.cardDesc}>
-              Enter a chemical SMILES string. The XGBoost model will compute the odor profile on-device using Morgan Fingerprints and 5 RDKit physical descriptors.
-            </Text>
+        <View style={styles.labHero}>
+          <View style={styles.labHeroGlow} />
+          <View style={styles.labHeroEyebrow}>
+            <View style={styles.systemDot} />
+            <Text style={styles.labHeroEyebrowText}>MOLECULAR SCENT LAB</Text>
+          </View>
+          <Text style={styles.labHeroTitle}>From structure to scent profile.</Text>
+          <Text style={styles.labHeroDesc}>
+            RDKit creates the molecular features online. Your 110 XGBoost models interpret them privately on this device.
+          </Text>
+          <View style={styles.pipelineRow}>
+            <View style={styles.pipelinePill}><Text style={styles.pipelinePillText}>1 · SMILES</Text></View>
+            <Text style={styles.pipelineArrow}>→</Text>
+            <View style={styles.pipelinePill}><Text style={styles.pipelinePillText}>2 · RDKit</Text></View>
+            <Text style={styles.pipelineArrow}>→</Text>
+            <View style={styles.pipelinePill}><Text style={styles.pipelinePillText}>3 · ONNX</Text></View>
           </View>
         </View>
 
         <View style={styles.card}>
           <View style={styles.cardAccent} />
           <View style={styles.cardInner}>
-            <Text style={styles.inputLabel}>SMILES String</Text>
+            <View style={styles.inputHeadingRow}>
+              <View>
+                <Text style={styles.inputStep}>STEP 1</Text>
+                <Text style={styles.inputTitle}>Enter a molecular structure</Text>
+              </View>
+              <View style={[styles.inputStateBadge, smilesInput.trim() && styles.inputStateBadgeReady]}>
+                <Text style={[styles.inputStateText, smilesInput.trim() && styles.inputStateTextReady]}>
+                  {smilesInput.trim() ? 'READY' : 'WAITING'}
+                </Text>
+              </View>
+            </View>
             <TextInput
               style={styles.textInput}
               placeholder="e.g. O=Cc1ccc(O)c(OC)c1  (Vanillin)"
               placeholderTextColor={C.textFaint}
               value={smilesInput}
-              onChangeText={setSmilesInput}
+              onChangeText={handleSmilesChange}
               autoCapitalize="none"
               autoCorrect={false}
               multiline
+              accessibilityLabel="SMILES molecular structure"
             />
+            <View style={styles.inputMetaRow}>
+              <Text style={styles.inputMetaText}>SMILES notation · case-sensitive</Text>
+              <Text style={styles.inputMetaText}>{smilesInput.length} characters</Text>
+            </View>
 
-            <Text style={[styles.inputLabel, { marginTop: 14, marginBottom: 8 }]}>Scent Mixology (Tap to combine)</Text>
+            <Text style={[styles.inputLabel, { marginTop: 18, marginBottom: 4 }]}>Quick molecule library</Text>
+            <Text style={styles.inputHelper}>Tap a molecule to fill the input, or select several for a prototype mixture demonstration.</Text>
             {MOLECULE_CATEGORIES.map((cat, catIdx) => (
               <View key={catIdx} style={{ marginBottom: 12 }}>
                 <Text style={styles.catLabel}>{cat.name}</Text>
@@ -603,7 +737,7 @@ const ChemistScreen = () => {
                           } else {
                             next.push(mol.smiles);
                           }
-                          setSmilesInput(next.join('.'));
+                          handleSmilesChange(next.join('.'));
                         }}
                         activeOpacity={0.7}
                       >
@@ -617,6 +751,13 @@ const ChemistScreen = () => {
                 </ScrollView>
               </View>
             ))}
+
+            <View style={styles.prototypeNote}>
+              <Text style={styles.prototypeNoteIcon}>i</Text>
+              <Text style={styles.prototypeNoteText}>
+                Mixology is a UI prototype only; it does not model concentration or mixture interactions.
+              </Text>
+            </View>
 
             <View style={styles.buttonRow}>
               <GoldButton
@@ -634,9 +775,14 @@ const ChemistScreen = () => {
             </View>
 
             {isLoading && (
-              <View style={styles.loadingRow}>
-                <ActivityIndicator size="small" color={C.gold} />
-                <Text style={styles.loadingText}>{statusText}</Text>
+              <View style={styles.loadingPanel}>
+                <View style={styles.loadingIconBox}>
+                  <ActivityIndicator size="small" color={C.green} />
+                </View>
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.loadingTitle}>Analysis in progress</Text>
+                  <Text style={styles.loadingText}>{statusText}</Text>
+                </View>
               </View>
             )}
           </View>
@@ -677,8 +823,17 @@ const ChemistScreen = () => {
           <View style={[styles.card, { borderColor: C.goldBorder }]}>
             <View style={styles.cardAccent} />
             <View style={styles.cardInner}>
-              <Text style={styles.cardTitle}>Detected Odor Profile 🎯</Text>
-              <Text style={styles.molSmiles} numberOfLines={1}>📝 {smilesInput}</Text>
+              <View style={styles.resultHeadingRow}>
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.resultEyebrow}>ANALYSIS COMPLETE</Text>
+                  <Text style={styles.resultTitle}>Detected odor profile</Text>
+                </View>
+                <View style={styles.resultCountBadge}>
+                  <Text style={styles.resultCountValue}>{predictions.length}</Text>
+                  <Text style={styles.resultCountLabel}>labels</Text>
+                </View>
+              </View>
+              <Text style={styles.molSmiles} numberOfLines={1}>{smilesInput}</Text>
 
               <View style={styles.thresholdRow}>
                 <View style={styles.thresholdDash} />
@@ -688,10 +843,10 @@ const ChemistScreen = () => {
 
               {predictions.map((pred, idx) => (
                 <View key={idx} style={styles.predRow}>
-                  <Text style={styles.predEmoji}>🌿</Text>
+                  <View style={styles.predRank}><Text style={styles.predRankText}>{idx + 1}</Text></View>
                   <View style={styles.predInfo}>
                     <View style={styles.predLabelRow}>
-                      <Text style={styles.predLabel}>{pred.label}</Text>
+                      <Text style={styles.predLabel}>{pred.label.replace(/\b\w/g, c => c.toUpperCase())}</Text>
                       <View style={styles.predBadge}>
                         <Text style={styles.predBadgeText}>Predicted</Text>
                       </View>
@@ -708,7 +863,7 @@ const ChemistScreen = () => {
               ))}
 
               <View style={styles.methodBox}>
-                <Text style={styles.methodText}>⚡ XGBoost Binary Relevance + Morgan FP + RDKit + ONNX (on-device)</Text>
+                <Text style={styles.methodText}>Online: Morgan FP + RDKit descriptors  ·  Offline: 110 ONNX XGBoost classifiers</Text>
               </View>
             </View>
           </View>
@@ -765,15 +920,9 @@ const App = () => {
   return (
     <View style={styles.container}>
       <StatusBar translucent backgroundColor="transparent" barStyle="light-content" />
-      <Header
-        mode={screen}
-        onModeToggle={() => setScreen(screen === 'explorer' ? 'chemist' : 'explorer')}
-      />
+      <Header mode={screen} />
       {screen === 'explorer' ? <ExplorerScreen /> : <ChemistScreen />}
-
-      <TouchableOpacity style={styles.homeBtn} onPress={() => setScreen('onboarding')}>
-        <Text style={styles.homeBtnText}>⌂</Text>
-      </TouchableOpacity>
+      <BottomNav screen={screen} onSelect={setScreen} />
     </View>
   );
 };
@@ -789,21 +938,46 @@ const styles = StyleSheet.create({
   onboardingContainer: {
     flex: 1,
     backgroundColor: C.green,
+  },
+  onboardingContent: {
     paddingTop: Platform.OS === 'android' ? (StatusBar.currentHeight || 0) + 20 : 60,
     paddingHorizontal: 20,
-    paddingBottom: 40,
+    paddingBottom: 28,
   },
-  onboardingHeader: { alignItems: 'center', marginBottom: 36 },
-  onboardingEmoji: { fontSize: 56, marginBottom: 10 },
+  onboardingHeader: { alignItems: 'center', marginBottom: 22 },
+  onboardingMark: {
+    width: 62, height: 62, borderRadius: 21, backgroundColor: C.gold,
+    alignItems: 'center', justifyContent: 'center', marginBottom: 16,
+    borderWidth: 1, borderColor: C.goldShine,
+    shadowColor: C.gold, shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.28, shadowRadius: 16, elevation: 8,
+  },
+  onboardingMarkText: { fontSize: 30, fontWeight: '900', color: C.ink, fontStyle: 'italic' },
+  eyebrowBadge: {
+    flexDirection: 'row', alignItems: 'center', gap: 7,
+    paddingHorizontal: 10, paddingVertical: 5, borderRadius: 20,
+    backgroundColor: 'rgba(255,255,255,0.07)', marginBottom: 12,
+  },
+  eyebrowDot: { width: 6, height: 6, borderRadius: 3, backgroundColor: C.goldLight },
+  eyebrowText: { color: C.goldLight, fontSize: 9, fontWeight: '800', letterSpacing: 1.4 },
   onboardingTitle: {
-    fontSize: 34, fontWeight: '800', color: C.gold,
-    letterSpacing: 5, textShadowColor: C.goldShine,
-    textShadowOffset: { width: 0, height: 1 }, textShadowRadius: 8,
+    fontSize: 36, fontWeight: '900', color: C.white,
+    letterSpacing: 6,
   },
   onboardingSubtitle: {
-    fontSize: 13, color: 'rgba(212,175,55,0.65)',
-    letterSpacing: 2, textTransform: 'uppercase', marginTop: 6,
+    fontSize: 15, color: 'rgba(255,255,255,0.66)',
+    lineHeight: 22, marginTop: 6, textAlign: 'center', maxWidth: 300,
   },
+  architectureStrip: {
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
+    backgroundColor: 'rgba(255,255,255,0.065)', borderRadius: 16,
+    borderWidth: 1, borderColor: 'rgba(212,175,55,0.18)',
+    paddingHorizontal: 12, paddingVertical: 13, marginBottom: 16,
+  },
+  architectureItem: { flex: 1, alignItems: 'center' },
+  architectureValue: { color: C.white, fontSize: 11, fontWeight: '800' },
+  architectureLabel: { color: 'rgba(255,255,255,0.48)', fontSize: 8, marginTop: 3 },
+  architectureArrow: { color: C.gold, fontSize: 14, marginHorizontal: 2 },
   onboardingCards: { gap: 16 },
   modeCard: {
     backgroundColor: C.cardBg, borderRadius: 20, padding: 22,
@@ -812,36 +986,37 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.15, shadowRadius: 12, elevation: 5,
   },
   modeCardDark: { backgroundColor: C.greenMid, borderColor: C.goldBorder },
+  modeCardTopRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 14 },
   modeCardIconBg: {
-    width: 56, height: 56, borderRadius: 16,
+    width: 48, height: 48, borderRadius: 15,
     backgroundColor: C.goldFaint, borderWidth: 1.5,
     borderColor: C.goldBorder, alignItems: 'center',
-    justifyContent: 'center', marginBottom: 14,
+    justifyContent: 'center',
   },
   modeCardIconBgDark: { backgroundColor: 'rgba(212,175,55,0.12)' },
-  modeCardIcon: { fontSize: 28 },
+  modeCardIcon: { fontSize: 24, color: C.goldDark },
   modeCardTitle: { fontSize: 22, fontWeight: '800', color: C.green, marginBottom: 8 },
   modeCardTitleLight: { color: C.gold },
   modeCardDesc: { fontSize: 13, color: C.textMuted, lineHeight: 20, marginBottom: 10 },
   modeCardDescLight: { color: 'rgba(212,175,55,0.7)' },
   modeCardBadge: {
     alignSelf: 'flex-start', backgroundColor: C.goldFaint,
-    borderRadius: 8, paddingHorizontal: 10, paddingVertical: 3,
+    borderRadius: 8, paddingHorizontal: 9, paddingVertical: 5,
     borderWidth: 1, borderColor: C.goldBorder,
   },
   modeCardBadgeDark: { backgroundColor: C.gold },
-  modeCardBadgeText: { fontSize: 11, fontWeight: '700', color: C.goldDark },
+  modeCardBadgeText: { fontSize: 8, fontWeight: '800', letterSpacing: 0.7, color: C.goldDark },
+  onboardingFootnote: { color: 'rgba(255,255,255,0.36)', fontSize: 10, textAlign: 'center', marginTop: 20 },
 
   header: {
     backgroundColor: C.green,
     shadowColor: C.greenDark, shadowOffset: { width: 0, height: 6 },
     shadowOpacity: 0.5, shadowRadius: 12, elevation: 10,
   },
-  headerGoldLine: { height: 3, backgroundColor: C.gold },
   headerContent: {
     flexDirection: 'row', alignItems: 'center',
-    paddingTop: Platform.OS === 'android' ? (StatusBar.currentHeight || 0) + 14 : 58,
-    paddingBottom: 16, paddingHorizontal: 18,
+    paddingTop: Platform.OS === 'android' ? (StatusBar.currentHeight || 0) + 12 : 56,
+    paddingBottom: 14, paddingHorizontal: 18,
   },
   headerIconBox: {
     width: 46, height: 46, borderRadius: 12,
@@ -851,22 +1026,62 @@ const styles = StyleSheet.create({
     shadowColor: C.gold, shadowOffset: { width: 0, height: 0 },
     shadowOpacity: 0.35, shadowRadius: 6, elevation: 3,
   },
-  headerEmoji: { fontSize: 24 },
+  headerMonogram: { fontSize: 21, fontWeight: '900', fontStyle: 'italic', color: C.gold },
   headerTitle: {
     fontSize: 22, fontWeight: '800', color: C.gold, letterSpacing: 4,
     textShadowColor: C.goldShine, textShadowOffset: { width: 0, height: 1 },
     textShadowRadius: 5,
   },
-  headerSubtitle: {
-    fontSize: 9, color: 'rgba(212,175,55,0.55)',
-    letterSpacing: 2, textTransform: 'uppercase', marginTop: 2,
+  headerSubtitle: { fontSize: 10, color: 'rgba(255,255,255,0.5)', letterSpacing: 0.8, marginTop: 2 },
+  headerBottomShimmer: { height: 1, backgroundColor: C.gold, opacity: 0.38 },
+  systemBadge: {
+    flexDirection: 'row', alignItems: 'center', gap: 6,
+    backgroundColor: 'rgba(255,255,255,0.07)', borderRadius: 20,
+    paddingHorizontal: 10, paddingVertical: 7,
+    borderWidth: 1, borderColor: 'rgba(255,255,255,0.08)',
   },
-  headerBottomShimmer: { height: 2, backgroundColor: C.greenLight, opacity: 0.5 },
-  modeToggle: {
-    backgroundColor: C.goldFaint, borderRadius: 10, paddingHorizontal: 12,
-    paddingVertical: 7, borderWidth: 1, borderColor: C.goldBorder,
+  systemDot: { width: 7, height: 7, borderRadius: 4, backgroundColor: '#68D391' },
+  systemBadgeText: { color: C.goldLight, fontSize: 8, fontWeight: '800', letterSpacing: 0.8 },
+
+  bottomNav: {
+    flexDirection: 'row', backgroundColor: C.white,
+    paddingHorizontal: 18, paddingTop: 8,
+    paddingBottom: Platform.OS === 'android' ? 10 : 24,
+    borderTopWidth: 1, borderTopColor: C.divider,
+    shadowColor: '#000', shadowOffset: { width: 0, height: -4 },
+    shadowOpacity: 0.06, shadowRadius: 10, elevation: 12,
   },
-  modeToggleText: { fontSize: 12, fontWeight: '700', color: C.gold },
+  bottomNavItem: {
+    flex: 1, alignItems: 'center', justifyContent: 'center',
+    borderRadius: 14, paddingVertical: 6,
+  },
+  bottomNavItemActive: { backgroundColor: C.greenFaint },
+  bottomNavIcon: { fontSize: 19, color: C.textFaint, lineHeight: 21 },
+  bottomNavIconActive: { color: C.green },
+  bottomNavLabel: { fontSize: 9, fontWeight: '700', color: C.textFaint, marginTop: 2 },
+  bottomNavLabelActive: { color: C.green },
+
+  labHero: {
+    backgroundColor: C.green, borderRadius: 22, padding: 20,
+    marginBottom: 14, overflow: 'hidden',
+    borderWidth: 1, borderColor: C.greenLight,
+  },
+  labHeroGlow: {
+    position: 'absolute', width: 180, height: 180, borderRadius: 90,
+    backgroundColor: C.gold, opacity: 0.08, right: -70, top: -90,
+  },
+  labHeroEyebrow: { flexDirection: 'row', alignItems: 'center', gap: 7, marginBottom: 12 },
+  labHeroEyebrowText: { color: C.goldLight, fontSize: 9, fontWeight: '800', letterSpacing: 1.2 },
+  labHeroTitle: { color: C.white, fontSize: 23, lineHeight: 29, fontWeight: '800', maxWidth: 290 },
+  labHeroDesc: { color: 'rgba(255,255,255,0.62)', fontSize: 12, lineHeight: 18, marginTop: 9 },
+  pipelineRow: { flexDirection: 'row', alignItems: 'center', marginTop: 16 },
+  pipelinePill: {
+    backgroundColor: 'rgba(255,255,255,0.08)', borderRadius: 10,
+    paddingHorizontal: 10, paddingVertical: 7,
+    borderWidth: 1, borderColor: 'rgba(255,255,255,0.08)',
+  },
+  pipelinePillText: { color: C.white, fontSize: 9, fontWeight: '700' },
+  pipelineArrow: { color: C.gold, fontSize: 12, marginHorizontal: 5 },
 
   card: {
     backgroundColor: C.cardBg, borderRadius: 16, marginBottom: 14,
@@ -889,6 +1104,13 @@ const styles = StyleSheet.create({
     fontSize: 11, fontWeight: '700', color: C.green,
     marginBottom: 8, letterSpacing: 1, textTransform: 'uppercase',
   },
+  inputHeadingRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 12 },
+  inputStep: { fontSize: 9, fontWeight: '800', color: C.goldDark, letterSpacing: 1.3, marginBottom: 4 },
+  inputTitle: { fontSize: 17, fontWeight: '800', color: C.ink },
+  inputStateBadge: { backgroundColor: C.offWhite, borderRadius: 10, paddingHorizontal: 9, paddingVertical: 6 },
+  inputStateBadgeReady: { backgroundColor: '#E8F5EE' },
+  inputStateText: { color: C.textFaint, fontSize: 8, fontWeight: '800', letterSpacing: 0.8 },
+  inputStateTextReady: { color: C.success },
   catLabel: {
     fontSize: 12, fontWeight: '700', color: C.textMuted,
     marginBottom: 6,
@@ -896,10 +1118,13 @@ const styles = StyleSheet.create({
   textInput: {
     backgroundColor: C.offWhite, borderRadius: 12,
     paddingHorizontal: 14, paddingVertical: 13,
-    fontSize: 13, color: C.green,
+    fontSize: 13, color: C.green, minHeight: 72, textAlignVertical: 'top',
     borderWidth: 1.5, borderColor: C.greenBorder,
     fontFamily: Platform.OS === 'android' ? 'monospace' : 'Menlo',
   },
+  inputMetaRow: { flexDirection: 'row', justifyContent: 'space-between', marginTop: 7 },
+  inputMetaText: { fontSize: 9, color: C.textFaint },
+  inputHelper: { fontSize: 11, color: C.textMuted, lineHeight: 16, marginBottom: 12 },
   buttonRow: { flexDirection: 'row', marginTop: 14, gap: 10 },
   exampleChip: {
     backgroundColor: C.cardBg, borderRadius: 10,
@@ -912,15 +1137,50 @@ const styles = StyleSheet.create({
     fontSize: 10, color: C.textFaint,
     fontFamily: Platform.OS === 'android' ? 'monospace' : 'Menlo',
   },
+  prototypeNote: {
+    flexDirection: 'row', alignItems: 'flex-start', backgroundColor: '#F3F4F6',
+    borderRadius: 11, padding: 11, marginTop: 2,
+  },
+  prototypeNoteIcon: {
+    width: 18, height: 18, borderRadius: 9, textAlign: 'center', lineHeight: 18,
+    backgroundColor: C.green, color: C.white, fontSize: 10, fontWeight: '800', marginRight: 9,
+  },
+  prototypeNoteText: { flex: 1, fontSize: 10, lineHeight: 15, color: C.textMuted },
 
-  loadingRow: { flexDirection: 'row', alignItems: 'center', marginTop: 16, justifyContent: 'center', gap: 10 },
-  loadingText: { fontSize: 12, color: C.textMuted, fontStyle: 'italic' },
+  loadingPanel: {
+    flexDirection: 'row', alignItems: 'center', marginTop: 16,
+    backgroundColor: C.goldFaint, borderRadius: 13, padding: 12,
+    borderWidth: 1, borderColor: C.goldBorder,
+  },
+  loadingIconBox: {
+    width: 36, height: 36, borderRadius: 12, backgroundColor: C.white,
+    alignItems: 'center', justifyContent: 'center', marginRight: 11,
+  },
+  loadingTitle: { fontSize: 12, fontWeight: '800', color: C.green, marginBottom: 2 },
+  loadingText: { fontSize: 10, color: C.textMuted, lineHeight: 15 },
 
-  thresholdRow: { flexDirection: 'row', alignItems: 'center', marginVertical: 12 },
+  resultHeadingRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 10 },
+  resultEyebrow: { fontSize: 9, fontWeight: '800', letterSpacing: 1.2, color: C.success, marginBottom: 4 },
+  resultTitle: { fontSize: 19, fontWeight: '800', color: C.ink },
+  resultCountBadge: {
+    width: 54, height: 54, borderRadius: 18, alignItems: 'center', justifyContent: 'center',
+    backgroundColor: C.green, borderWidth: 1, borderColor: C.goldBorder,
+  },
+  resultCountValue: { color: C.goldLight, fontSize: 18, fontWeight: '900', lineHeight: 21 },
+  resultCountLabel: { color: 'rgba(255,255,255,0.55)', fontSize: 8, textTransform: 'uppercase' },
+  molSmiles: {
+    backgroundColor: C.offWhite, borderRadius: 9, paddingHorizontal: 10, paddingVertical: 8,
+    fontFamily: Platform.OS === 'android' ? 'monospace' : 'Menlo', fontSize: 10, color: C.textMuted,
+  },
+  thresholdRow: { flexDirection: 'row', alignItems: 'center', marginVertical: 14 },
   thresholdDash: { flex: 1, height: 1, backgroundColor: C.divider },
   thresholdText: { fontSize: 11, color: C.textFaint, marginHorizontal: 10, fontWeight: '600' },
   predRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 12 },
-  predEmoji: { fontSize: 20, width: 32 },
+  predRank: {
+    width: 28, height: 28, borderRadius: 10, backgroundColor: C.greenFaint,
+    alignItems: 'center', justifyContent: 'center',
+  },
+  predRankText: { fontSize: 10, fontWeight: '800', color: C.green },
   predInfo: { flex: 1, marginHorizontal: 10 },
   predLabelRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 5 },
   predLabel: { fontSize: 14, fontWeight: '600', color: C.green },
@@ -989,21 +1249,49 @@ const styles = StyleSheet.create({
   },
   homeBtnText: { fontSize: 20, color: C.gold },
 
-  explorerTabBar: { flexDirection: 'row', backgroundColor: C.white, borderBottomWidth: 1, borderBottomColor: C.divider, paddingHorizontal: 16, paddingTop: 10 },
-  explorerTab: { flex: 1, alignItems: 'center', paddingVertical: 12, borderBottomWidth: 3, borderBottomColor: 'transparent' },
-  explorerTabActive: { borderBottomColor: C.gold },
+  explorerTabBar: {
+    flexDirection: 'row', backgroundColor: C.white,
+    borderBottomWidth: 1, borderBottomColor: C.divider,
+    paddingHorizontal: 14, paddingVertical: 9, gap: 6,
+  },
+  explorerTab: { flex: 1, alignItems: 'center', paddingVertical: 9, borderRadius: 11 },
+  explorerTabActive: { backgroundColor: C.greenFaint },
   explorerTabText: { fontSize: 13, fontWeight: '600', color: C.textFaint },
   explorerTabTextActive: { color: C.green },
-  explorerSearch: { backgroundColor: C.white, borderRadius: 12, paddingHorizontal: 16, paddingVertical: 14, fontSize: 15, color: C.green, borderWidth: 1, borderColor: C.divider, marginBottom: 16 },
-  explorerHint: { fontSize: 13, color: C.textMuted, textAlign: 'center', marginTop: 40, paddingHorizontal: 20 },
+  explorerHero: {
+    backgroundColor: C.green, borderRadius: 20, padding: 19, marginBottom: 16,
+    borderWidth: 1, borderColor: C.greenLight,
+  },
+  explorerHeroEyebrow: { color: C.goldLight, fontSize: 9, fontWeight: '800', letterSpacing: 1.2, marginBottom: 8 },
+  explorerHeroTitle: { color: C.white, fontSize: 22, lineHeight: 28, fontWeight: '800', maxWidth: 300 },
+  explorerHeroDesc: { color: 'rgba(255,255,255,0.58)', fontSize: 11, lineHeight: 17, marginTop: 8 },
+  searchField: {
+    flexDirection: 'row', alignItems: 'center', backgroundColor: C.white,
+    borderRadius: 14, borderWidth: 1.5, borderColor: C.divider,
+    marginBottom: 16, paddingHorizontal: 13,
+  },
+  searchIcon: { color: C.green, fontSize: 21, marginRight: 8 },
+  explorerSearch: { flex: 1, paddingVertical: 14, fontSize: 14, color: C.green },
+  searchClear: { width: 30, height: 30, alignItems: 'center', justifyContent: 'center', borderRadius: 15, backgroundColor: C.offWhite },
+  searchClearText: { color: C.textMuted, fontSize: 20, lineHeight: 22 },
+  explorerHint: { fontSize: 12, color: C.textMuted, textAlign: 'center', marginTop: 5, paddingHorizontal: 20, lineHeight: 18 },
   explorerEmpty: { fontSize: 14, color: C.textMuted, textAlign: 'center', marginTop: 40, fontStyle: 'italic' },
-  explorerCard: { backgroundColor: C.white, borderRadius: 16, padding: 16, marginBottom: 12, borderWidth: 1, borderColor: C.divider, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.05, shadowRadius: 6, elevation: 2 },
+  explorerEmptyCard: { alignItems: 'center', backgroundColor: C.white, borderRadius: 18, paddingVertical: 28, paddingHorizontal: 18, borderWidth: 1, borderColor: C.divider },
+  explorerEmptyIcon: { fontSize: 26, color: C.gold, marginBottom: 9 },
+  explorerEmptyTitle: { fontSize: 15, fontWeight: '800', color: C.ink },
+  explorerCard: { backgroundColor: C.white, borderRadius: 17, padding: 15, marginBottom: 11, borderWidth: 1, borderColor: C.divider, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.04, shadowRadius: 6, elevation: 2 },
+  perfumeMonogram: { width: 42, height: 42, borderRadius: 14, backgroundColor: C.greenFaint, alignItems: 'center', justifyContent: 'center', marginRight: 12 },
+  perfumeMonogramText: { color: C.green, fontSize: 17, fontWeight: '900' },
   explorerCardBrand: { fontSize: 11, color: C.textMuted, textTransform: 'uppercase', letterSpacing: 1, marginBottom: 4 },
   explorerCardName: { fontSize: 16, fontWeight: '700', color: C.green, marginBottom: 6 },
-  explorerCardAccords: { fontSize: 13, color: C.goldDark, fontWeight: '500' },
+  explorerCardAccords: { fontSize: 12, color: C.goldDark, fontWeight: '600' },
   explorerScoreBadge: { backgroundColor: C.goldFaint, paddingHorizontal: 8, paddingVertical: 4, borderRadius: 8, borderWidth: 1, borderColor: C.goldBorder },
   explorerScoreText: { fontSize: 12, fontWeight: '700', color: C.goldDark },
-  explorerSectionTitle: { fontSize: 16, fontWeight: '700', color: C.green, marginBottom: 12 },
+  sectionHeadingRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 },
+  explorerSectionTitle: { fontSize: 17, fontWeight: '800', color: C.ink },
+  sectionSubtitle: { fontSize: 11, color: C.textMuted, marginTop: 3 },
+  selectionBadge: { backgroundColor: C.goldFaint, borderRadius: 10, paddingHorizontal: 9, paddingVertical: 6 },
+  selectionBadgeText: { fontSize: 9, color: C.goldDark, fontWeight: '800' },
   labelChipWrap: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 20 },
   labelChip: { backgroundColor: C.white, borderWidth: 1, borderColor: C.divider, borderRadius: 20, paddingHorizontal: 12, paddingVertical: 8 },
   labelChipActive: { backgroundColor: C.green, borderColor: C.greenDark },
@@ -1011,6 +1299,9 @@ const styles = StyleSheet.create({
   labelChipTextActive: { color: C.gold, fontWeight: '600' },
   editBtn: { padding: 6, backgroundColor: C.goldFaint, borderRadius: 6 },
   deleteBtn: { padding: 6, backgroundColor: '#fee2e2', borderRadius: 6 },
+  myLabIntro: { backgroundColor: C.white, borderRadius: 16, padding: 16, marginBottom: 12, borderWidth: 1, borderColor: C.divider },
+  myLabIntroTitle: { fontSize: 16, fontWeight: '800', color: C.ink, marginBottom: 5 },
+  myLabIntroText: { fontSize: 11, lineHeight: 17, color: C.textMuted },
 
   modalOverlay: { flex: 1, backgroundColor: 'rgba(15,43,32,0.6)', justifyContent: 'flex-end' },
   modalView: { backgroundColor: C.white, borderTopLeftRadius: 24, borderTopRightRadius: 24, padding: 24, paddingBottom: Platform.OS === 'ios' ? 40 : 24, shadowColor: '#000', shadowOffset: { width: 0, height: -4 }, shadowOpacity: 0.1, shadowRadius: 12, elevation: 10 },

@@ -3,7 +3,51 @@ import axios from 'axios';
 import RNFS from 'react-native-fs';
 import xgbMeta from '../assets/metadata/xgb_meta.json';
 
-const API_URL = 'https://perfume-multilabel-classifier-production.up.railway.app';
+const API_URL = 'https://marvelkn-essenza-fingerprint-api.hf.space';
+const FINGERPRINT_ENDPOINT = '/call/predict';
+const SPACE_WAKE_TIMEOUT_MS = 120000;
+
+interface GradioQueueResponse {
+  event_id?: string;
+}
+
+/**
+ * Gradio's queued HTTP endpoint returns a short server-sent-event document once
+ * the job finishes. React Native's Axios adapter buffers that document until the
+ * connection closes, so it can be parsed without browser streaming APIs.
+ */
+function parseGradioQueueResult(payload: unknown): any {
+  if (typeof payload !== 'string') {
+    throw new Error('Fingerprint service returned an unexpected response.');
+  }
+
+  const events = payload.split(/\r?\n\r?\n/);
+  for (const eventBlock of events) {
+    const lines = eventBlock.split(/\r?\n/);
+    const eventType = lines
+      .find(line => line.startsWith('event:'))
+      ?.slice('event:'.length)
+      .trim();
+    const dataText = lines
+      .filter(line => line.startsWith('data:'))
+      .map(line => line.slice('data:'.length).trimStart())
+      .join('\n');
+
+    if (eventType === 'error') {
+      throw new Error('Fingerprint service could not complete the queued request.');
+    }
+
+    if (eventType === 'complete' && dataText) {
+      const parsed = JSON.parse(dataText);
+      if (!Array.isArray(parsed) || parsed.length === 0) {
+        throw new Error('Fingerprint service returned an empty result.');
+      }
+      return parsed[0];
+    }
+  }
+
+  throw new Error('Fingerprint service did not return a completed result.');
+}
 
 // ── Interfaces ────────────────────────────────────────────────
 
@@ -56,17 +100,43 @@ export class InferenceService {
 
   /**
    * Fetches the Morgan Fingerprint (2048-bit) + 5 RDKit physical descriptors
-   * for a given SMILES string via the Railway API.
+   * for a given SMILES string via the Hugging Face Gradio API.
    * Also returns molecule metadata and a model-confidence warning if applicable.
    */
   static async getFingerprint(smilesStr: string): Promise<FingerprintResponse> {
     try {
-      const response = await axios.post(
-        `${API_URL}/fingerprint`,
-        { smiles: smilesStr },
-        { timeout: 15000 }
+      // ZeroGPU requires queued calls. POST creates the job; GET waits for its
+      // SSE completion document. The fingerprint computation itself remains CPU-only.
+      const queueResponse = await axios.post<GradioQueueResponse>(
+        `${API_URL}${FINGERPRINT_ENDPOINT}`,
+        { data: [smilesStr, ''] },
+        { timeout: 30000 }
       );
-      const d = response.data;
+
+      const eventId = queueResponse.data?.event_id;
+      if (!eventId) {
+        throw new Error('Fingerprint service did not return a queue event ID.');
+      }
+
+      const resultResponse = await axios.get(
+        `${API_URL}${FINGERPRINT_ENDPOINT}/${encodeURIComponent(eventId)}`,
+        {
+          timeout: SPACE_WAKE_TIMEOUT_MS,
+          responseType: 'text',
+          transformResponse: data => data,
+        }
+      );
+      const d = parseGradioQueueResult(resultResponse.data);
+
+      if (d.error) {
+        throw new Error(String(d.error));
+      }
+      if (!Array.isArray(d.fingerprint) || d.fingerprint.length !== 2053) {
+        throw new Error(
+          `Fingerprint service returned ${d.fingerprint?.length ?? 0} features; expected 2053.`
+        );
+      }
+
       return {
         fingerprint: d.fingerprint,
         combined_smiles: d.smiles,
@@ -76,10 +146,10 @@ export class InferenceService {
         warning: d.warning ?? null,
       };
     } catch (e: any) {
-      // Timeout — Railway cold start
-      if (axios.isAxiosError(e) && e.code === 'ECONNABORTED') {
+      // Timeout — Hugging Face cold start or ZeroGPU queue delay
+      if (axios.isAxiosError(e) && (e.code === 'ECONNABORTED' || e.code === 'ETIMEDOUT')) {
         throw new Error(
-          'Request timed out. The server may be waking up — please try again in a moment.'
+          'Request timed out. The fingerprint service may be waking up or queued — please try again in a moment.'
         );
       }
       // Network unreachable
@@ -99,6 +169,9 @@ export class InferenceService {
           throw new Error(detail); // MW filter — keep as-is, App.js already handles it
         }
         throw new Error(detail);
+      }
+      if (e instanceof Error && e.message) {
+        throw e;
       }
       throw new Error('Failed to get fingerprint from API. Please verify the SMILES and try again.');
     }
@@ -128,7 +201,7 @@ export class InferenceService {
           console.log(`[InferenceService] Copying model ${filename} from assets...`);
           try {
             await RNFS.copyFileAssets(`models/${filename}`, destPath);
-          } catch (copyErr: any) {
+          } catch {
             throw new Error(
               `Failed to load model file "${filename}". The app may need to be reinstalled.`
             );
@@ -151,7 +224,7 @@ export class InferenceService {
         const probOutput = results[session.outputNames[1]];
         let prob = 0;
 
-        if (probOutput.type === 'tensor(float)' || probOutput.type === 'float32') {
+        if (String(probOutput.type) === 'tensor(float)' || probOutput.type === 'float32') {
           const data = probOutput.data as Float32Array;
           // Output layout: [prob_class_0, prob_class_1]
           prob = data[1] !== undefined ? data[1] : data[0];
@@ -159,7 +232,7 @@ export class InferenceService {
           // Fallback: sequence-of-maps output format
           const mapList = probOutput.data as any[];
           if (mapList && mapList.length > 0) {
-            prob = mapList[0]['1'] ?? mapList[0][1n] ?? mapList[0][1] ?? 0;
+            prob = mapList[0]['1'] ?? mapList[0][1] ?? 0;
           }
         }
 
@@ -205,7 +278,7 @@ export class InferenceService {
       top_accords: p.top_accords,
       similarityScore: p.similarityScore,
       rating: p.rating,
-      is_custom: p.is_custom,
+      is_custom: p.is_custom ?? 0,
     }));
   }
 }

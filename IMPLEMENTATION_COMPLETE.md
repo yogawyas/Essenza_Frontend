@@ -22,8 +22,9 @@ All 7 tasks from the approved audit plan have been implemented:
 - **Impact:** 110 models reused across predictions; no memory leak
 
 ### 4. API Error Handling
-- **Added:** 15-second axios timeout on `/fingerprint` and `/recommend`
-- **Added:** Timeout-specific error message ("Server Waking Up")
+- **Added:** Gradio two-step queue integration through `/call/predict`
+- **Added:** 120-second result timeout for Hugging Face cold starts and queue delays
+- **Added:** Timeout-specific error message ("Server Waking Up or Queued")
 - **Added:** Network-specific error message ("No Connection")
 - **Location:** `InferenceService.ts` lines 57-85, 159-171
 - **Impact:** User sees actionable error messages instead of hanging UI
@@ -38,7 +39,7 @@ All 7 tasks from the approved audit plan have been implemented:
 
 ### 6. Explorer Mode Implementation
 - **Before:** Static "Coming Soon" placeholder
-- **After:** Full recommendation system wired to `/recommend` API
+- **After:** Full recommendation system backed by the on-device SQLite database
 - **Database:** 65 curated perfumes (Chanel, Dior, Tom Ford, Le Labo, Guerlain, etc.)
 - **Crosswalk:** 37 Leffingwell → Fragrantica accord mappings
 - **UI:** Note picker (10 notes) → API call → ranked perfume cards with similarity scores
@@ -72,7 +73,7 @@ All 7 tasks from the approved audit plan have been implemented:
 - ✅ Zero results shows "No Matches Found" with helpful message
 
 ### API Error Handling
-- ✅ Timeout error shows "Server Waking Up" modal
+- ✅ Timeout error explains Hugging Face wake-up or queue delay
 - ✅ Network error shows "No Connection" modal
 - ✅ Heavy molecule (MW>400) shows "Compound Not Volatile" modal
 - ✅ Invalid SMILES shows "Compound Not Recognized" modal
@@ -84,7 +85,7 @@ All 7 tasks from the approved audit plan have been implemented:
 - `src/services/InferenceService.ts` — rewritten (213 lines)
 - `App.js` — rewritten (968 lines)
 
-### Perfume-MultiLabel-Classifier (Railway API)
+### Perfume-MultiLabel-Classifier (Hugging Face fingerprint API)
 - `dataset/perfume_db.sqlite` — rebuilt (65 perfumes)
 - `mobile_assets/leffingwell_to_fragrantica.json` — updated (37 mappings)
 - `etl_pipeline.py` — rewritten (curated dataset builder)
@@ -137,9 +138,9 @@ The `.gitignore` already has the correct rule — the DB will deploy.
    - **Impact:** Rare labels (alliaceous, ketonic) won't match perfumes
    - **Mitigation:** All 10 Explorer UI notes are mapped
 
-3. **Railway cold start:** First API call takes 10-15 seconds
-   - **Impact:** User sees "Server Waking Up" modal on first use
-   - **Mitigation:** Timeout modal explains the delay
+3. **Hugging Face ZeroGPU cold start and queue:** The first call can take longer and free usage is quota-limited
+   - **Impact:** Fingerprint requests may wait in a queue or time out during high demand
+   - **Mitigation:** The app uses Gradio's queued `/call/predict` protocol and a 120-second result timeout
 
 ## Architecture Diagram
 
@@ -162,19 +163,15 @@ The `.gitignore` already has the correct rule — the DB will deploy.
 └─────────────────────────────────────┼───────────────────┘
                                       │
                 ┌─────────────────────▼─────────────────┐
-                │   Railway API (FastAPI + RDKit)       │
-                │   https://...-production.up.railway.app│
+                │ Hugging Face Gradio Space + RDKit    │
+                │ marvelkn/essenza-fingerprint-api     │
                 │                                        │
-                │   POST /fingerprint                    │
+                │   POST+GET /call/predict (queued)      │
                 │   - Input: SMILES string               │
                 │   - Output: 2053-bit vector            │
                 │            + metadata + warning        │
                 │                                        │
-                │   POST /recommend                      │
-                │   - Input: label_probabilities dict    │
-                │   - Output: PerfumeResult[] (ranked)   │
-                │   - DB: perfume_db.sqlite (65 rows)    │
-                │   - Crosswalk: leffingwell→fragrantica │
+                │   Model inference stays offline        │
                 └────────────────────────────────────────┘
 ```
 
