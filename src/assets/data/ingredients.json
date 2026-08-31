@@ -1,0 +1,14 @@
+[
+  { "id": "1", "name": "Linalool", "smiles": "CC(=CCCC(C)(C=C)O)C", "type": "Heart Note" },
+  { "id": "2", "name": "Limonene", "smiles": "CC1=CCC(C(C)=C)CC1", "type": "Top Note" },
+  { "id": "3", "name": "Vanillin", "smiles": "O=Cc1ccc(O)c(OC)c1", "type": "Base Note" },
+  { "id": "4", "name": "Eugenol", "smiles": "COc1cc(CC=C)ccc1O", "type": "Heart Note" },
+  { "id": "5", "name": "Iso E Super", "smiles": "CC1(C)CCCC2(C)C1CCC2(C)C(=O)C", "type": "Base Note" },
+  { "id": "6", "name": "Hedione", "smiles": "CCCCC1C(=O)CC(C1)CC(=O)OC", "type": "Heart Note" },
+  { "id": "7", "name": "Citral", "smiles": "CC(=CCCC(=CC=O)C)C", "type": "Top Note" },
+  { "id": "8", "name": "Geraniol", "smiles": "CC(=CCCC(=CCO)C)C", "type": "Heart Note" },
+  { "id": "9", "name": "Coumarin", "smiles": "O=C1C=Cc2ccccc2O1", "type": "Base Note" },
+  { "id": "10", "name": "Calone", "smiles": "O=C1COc2ccccc2O1", "type": "Heart Note" },
+  { "id": "11", "name": "Benzyl acetate", "smiles": "CC(=O)OCc1ccccc1", "type": "Top Note" },
+  { "id": "12", "name": "Alpha-Pinene", "smiles": "CC1=CCC2CC1C2(C)C", "type": "Top Note" }
+]

@@ -1,8 +1,12 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import {
   StyleSheet, View, Text, TextInput, TouchableOpacity,
-  ScrollView, StatusBar, Dimensions, Platform, Image,
+  ScrollView, StatusBar, Dimensions, Platform, Modal, ActivityIndicator,
+  Alert, Switch,
 } from 'react-native';
+import { InferenceService } from './src/services/InferenceService';
+import { DatabaseService } from './src/services/DatabaseService';
+
 
 const { width } = Dimensions.get('window');
 
@@ -28,141 +32,43 @@ const C = {
   divider:     '#E8EDE0',
 };
 
-// ── Data: Notes / Scent Categories ───────────────────────────
-const NOTES = [
-  { id: 'floral',  label: 'Floral',  emoji: '🌸', desc: 'Rose, Jasmine, Peony' },
-  { id: 'citrus',  label: 'Citrus',  emoji: '🍋', desc: 'Lemon, Bergamot, Orange' },
-  { id: 'woody',   label: 'Woody',   emoji: '🪵', desc: 'Sandalwood, Cedar, Oud' },
-  { id: 'fresh',   label: 'Fresh',   emoji: '💨', desc: 'Aquatic, Marine, Clean' },
-  { id: 'sweet',   label: 'Sweet',   emoji: '🍬', desc: 'Vanilla, Caramel, Sugar' },
-  { id: 'musky',   label: 'Musky',   emoji: '🫧', desc: 'White Musk, Amber, Skin' },
-  { id: 'herbal',  label: 'Herbal',  emoji: '🌿', desc: 'Lavender, Sage, Mint' },
-  { id: 'fruity',  label: 'Fruity',  emoji: '🍑', desc: 'Peach, Berry, Apple' },
-  { id: 'spicy',   label: 'Spicy',   emoji: '🌶️', desc: 'Pepper, Cinnamon, Clove' },
-  { id: 'green',   label: 'Green',   emoji: '🍃', desc: 'Grass, Leaves, Vetiver' },
-];
-
-// ── Data: Molecules per note ──────────────────────────────────
-const NOTE_MOLECULES = {
-  floral:  [{ name: 'Linalool',       smiles: 'CC(=CCC/C(=C/CO)C)C', role: 'Top note carrier' },
-            { name: 'Geraniol',        smiles: 'CC(=CCC/C(=C/CO)C)C', role: 'Rose character' }],
-  citrus:  [{ name: 'Limonene',       smiles: 'CC1=CCC(CC1)C(=C)C', role: 'Citrus burst' },
-            { name: 'Linalyl Acetate', smiles: 'CC(=O)OC/C=C(/C)CCC=C(C)C', role: 'Bergamot' }],
-  woody:   [{ name: 'Cedrol',         smiles: 'CC1(C2CCC3(C)C(CC2)C13)O', role: 'Cedar base' },
-            { name: 'α-Santalol',     smiles: 'CC(C)(O)CCC=C1CC=CC1', role: 'Sandalwood' }],
-  fresh:   [{ name: 'Calone',         smiles: 'O=C1CCCCO1', role: 'Marine freshness' },
-            { name: 'Dihydromyrcenol', smiles: 'CC(C)(O)CCC=C(C)C', role: 'Clean accord' }],
-  sweet:   [{ name: 'Vanillin',       smiles: 'O=Cc1ccc(O)c(OC)c1', role: 'Vanilla warmth' },
-            { name: 'Ethyl Maltol',   smiles: 'CCc1occc(=O)c1O', role: 'Caramel sugar' }],
-  musky:   [{ name: 'Galaxolide',     smiles: 'CC1(C)CC(C)(C)c2cc3c(cc21)OC(C)(C)CO3', role: 'White musk' },
-            { name: 'Habanolide',     smiles: 'O=C1CCCCCCC/C=C/CC1', role: 'Skin musk' }],
-  herbal:  [{ name: 'Linalool',       smiles: 'CC(=CCC/C(=C/CO)C)C', role: 'Lavender' },
-            { name: 'Eucalyptol',     smiles: 'CC12CCC(CC1)(O2)C(C)C', role: 'Fresh herb' }],
-  fruity:  [{ name: 'γ-Undecalactone', smiles: 'O=C1CCCCC(CCCC)O1', role: 'Peach note' },
-            { name: 'Allyl Amyl Glycolate', smiles: 'O=C(OCC=C)COCCCCC', role: 'Berry' }],
-  spicy:   [{ name: 'Eugenol',        smiles: 'COc1cc(CC=C)ccc1O', role: 'Clove spice' },
-            { name: 'Cinnamaldehyde', smiles: 'O=C/C=C/c1ccccc1', role: 'Cinnamon' }],
-  green:   [{ name: 'Violet Leaf Aldehyde', smiles: 'O=CCCCC=C', role: 'Cut grass' },
-            { name: 'Hexenol',        smiles: 'OCC=CCCC', role: 'Green leaves' }],
-};
-
-// ── Data: Mock Perfume Recommendations ───────────────────────
-const PERFUME_DB = [
+// ── Data: Scent Mixology Categories ────────────────────────────
+const MOLECULE_CATEGORIES = [
   {
-    id: 1, name: 'Santal 33', brand: 'Le Labo',
-    notes: ['woody', 'musky', 'spicy'],
-    price: 'Rp 2.800.000', concentration: 'EDP',
-    emoji: '🟤', description: 'Iconic woody-musky signature with cedarwood & cardamom.',
+    name: '🍬 Sweet / Gourmand',
+    items: [
+      { name: 'Vanillin', smiles: 'O=Cc1ccc(O)c(OC)c1' },
+      { name: 'Coumarin', smiles: 'O=C1OC2=CC=CC=C2C=C1' },
+    ]
   },
   {
-    id: 2, name: 'Chanel No.5', brand: 'Chanel',
-    notes: ['floral', 'musky', 'fresh'],
-    price: 'Rp 2.200.000', concentration: 'EDP',
-    emoji: '⬜', description: 'Timeless powdery floral with ylang-ylang & sandalwood.',
+    name: '🍋 Citrus',
+    items: [
+      { name: 'Limonene', smiles: 'CC1=CCC(CC1)C(=C)C' },
+      { name: 'Citral', smiles: 'CC(=CCCC(=CC=O)C)C' },
+    ]
   },
   {
-    id: 3, name: 'Light Blue', brand: 'Dolce & Gabbana',
-    notes: ['citrus', 'fresh', 'woody'],
-    price: 'Rp 1.400.000', concentration: 'EDT',
-    emoji: '🔵', description: 'Bright citrus-fresh with apple & cedar.',
+    name: '🌸 Floral',
+    items: [
+      { name: 'Linalool', smiles: 'CC(=CCCC(C)(C=C)O)C' },
+      { name: 'Geraniol', smiles: 'CC(=CCCC(=CCO)C)C' },
+    ]
   },
   {
-    id: 4, name: 'Black Orchid', brand: 'Tom Ford',
-    notes: ['sweet', 'woody', 'spicy'],
-    price: 'Rp 3.100.000', concentration: 'EDP',
-    emoji: '⚫', description: 'Dark and opulent with black truffle & orchid.',
+    name: '🪵 Spicy / Woody',
+    items: [
+      { name: 'Eugenol', smiles: 'COc1cc(CC=C)ccc1O' },
+      { name: 'Iso E Super', smiles: 'CC(=C)C1CCC2C1(C)CCCC2(C)C' },
+    ]
   },
   {
-    id: 5, name: 'Flowerbomb', brand: 'Viktor&Rolf',
-    notes: ['floral', 'sweet', 'musky'],
-    price: 'Rp 1.900.000', concentration: 'EDP',
-    emoji: '🌸', description: 'Explosive floral bouquet with patchouli & vanilla.',
-  },
-  {
-    id: 6, name: 'Acqua di Gio', brand: 'Giorgio Armani',
-    notes: ['fresh', 'citrus', 'musky'],
-    price: 'Rp 1.200.000', concentration: 'EDT',
-    emoji: '💧', description: 'Mediterranean aquatic freshness with neroli & musk.',
-  },
-  {
-    id: 7, name: 'La Vie Est Belle', brand: 'Lancôme',
-    notes: ['sweet', 'floral', 'fruity'],
-    price: 'Rp 1.600.000', concentration: 'EDP',
-    emoji: '🟣', description: 'Joyful iris & praline with gourmand sweetness.',
-  },
-  {
-    id: 8, name: 'Oud Wood', brand: 'Tom Ford',
-    notes: ['woody', 'spicy', 'musky'],
-    price: 'Rp 4.200.000', concentration: 'EDP',
-    emoji: '🟫', description: 'Rare oud with rosewood & cardamom warmth.',
-  },
-  {
-    id: 9, name: 'CK One', brand: 'Calvin Klein',
-    notes: ['fresh', 'green', 'citrus'],
-    price: 'Rp 650.000', concentration: 'EDT',
-    emoji: '🍃', description: 'Clean unisex freshness with green tea & musk.',
-  },
-  {
-    id: 10, name: 'Guilty', brand: 'Gucci',
-    notes: ['floral', 'fruity', 'spicy'],
-    price: 'Rp 1.750.000', concentration: 'EDP',
-    emoji: '🔴', description: 'Bold pink pepper & geranium with amber base.',
-  },
-];
-
-// ── Data: SMILES examples for Chemist mode ───────────────────
-const EXAMPLE_SMILES = [
-  { name: 'Linalool',         smiles: 'CC(=CCC/C(=C/CO)C)C' },
-  { name: 'Vanillin',         smiles: 'O=Cc1ccc(O)c(OC)c1' },
-  { name: 'Limonene',         smiles: 'CC1=CCC(CC1)C(=C)C' },
-  { name: 'Eugenol',          smiles: 'COc1cc(CC=C)ccc1O' },
-  { name: 'Cinnamaldehyde',   smiles: 'O=C/C=C/c1ccccc1' },
-];
-
-// ── Mock Logic ────────────────────────────────────────────────
-const mockPredictFromSmiles = (smiles) => {
-  let hash = 0;
-  for (let i = 0; i < smiles.length; i++) {
-    hash = ((hash << 5) - hash) + smiles.charCodeAt(i);
-    hash |= 0;
+    name: '🦨 Musk',
+    items: [
+      { name: 'Galaxolide', smiles: 'CC12CCC3C(C)(C)CC(C)(C)C3C1CCC2' },
+    ]
   }
-  return NOTES.map((note, idx) => {
-    const seed = Math.abs(hash * (idx + 1) * 13) % 100;
-    return { ...note, confidence: Math.round(seed) / 100 };
-  }).sort((a, b) => b.confidence - a.confidence);
-};
-
-const recommendPerfumes = (selectedNoteIds) => {
-  if (!selectedNoteIds.length) return [];
-  return PERFUME_DB
-    .map(p => {
-      const matches = p.notes.filter(n => selectedNoteIds.includes(n)).length;
-      return { ...p, score: matches };
-    })
-    .filter(p => p.score > 0)
-    .sort((a, b) => b.score - a.score)
-    .slice(0, 5);
-};
+];
 
 // ── Shared Components ─────────────────────────────────────────
 const GoldButton = ({ onPress, disabled, children, style }) => (
@@ -189,7 +95,6 @@ const Header = ({ mode, onModeToggle }) => (
         <Text style={styles.headerTitle}>ESSENZA</Text>
         <Text style={styles.headerSubtitle}>Scent Profile Predictor</Text>
       </View>
-      {/* Mode Toggle */}
       <TouchableOpacity style={styles.modeToggle} onPress={onModeToggle} activeOpacity={0.8}>
         <Text style={styles.modeToggleText}>{mode === 'explorer' ? '⚗️ Pro' : '🌸 Easy'}</Text>
       </TouchableOpacity>
@@ -216,13 +121,13 @@ const ModeSelector = ({ onSelect }) => (
         </View>
         <Text style={styles.modeCardTitle}>Explorer</Text>
         <Text style={styles.modeCardDesc}>
-          Pilih aroma favorit kamu dan temukan parfum yang sempurna untukmu.
+          Pick your favorite scent notes and find the perfect perfume for you.
         </Text>
         <View style={styles.modeCardBadge}>
-          <Text style={styles.modeCardBadgeText}>Untuk Semua</Text>
+          <Text style={styles.modeCardBadgeText}>✅ Available</Text>
         </View>
         <GoldButton onPress={() => onSelect('explorer')} style={{ marginTop: 16 }}>
-          Mulai Eksplorasi →
+          Explore Scents →
         </GoldButton>
       </TouchableOpacity>
 
@@ -233,332 +138,619 @@ const ModeSelector = ({ onSelect }) => (
         </View>
         <Text style={[styles.modeCardTitle, styles.modeCardTitleLight]}>Chemist</Text>
         <Text style={[styles.modeCardDesc, styles.modeCardDescLight]}>
-          Masukkan SMILES string + notes untuk prediksi label aroma senyawa baru.
+          Enter a SMILES string to predict odor labels using XGBoost + ONNX on-device inference.
         </Text>
         <View style={[styles.modeCardBadge, styles.modeCardBadgeDark]}>
-          <Text style={[styles.modeCardBadgeText, { color: C.green }]}>Advanced</Text>
+          <Text style={[styles.modeCardBadgeText, { color: C.green }]}>✅ Available</Text>
         </View>
         <GoldButton onPress={() => onSelect('chemist')} style={{ marginTop: 16 }}>
-          Buka Lab →
+          Open Lab →
         </GoldButton>
       </TouchableOpacity>
     </View>
   </View>
 );
 
-// ── SCREEN: Explorer Mode ─────────────────────────────────────
+// ── SCREEN: Explorer Mode (Offline + CRUD) ──────────────────
+const ALL_LABELS = [
+  'floral','fruity','woody','sweet','citrus','aromatic','musky','fresh',
+  'spicy','balsamic','vanilla','powdery','earthy','smoky','tobacco','anisic',
+  'aldehydic','rose','green','herbal','mint','caramellic','cocoa','honey','winey',
+];
+
 const ExplorerScreen = () => {
-  const [selectedNotes, setSelectedNotes] = useState([]);
-  const [step, setStep]                   = useState('notes'); // 'notes' | 'molecules' | 'perfumes'
-  const [isLoading, setIsLoading]         = useState(false);
-  const [molecules, setMolecules]         = useState([]);
-  const [perfumes, setPerfumes]           = useState([]);
+  // ── State ─────────────────────────────────────────────────
+  const [tab, setTab]                   = useState('search');   // 'search' | 'custom'
+  const [searchQuery, setSearchQuery]   = useState('');
+  const [searchResults, setSearchResults] = useState([]);
+  const [filterLabels, setFilterLabels] = useState([]);
+  const [perfumeResults, setPerfumeResults] = useState([]);
+  const [userPerfumes, setUserPerfumes] = useState([]);
+  const [isLoading, setIsLoading]       = useState(false);
+  const [dbReady, setDbReady]           = useState(false);
 
-  const toggleNote = (id) => {
-    setSelectedNotes(prev =>
-      prev.includes(id) ? prev.filter(n => n !== id) : [...prev, id]
+  // CRUD Modal state
+  const [modalVisible, setModalVisible] = useState(false);
+  const [editTarget, setEditTarget]     = useState(null);  // null = Create, obj = Edit
+  const [formName, setFormName]         = useState('');
+  const [formMode, setFormMode]         = useState('simple');  // 'simple'|'advanced'
+  const [formAccords, setFormAccords]   = useState({});
+
+  // ── Init DB ────────────────────────────────────────────────
+  useEffect(() => {
+    DatabaseService.init()
+      .then(() => { setDbReady(true); loadUserPerfumes(); })
+      .catch(e => console.error('[Explorer] DB init failed:', e));
+  }, []);
+
+  const loadUserPerfumes = async () => {
+    const items = await DatabaseService.getAllUserPerfumes();
+    setUserPerfumes(items);
+  };
+
+  // ── Search Parfum Komersial ────────────────────────────────
+  const handleSearch = useCallback(async (q) => {
+    setSearchQuery(q);
+    if (!dbReady || q.trim().length < 2) { setSearchResults([]); return; }
+    const res = await DatabaseService.searchPerfumes(q.trim());
+    setSearchResults(res);
+  }, [dbReady]);
+
+  // ── Filter by Label ────────────────────────────────────────
+  const toggleLabel = (label) => {
+    setFilterLabels(prev =>
+      prev.includes(label) ? prev.filter(l => l !== label) : [...prev, label]
     );
-    // Reset results when notes change
-    setStep('notes');
-    setMolecules([]);
-    setPerfumes([]);
   };
 
-  const handleDiscover = () => {
-    if (!selectedNotes.length) return;
+  const handleFindByLabel = async () => {
+    if (filterLabels.length === 0 || !dbReady) return;
     setIsLoading(true);
-    setTimeout(() => {
-      // Gather molecules from selected notes
-      const mols = selectedNotes.flatMap(id => NOTE_MOLECULES[id] || []);
-      setMolecules(mols);
-      const recs = recommendPerfumes(selectedNotes);
-      setPerfumes(recs);
-      setStep('results');
-      setIsLoading(false);
-    }, 900);
+    const res = await DatabaseService.getPerfumesByLabels(filterLabels, 0.05, 20);
+    setPerfumeResults(res);
+    setIsLoading(false);
   };
 
-  const handleReset = () => {
-    setSelectedNotes([]);
-    setStep('notes');
-    setMolecules([]);
-    setPerfumes([]);
+  // ── CRUD Operations ────────────────────────────────────────
+  const openCreate = () => {
+    setEditTarget(null);
+    setFormName('');
+    setFormMode('simple');
+    setFormAccords({});
+    setModalVisible(true);
   };
 
-  return (
-    <ScrollView style={styles.scrollView} contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
+  const openEdit = (item) => {
+    setEditTarget(item);
+    setFormName(item.name);
+    setFormMode(item.mode);
+    setFormAccords({ ...item.accords });
+    setModalVisible(true);
+  };
 
-      {/* Intro */}
-      <View style={styles.card}>
-        <View style={styles.cardAccent} />
-        <View style={styles.cardInner}>
-          <Text style={styles.cardTitle}>Aroma Apa yang Kamu Suka? 🌿</Text>
-          <Text style={styles.cardDesc}>
-            Pilih satu atau beberapa notes favoritmu. Kami akan tunjukkan molekul di baliknya dan parfum yang mungkin kamu suka.
-          </Text>
+  const handleSave = async () => {
+    if (!formName.trim() || Object.keys(formAccords).length === 0) {
+      Alert.alert('Incomplete', 'Please enter a name and select at least one scent label.');
+      return;
+    }
+    const top = Object.entries(formAccords).sort((a,b)=>b[1]-a[1]).slice(0,3).map(([k])=>k).join(', ');
+    const data = { name: formName.trim(), accords: formAccords, top_accords: top, mode: formMode };
+    if (editTarget) {
+      await DatabaseService.updateUserPerfume(editTarget.id, data);
+    } else {
+      await DatabaseService.createUserPerfume(data);
+    }
+    setModalVisible(false);
+    loadUserPerfumes();
+  };
+
+  const handleDelete = (item) => {
+    Alert.alert('Delete Perfume', `Delete "${item.name}"?`, [
+      { text: 'Cancel', style: 'cancel' },
+      { text: 'Delete', style: 'destructive', onPress: async () => {
+        await DatabaseService.deleteUserPerfume(item.id);
+        loadUserPerfumes();
+      }},
+    ]);
+  };
+
+  const setLabelScore = (label, val) => {
+    if (val <= 0) {
+      const next = { ...formAccords };
+      delete next[label];
+      setFormAccords(next);
+    } else {
+      setFormAccords(prev => ({ ...prev, [label]: val }));
+    }
+  };
+
+  // ── Render Helpers ─────────────────────────────────────────
+  const renderPerfumeCard = (item, showSimilarity = false) => (
+    <TouchableOpacity
+      key={item.pid ?? item.id}
+      style={styles.explorerCard}
+      onPress={() => openEdit(item)}
+      activeOpacity={0.85}
+    >
+      <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+        <View style={{ flex: 1 }}>
+          <Text style={styles.explorerCardBrand}>{item.brand || '🧪 Custom'}</Text>
+          <Text style={styles.explorerCardName}>{item.name}</Text>
+          <Text style={styles.explorerCardAccords}>🌸 {item.top_accords}</Text>
         </View>
-      </View>
-
-      {/* Notes Selector */}
-      <Text style={styles.sectionTitle}>Pilih Notes Favorit</Text>
-      <View style={styles.notesGrid}>
-        {NOTES.map(note => {
-          const active = selectedNotes.includes(note.id);
-          return (
-            <TouchableOpacity
-              key={note.id}
-              style={[styles.noteChip, active && styles.noteChipActive]}
-              onPress={() => toggleNote(note.id)}
-              activeOpacity={0.75}
-            >
-              <Text style={styles.noteChipEmoji}>{note.emoji}</Text>
-              <Text style={[styles.noteChipLabel, active && styles.noteChipLabelActive]}>{note.label}</Text>
-              <Text style={[styles.noteChipDesc, active && styles.noteChipDescActive]} numberOfLines={1}>{note.desc}</Text>
+        {showSimilarity && item.similarityScore !== undefined && (
+          <View style={styles.explorerScoreBadge}>
+            <Text style={styles.explorerScoreText}>
+              {Math.round(item.similarityScore * 100)}%
+            </Text>
+          </View>
+        )}
+        {item.id !== undefined && (
+          <View style={{ flexDirection: 'row', gap: 8, marginLeft: 8 }}>
+            <TouchableOpacity onPress={() => openEdit(item)} style={styles.editBtn}>
+              <Text style={{ color: C.gold, fontSize: 12 }}>Edit</Text>
             </TouchableOpacity>
-          );
-        })}
+            <TouchableOpacity onPress={() => handleDelete(item)} style={styles.deleteBtn}>
+              <Text style={{ color: '#e55', fontSize: 12 }}>Del</Text>
+            </TouchableOpacity>
+          </View>
+        )}
+      </View>
+    </TouchableOpacity>
+  );
+
+  // ── Render ─────────────────────────────────────────────────
+  return (
+    <View style={{ flex: 1, backgroundColor: C.offWhite }}>
+      {/* Tab Bar */}
+      <View style={styles.explorerTabBar}>
+        {['search', 'filter', 'custom'].map(t => (
+          <TouchableOpacity key={t} style={[styles.explorerTab, tab===t && styles.explorerTabActive]}
+            onPress={() => setTab(t)}>
+            <Text style={[styles.explorerTabText, tab===t && styles.explorerTabTextActive]}>
+              {t==='search' ? '🔍 Search' : t==='filter' ? '🏷️ By Label' : '🧪 My Lab'}
+            </Text>
+          </TouchableOpacity>
+        ))}
       </View>
 
-      {/* Selected count + CTA */}
-      {selectedNotes.length > 0 && (
-        <View style={styles.ctaRow}>
-          <Text style={styles.ctaCount}>{selectedNotes.length} notes dipilih</Text>
-          <GoldButton onPress={handleDiscover} disabled={isLoading} style={{ flex: 1 }}>
-            {isLoading ? '⏳  Mencari...' : '✨  Discover Parfum'}
-          </GoldButton>
-          <TouchableOpacity style={styles.clearButton} onPress={handleReset}>
-            <Text style={styles.clearButtonText}>Reset</Text>
-          </TouchableOpacity>
-        </View>
-      )}
+      <ScrollView contentContainerStyle={{ padding: 16, paddingBottom: 40 }}>
 
-      {/* Results: Molecules */}
-      {step === 'results' && molecules.length > 0 && (
-        <View style={styles.card}>
-          <View style={styles.cardAccent} />
-          <View style={styles.cardInner}>
-            <Text style={styles.cardTitle}>🔬 Molekul di Balik Aromamu</Text>
-            <Text style={styles.cardDesc}>Senyawa kimia yang menciptakan notes yang kamu pilih:</Text>
-            {molecules.map((mol, i) => (
-              <View key={i} style={styles.molRow}>
-                <View style={styles.molIconBox}>
-                  <Text style={styles.molIconText}>⬡</Text>
-                </View>
-                <View style={styles.molInfo}>
-                  <Text style={styles.molName}>{mol.name}</Text>
-                  <Text style={styles.molRole}>{mol.role}</Text>
-                  <Text style={styles.molSmiles} numberOfLines={1}>{mol.smiles}</Text>
-                </View>
-              </View>
-            ))}
+        {/* ── TAB: Search ────────────────────────────── */}
+        {tab === 'search' && (
+          <View>
+            <TextInput
+              style={styles.explorerSearch}
+              placeholder="Search perfume name or brand..."
+              placeholderTextColor={C.textFaint}
+              value={searchQuery}
+              onChangeText={handleSearch}
+            />
+            {searchResults.length > 0
+              ? searchResults.map(p => renderPerfumeCard(p))
+              : searchQuery.length >= 2
+                ? <Text style={styles.explorerEmpty}>No results for "{searchQuery}"</Text>
+                : <Text style={styles.explorerHint}>Type at least 2 characters to search from 2,000+ perfumes.</Text>
+            }
+          </View>
+        )}
+
+        {/* ── TAB: Filter by Label ───────────────────── */}
+        {tab === 'filter' && (
+          <View>
+            <Text style={styles.explorerSectionTitle}>Select Scent Labels</Text>
+            <View style={styles.labelChipWrap}>
+              {ALL_LABELS.map(label => (
+                <TouchableOpacity key={label}
+                  style={[styles.labelChip, filterLabels.includes(label) && styles.labelChipActive]}
+                  onPress={() => toggleLabel(label)}>
+                  <Text style={[styles.labelChipText, filterLabels.includes(label) && styles.labelChipTextActive]}>
+                    {label}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+            <GoldButton
+              onPress={handleFindByLabel}
+              disabled={filterLabels.length === 0 || isLoading}
+              style={{ marginTop: 12 }}
+            >
+              {isLoading ? 'Searching...' : `Find Perfumes with ${filterLabels.join(', ') || '...'}`}
+            </GoldButton>
+            {perfumeResults.length > 0 && (
+              <>
+                <Text style={[styles.explorerSectionTitle, { marginTop: 20 }]}>
+                  {perfumeResults.length} Matches Found
+                </Text>
+                {perfumeResults.map(p => renderPerfumeCard(p, true))}
+              </>
+            )}
+            {perfumeResults.length === 0 && filterLabels.length > 0 && !isLoading && (
+              <Text style={styles.explorerEmpty}>No perfumes found. Try fewer labels.</Text>
+            )}
+          </View>
+        )}
+
+        {/* ── TAB: My Lab (CRUD) ────────────────────── */}
+        {tab === 'custom' && (
+          <View>
+            <GoldButton onPress={openCreate} style={{ marginBottom: 16 }}>
+              + Add Custom Perfume
+            </GoldButton>
+            {userPerfumes.length === 0
+              ? <Text style={styles.explorerHint}>
+                  Your lab is empty. Create your first custom perfume formula above!
+                </Text>
+              : userPerfumes.map(p => renderPerfumeCard(p))
+            }
+          </View>
+        )}
+
+      </ScrollView>
+
+      {/* ── CRUD Modal ─────────────────────────────── */}
+      <Modal visible={modalVisible} animationType="slide" transparent>
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalSheet}>
+            <Text style={styles.modalTitle}>
+              {editTarget ? '✏️ Edit Perfume' : '🧪 New Custom Perfume'}
+            </Text>
+
+            <TextInput
+              style={styles.modalInput}
+              placeholder="Perfume Name"
+              placeholderTextColor={C.textFaint}
+              value={formName}
+              onChangeText={setFormName}
+            />
+
+            {/* Mode Toggle */}
+            <View style={styles.modeRow}>
+              <Text style={styles.modeLabelText}>Simple (tag only)</Text>
+              <Switch
+                value={formMode === 'advanced'}
+                onValueChange={v => setFormMode(v ? 'advanced' : 'simple')}
+                thumbColor={C.gold}
+                trackColor={{ false: C.divider, true: C.greenLight }}
+              />
+              <Text style={styles.modeLabelText}>Advanced (%)</Text>
+            </View>
+
+            <ScrollView style={{ maxHeight: 280 }}>
+              {ALL_LABELS.map(label => {
+                const score = formAccords[label] ?? 0;
+                if (formMode === 'simple') {
+                  return (
+                    <TouchableOpacity key={label}
+                      style={[styles.modalLabelRow, score > 0 && styles.modalLabelRowActive]}
+                      onPress={() => setLabelScore(label, score > 0 ? 0 : 0.8)}>
+                      <Text style={styles.modalLabelText}>
+                        {score > 0 ? '✅' : '⬜'} {label}
+                      </Text>
+                    </TouchableOpacity>
+                  );
+                } else {
+                  return (
+                    <View key={label} style={styles.modalLabelRow}>
+                      <Text style={[styles.modalLabelText, { flex: 1 }]}>{label}</Text>
+                      <View style={styles.percentBtns}>
+                        {[0, 0.25, 0.5, 0.75, 1.0].map(v => (
+                          <TouchableOpacity key={v}
+                            style={[styles.percentBtn, score === v && styles.percentBtnActive]}
+                            onPress={() => setLabelScore(label, v)}>
+                            <Text style={[styles.percentBtnText, score === v && styles.percentBtnTextActive]}>
+                              {v === 0 ? '—' : `${v*100}%`}
+                            </Text>
+                          </TouchableOpacity>
+                        ))}
+                      </View>
+                    </View>
+                  );
+                }
+              })}
+            </ScrollView>
+
+            <View style={styles.modalActions}>
+              <TouchableOpacity style={styles.modalCancelBtn} onPress={() => setModalVisible(false)}>
+                <Text style={{ color: C.textMuted }}>Cancel</Text>
+              </TouchableOpacity>
+              <GoldButton onPress={handleSave} style={{ flex: 1 }}>
+                {editTarget ? 'Update' : 'Save Perfume'}
+              </GoldButton>
+            </View>
           </View>
         </View>
-      )}
-
-      {/* Results: Perfume Recommendations */}
-      {step === 'results' && perfumes.length > 0 && (
-        <View>
-          <Text style={styles.sectionTitle}>💎 Parfum yang Mungkin Kamu Suka</Text>
-          {perfumes.map((p, i) => (
-            <View key={p.id} style={[styles.card, styles.perfumeCard]}>
-              <View style={styles.cardAccent} />
-              <View style={styles.cardInner}>
-                <View style={styles.perfumeHeader}>
-                  <View style={styles.perfumeEmojiBadge}>
-                    <Text style={styles.perfumeEmoji}>{p.emoji}</Text>
-                  </View>
-                  <View style={{ flex: 1 }}>
-                    <Text style={styles.perfumeName}>{p.name}</Text>
-                    <Text style={styles.perfumeBrand}>{p.brand}</Text>
-                  </View>
-                  <View style={styles.perfumeRankBadge}>
-                    <Text style={styles.perfumeRankText}>#{i + 1}</Text>
-                  </View>
-                </View>
-                <Text style={styles.perfumeDesc}>{p.description}</Text>
-                <View style={styles.perfumeFooter}>
-                  <View style={styles.perfumeTag}>
-                    <Text style={styles.perfumeTagText}>{p.concentration}</Text>
-                  </View>
-                  {p.notes.filter(n => selectedNotes.includes(n)).map(n => {
-                    const note = NOTES.find(x => x.id === n);
-                    return (
-                      <View key={n} style={styles.perfumeNoteTag}>
-                        <Text style={styles.perfumeNoteTagText}>{note?.emoji} {note?.label}</Text>
-                      </View>
-                    );
-                  })}
-                  <Text style={styles.perfumePrice}>{p.price}</Text>
-                </View>
-              </View>
-            </View>
-          ))}
-        </View>
-      )}
-
-      <View style={{ height: 40 }} />
-    </ScrollView>
+      </Modal>
+    </View>
   );
 };
 
-// ── SCREEN: Chemist Mode ──────────────────────────────────────
+
+// ── SCREEN: Chemist Mode (Real ML Backend) ───────────────────
 const ChemistScreen = () => {
-  const [smilesInput, setSmilesInput]   = useState('');
-  const [selectedNotes, setSelectedNotes] = useState([]);
-  const [predictions, setPredictions]   = useState(null);
-  const [isLoading, setIsLoading]       = useState(false);
-  const THRESHOLD = 0.5;
+  const [smilesInput, setSmilesInput] = useState('');
+  const [predictions, setPredictions]     = useState(null);
+  const [moleculeInfo, setMoleculeInfo]   = useState(null);
+  const [warningText, setWarningText]     = useState(null);
+  const [isLoading, setIsLoading]         = useState(false);
+  const [statusText, setStatusText]       = useState('');
+  const [errorModal, setErrorModal]       = useState({ visible: false, title: '', reason: '', tip: '' });
 
-  const toggleNote = (id) => {
-    setSelectedNotes(prev =>
-      prev.includes(id) ? prev.filter(n => n !== id) : [...prev, id]
-    );
-  };
+  useEffect(() => {
+    return () => {
+      InferenceService.releaseAll();
+    };
+  }, []);
 
-  const handlePredict = () => {
+  const handlePredict = async () => {
     if (!smilesInput.trim()) return;
     setIsLoading(true);
-    setTimeout(() => {
-      setPredictions(mockPredictFromSmiles(smilesInput.trim()));
+    setPredictions(null);
+    setMoleculeInfo(null);
+    setWarningText(null);
+    try {
+      setStatusText('Calculating molecular fingerprint via API...');
+      const fpData = await InferenceService.getFingerprint(smilesInput.trim());
+
+      setMoleculeInfo({
+        formula:   fpData.molecular_formula,
+        weight:    fpData.molecular_weight,
+        iupacName: fpData.iupac_name,
+      });
+      if (fpData.warning) {
+        setWarningText(fpData.warning);
+      }
+
+      setStatusText('Running XGBoost on-device models...');
+      const results = await InferenceService.predict(fpData.fingerprint);
+      setPredictions(results);
+    } catch (e) {
+      const msg = e.message || 'An error occurred.';
+      if (msg.includes('timed out')) {
+        setErrorModal({
+          visible: true,
+          title: '⏳ Server Waking Up',
+          reason: msg,
+          tip: 'The Railway server may be in sleep mode. Wait 10–15 seconds and try again.',
+        });
+      } else if (msg.includes('No network')) {
+        setErrorModal({
+          visible: true,
+          title: '📡 No Connection',
+          reason: msg,
+          tip: 'Check your Wi-Fi or mobile data and try again.',
+        });
+      } else if (msg.includes('terlalu berat') || msg.includes('MW') || msg.includes('molecular weight')) {
+        setErrorModal({
+          visible: true,
+          title: '⚖️ Compound Not Volatile',
+          reason: msg,
+          tip: 'Fragrance compounds must be volatile (molecular weight <400 g/mol). Try compounds like Linalool, Limonene, or Vanillin.',
+        });
+      } else if (msg.includes('tidak ditemukan') || msg.includes('not found') || msg.includes('Invalid SMILES')) {
+        setErrorModal({
+          visible: true,
+          title: '🔍 Compound Not Recognized',
+          reason: msg,
+          tip: 'Ensure the SMILES is valid. Use the example molecules below as a reference.',
+        });
+      } else {
+        setErrorModal({
+          visible: true,
+          title: '⚠️ Analysis Failed',
+          reason: msg,
+          tip: 'Ensure your internet connection is active and try again.',
+        });
+      }
+    } finally {
       setIsLoading(false);
-    }, 800);
+      setStatusText('');
+    }
   };
 
   const handleClear = () => {
     setSmilesInput('');
-    setSelectedNotes([]);
     setPredictions(null);
+    setMoleculeInfo(null);
+    setWarningText(null);
   };
 
   return (
-    <ScrollView style={styles.scrollView} contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
+    <>
+      <ScrollView style={styles.scrollView} contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
 
-      {/* Intro */}
-      <View style={styles.card}>
-        <View style={styles.cardAccent} />
-        <View style={styles.cardInner}>
-          <Text style={styles.cardTitle}>Analisis Molekul ⚗️</Text>
-          <Text style={styles.cardDesc}>
-            Masukkan SMILES string dan pilih notes referensi untuk memprediksi label aroma dari senyawa baru menggunakan Random Forest + Morgan Fingerprint.
-          </Text>
+        <View style={styles.card}>
+          <View style={styles.cardAccent} />
+          <View style={styles.cardInner}>
+            <Text style={styles.cardTitle}>Molecule Analysis ⚗️</Text>
+            <Text style={styles.cardDesc}>
+              Enter a chemical SMILES string. The XGBoost model will compute the odor profile on-device using Morgan Fingerprints and 5 RDKit physical descriptors.
+            </Text>
+          </View>
         </View>
-      </View>
 
-      {/* SMILES Input */}
-      <View style={styles.card}>
-        <View style={styles.cardAccent} />
-        <View style={styles.cardInner}>
-          <Text style={styles.inputLabel}>SMILES String</Text>
-          <TextInput
-            style={styles.textInput}
-            placeholder="cth: CC(=CCC/C(=C/CO)C)C"
-            placeholderTextColor={C.textFaint}
-            value={smilesInput}
-            onChangeText={setSmilesInput}
-            autoCapitalize="none"
-            autoCorrect={false}
-          />
+        <View style={styles.card}>
+          <View style={styles.cardAccent} />
+          <View style={styles.cardInner}>
+            <Text style={styles.inputLabel}>SMILES String</Text>
+            <TextInput
+              style={styles.textInput}
+              placeholder="e.g. O=Cc1ccc(O)c(OC)c1  (Vanillin)"
+              placeholderTextColor={C.textFaint}
+              value={smilesInput}
+              onChangeText={setSmilesInput}
+              autoCapitalize="none"
+              autoCorrect={false}
+              multiline
+            />
 
-          {/* Quick examples */}
-          <Text style={[styles.inputLabel, { marginTop: 14 }]}>Contoh Molekul</Text>
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom: 4 }}>
-            {EXAMPLE_SMILES.map((ex, i) => (
-              <TouchableOpacity
-                key={i}
-                style={styles.exampleChip}
-                onPress={() => setSmilesInput(ex.smiles)}
-                activeOpacity={0.7}
-              >
-                <Text style={styles.exampleName}>{ex.name}</Text>
-                <Text style={styles.exampleSmiles} numberOfLines={1}>{ex.smiles}</Text>
-              </TouchableOpacity>
+            <Text style={[styles.inputLabel, { marginTop: 14, marginBottom: 8 }]}>Scent Mixology (Tap to combine)</Text>
+            {MOLECULE_CATEGORIES.map((cat, catIdx) => (
+              <View key={catIdx} style={{ marginBottom: 12 }}>
+                <Text style={styles.catLabel}>{cat.name}</Text>
+                <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+                  {cat.items.map((mol, i) => {
+                    const currentSmiles = smilesInput.split('.').map(s => s.trim()).filter(Boolean);
+                    const isActive = currentSmiles.includes(mol.smiles);
+                    return (
+                      <TouchableOpacity
+                        key={i}
+                        style={[styles.exampleChip, isActive && { borderColor: C.gold, backgroundColor: C.goldFaint }]}
+                        onPress={() => {
+                          let next = [...currentSmiles];
+                          if (isActive) {
+                            next = next.filter(s => s !== mol.smiles);
+                          } else {
+                            next.push(mol.smiles);
+                          }
+                          setSmilesInput(next.join('.'));
+                        }}
+                        activeOpacity={0.7}
+                      >
+                        <Text style={[styles.exampleName, isActive && { color: C.gold }]}>
+                          {isActive ? '✓ ' : ''}{mol.name}
+                        </Text>
+                        <Text style={styles.exampleSmiles} numberOfLines={1}>{mol.smiles}</Text>
+                      </TouchableOpacity>
+                    );
+                  })}
+                </ScrollView>
+              </View>
             ))}
-          </ScrollView>
 
-          <View style={styles.buttonRow}>
-            <GoldButton
-              onPress={handlePredict}
-              disabled={!smilesInput.trim() || isLoading}
-              style={{ flex: 1 }}
-            >
-              {isLoading ? '⏳  Predicting...' : '🔬  Predict Label'}
-            </GoldButton>
-            {(smilesInput.length > 0 || selectedNotes.length > 0) && (
-              <TouchableOpacity style={styles.clearButton} onPress={handleClear}>
-                <Text style={styles.clearButtonText}>Clear</Text>
-              </TouchableOpacity>
+            <View style={styles.buttonRow}>
+              <GoldButton
+                onPress={handlePredict}
+                disabled={!smilesInput.trim() || isLoading}
+                style={{ flex: 1 }}
+              >
+                {isLoading ? '⏳  Processing...' : '🔬  Predict Odor Profile'}
+              </GoldButton>
+              {smilesInput.length > 0 && (
+                <TouchableOpacity style={styles.clearButton} onPress={handleClear}>
+                  <Text style={styles.clearButtonText}>Clear</Text>
+                </TouchableOpacity>
+              )}
+            </View>
+
+            {isLoading && (
+              <View style={styles.loadingRow}>
+                <ActivityIndicator size="small" color={C.gold} />
+                <Text style={styles.loadingText}>{statusText}</Text>
+              </View>
             )}
           </View>
         </View>
-      </View>
 
-      {/* Notes Reference (Optional) */}
-      <Text style={styles.sectionTitle}>Notes Referensi (Opsional)</Text>
-      <View style={[styles.notesGrid, { marginBottom: 16 }]}>
-        {NOTES.map(note => {
-          const active = selectedNotes.includes(note.id);
-          return (
-            <TouchableOpacity
-              key={note.id}
-              style={[styles.noteChip, active && styles.noteChipActive]}
-              onPress={() => toggleNote(note.id)}
-              activeOpacity={0.75}
-            >
-              <Text style={styles.noteChipEmoji}>{note.emoji}</Text>
-              <Text style={[styles.noteChipLabel, active && styles.noteChipLabelActive]}>{note.label}</Text>
-            </TouchableOpacity>
-          );
-        })}
-      </View>
-
-      {/* Prediction Results */}
-      {predictions && (
-        <View style={[styles.card, { borderColor: C.goldBorder }]}>
-          <View style={styles.cardAccent} />
-          <View style={styles.cardInner}>
-            <Text style={styles.cardTitle}>Profil Aroma Terdeteksi</Text>
-            <Text style={styles.molSmiles} numberOfLines={1}>📝 {smilesInput}</Text>
-
-            <View style={styles.thresholdRow}>
-              <View style={styles.thresholdDash} />
-              <Text style={styles.thresholdText}>Threshold: {THRESHOLD}</Text>
-              <View style={styles.thresholdDash} />
-            </View>
-
-            {predictions.map((pred, idx) => {
-              const hit = pred.confidence >= THRESHOLD;
-              return (
-                <View key={idx} style={[styles.predRow, !hit && { opacity: 0.35 }]}>
-                  <Text style={styles.predEmoji}>{pred.emoji}</Text>
-                  <View style={styles.predInfo}>
-                    <View style={styles.predLabelRow}>
-                      <Text style={[styles.predLabel, !hit && { color: C.textFaint }]}>{pred.label}</Text>
-                      {hit && (
-                        <View style={styles.predBadge}>
-                          <Text style={styles.predBadgeText}>Predicted</Text>
-                        </View>
-                      )}
-                    </View>
-                    <View style={styles.barBg}>
-                      <View style={[styles.barFill, { width: `${pred.confidence * 100}%`, backgroundColor: hit ? C.gold : C.divider }]} />
-                    </View>
-                  </View>
-                  <Text style={[styles.predScore, !hit && { color: C.textFaint }]}>
-                    {(pred.confidence * 100).toFixed(0)}%
-                  </Text>
-                </View>
-              );
-            })}
-
-            <View style={styles.methodBox}>
-              <Text style={styles.methodText}>⚡ Random Forest + ONNX Runtime (on-device)</Text>
+        {moleculeInfo && (
+          <View style={styles.molMetaCard}>
+            <Text style={[styles.sectionTitle, { color: '#15803D', marginBottom: 10 }]}>Molecule Profile 🧬</Text>
+            <View style={styles.molMetaRow}>
+              <View style={styles.molMetaItem}>
+                <Text style={styles.molMetaLabel}>Formula</Text>
+                <Text style={styles.molMetaValue}>{moleculeInfo.formula ?? '—'}</Text>
+              </View>
+              <View style={styles.molMetaItem}>
+                <Text style={styles.molMetaLabel}>Mol. Weight</Text>
+                <Text style={styles.molMetaValue}>
+                  {moleculeInfo.weight != null ? `${Number(moleculeInfo.weight).toFixed(1)} g/mol` : '—'}
+                </Text>
+              </View>
+              <View style={styles.molMetaItem}>
+                <Text style={styles.molMetaLabel}>IUPAC</Text>
+                <Text style={styles.molMetaValue} numberOfLines={2}>
+                  {moleculeInfo.iupacName ?? '—'}
+                </Text>
+              </View>
             </View>
           </View>
-        </View>
-      )}
+        )}
 
-      <View style={{ height: 40 }} />
-    </ScrollView>
+        {warningText && (
+          <View style={styles.warningBanner}>
+            <Text style={styles.warningBannerIcon}>⚠️</Text>
+            <Text style={styles.warningBannerText}>{warningText}</Text>
+          </View>
+        )}
+
+        {predictions && predictions.length > 0 && (
+          <View style={[styles.card, { borderColor: C.goldBorder }]}>
+            <View style={styles.cardAccent} />
+            <View style={styles.cardInner}>
+              <Text style={styles.cardTitle}>Detected Odor Profile 🎯</Text>
+              <Text style={styles.molSmiles} numberOfLines={1}>📝 {smilesInput}</Text>
+
+              <View style={styles.thresholdRow}>
+                <View style={styles.thresholdDash} />
+                <Text style={styles.thresholdText}>{predictions.length} LABELS DETECTED</Text>
+                <View style={styles.thresholdDash} />
+              </View>
+
+              {predictions.map((pred, idx) => (
+                <View key={idx} style={styles.predRow}>
+                  <Text style={styles.predEmoji}>🌿</Text>
+                  <View style={styles.predInfo}>
+                    <View style={styles.predLabelRow}>
+                      <Text style={styles.predLabel}>{pred.label}</Text>
+                      <View style={styles.predBadge}>
+                        <Text style={styles.predBadgeText}>Predicted</Text>
+                      </View>
+                    </View>
+                    <View style={[styles.barBg, { position: 'relative', overflow: 'visible' }]}>
+                      <View style={[styles.barFill, { width: `${Math.min(pred.probability * 100, 100)}%`, backgroundColor: C.gold }]} />
+                      <View style={[styles.thresholdTick, { left: `${Math.min(pred.threshold * 100, 100)}%` }]} />
+                    </View>
+                  </View>
+                  <Text style={styles.predScore}>
+                    {(pred.probability * 100).toFixed(0)}%
+                  </Text>
+                </View>
+              ))}
+
+              <View style={styles.methodBox}>
+                <Text style={styles.methodText}>⚡ XGBoost Binary Relevance + Morgan FP + RDKit + ONNX (on-device)</Text>
+              </View>
+            </View>
+          </View>
+        )}
+
+        {predictions && predictions.length === 0 && (
+          <View style={styles.card}>
+            <View style={[styles.cardAccent, { backgroundColor: C.textFaint }]} />
+            <View style={styles.cardInner}>
+              <View style={styles.emptyState}>
+                <Text style={styles.emptyStateEmoji}>🤔</Text>
+                <Text style={styles.emptyStateTitle}>No Odor Labels Detected</Text>
+                <Text style={styles.emptyStateDesc}>
+                  No labels exceeded their detection threshold. Try a known fragrance compound from the examples below.
+                </Text>
+              </View>
+            </View>
+          </View>
+        )}
+
+        <View style={{ height: 40 }} />
+      </ScrollView>
+
+      <Modal animationType="fade" transparent visible={errorModal.visible} onRequestClose={() => setErrorModal(m => ({ ...m, visible: false }))}>
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalView}>
+            <Text style={styles.errorModalTitle}>{errorModal.title}</Text>
+            <View style={styles.errorReasonBox}>
+              <Text style={styles.errorReasonLabel}>System Message</Text>
+              <Text style={styles.errorReason}>{errorModal.reason}</Text>
+            </View>
+            <View style={styles.errorTipBox}>
+              <Text style={styles.errorTipLabel}>💡 What to do</Text>
+              <Text style={styles.errorTip}>{errorModal.tip}</Text>
+            </View>
+            <GoldButton onPress={() => setErrorModal(m => ({ ...m, visible: false }))}>
+              Got It
+            </GoldButton>
+          </View>
+        </View>
+      </Modal>
+    </>
   );
 };
 
@@ -579,7 +771,6 @@ const App = () => {
       />
       {screen === 'explorer' ? <ExplorerScreen /> : <ChemistScreen />}
 
-      {/* Back to home */}
       <TouchableOpacity style={styles.homeBtn} onPress={() => setScreen('onboarding')}>
         <Text style={styles.homeBtnText}>⌂</Text>
       </TouchableOpacity>
@@ -592,8 +783,9 @@ export default App;
 // ── STYLES ────────────────────────────────────────────────────
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: C.offWhite },
+  scrollView: { flex: 1 },
+  scrollContent: { paddingHorizontal: 16, paddingTop: 18 },
 
-  // ── Onboarding ──
   onboardingContainer: {
     flex: 1,
     backgroundColor: C.green,
@@ -605,10 +797,8 @@ const styles = StyleSheet.create({
   onboardingEmoji: { fontSize: 56, marginBottom: 10 },
   onboardingTitle: {
     fontSize: 34, fontWeight: '800', color: C.gold,
-    letterSpacing: 5,
-    textShadowColor: C.goldShine,
-    textShadowOffset: { width: 0, height: 1 },
-    textShadowRadius: 8,
+    letterSpacing: 5, textShadowColor: C.goldShine,
+    textShadowOffset: { width: 0, height: 1 }, textShadowRadius: 8,
   },
   onboardingSubtitle: {
     fontSize: 13, color: 'rgba(212,175,55,0.65)',
@@ -642,7 +832,6 @@ const styles = StyleSheet.create({
   modeCardBadgeDark: { backgroundColor: C.gold },
   modeCardBadgeText: { fontSize: 11, fontWeight: '700', color: C.goldDark },
 
-  // ── Header ──
   header: {
     backgroundColor: C.green,
     shadowColor: C.greenDark, shadowOffset: { width: 0, height: 6 },
@@ -679,11 +868,6 @@ const styles = StyleSheet.create({
   },
   modeToggleText: { fontSize: 12, fontWeight: '700', color: C.gold },
 
-  // ── Scroll ──
-  scrollView: { flex: 1 },
-  scrollContent: { paddingHorizontal: 16, paddingTop: 18 },
-
-  // ── Card ──
   card: {
     backgroundColor: C.cardBg, borderRadius: 16, marginBottom: 14,
     flexDirection: 'row', overflow: 'hidden',
@@ -696,96 +880,18 @@ const styles = StyleSheet.create({
   cardTitle: { fontSize: 16, fontWeight: '700', color: C.green, marginBottom: 6 },
   cardDesc: { fontSize: 13, color: C.textMuted, lineHeight: 20 },
 
-  // ── Section Title ──
   sectionTitle: {
     fontSize: 11, fontWeight: '700', color: C.green,
     marginBottom: 10, letterSpacing: 1.5, textTransform: 'uppercase',
   },
 
-  // ── Notes Grid ──
-  notesGrid: {
-    flexDirection: 'row', flexWrap: 'wrap', gap: 10, marginBottom: 14,
-  },
-  noteChip: {
-    width: (width - 32 - 10) / 2,
-    backgroundColor: C.cardBg, borderRadius: 14,
-    padding: 14, borderWidth: 1.5, borderColor: C.divider,
-    shadowColor: C.greenDark, shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05, shadowRadius: 4, elevation: 2,
-  },
-  noteChipActive: {
-    backgroundColor: C.green, borderColor: C.gold,
-    shadowColor: C.gold, shadowOpacity: 0.3, elevation: 4,
-  },
-  noteChipEmoji: { fontSize: 24, marginBottom: 6 },
-  noteChipLabel: { fontSize: 15, fontWeight: '700', color: C.green },
-  noteChipLabelActive: { color: C.gold },
-  noteChipDesc: { fontSize: 11, color: C.textFaint, marginTop: 2 },
-  noteChipDescActive: { color: 'rgba(212,175,55,0.65)' },
-
-  // ── CTA Row ──
-  ctaRow: {
-    flexDirection: 'row', alignItems: 'center',
-    gap: 10, marginBottom: 16,
-  },
-  ctaCount: { fontSize: 12, color: C.textMuted, minWidth: 80 },
-
-  // ── Molecule Rows ──
-  molRow: {
-    flexDirection: 'row', alignItems: 'flex-start',
-    paddingVertical: 10, borderBottomWidth: 1, borderBottomColor: C.divider,
-  },
-  molIconBox: {
-    width: 36, height: 36, borderRadius: 10,
-    backgroundColor: C.goldFaint, borderWidth: 1,
-    borderColor: C.goldBorder, alignItems: 'center',
-    justifyContent: 'center', marginRight: 12, marginTop: 2,
-  },
-  molIconText: { fontSize: 18, color: C.gold },
-  molInfo: { flex: 1 },
-  molName: { fontSize: 14, fontWeight: '700', color: C.green },
-  molRole: { fontSize: 12, color: C.gold, fontWeight: '600', marginTop: 2 },
-  molSmiles: {
-    fontSize: 11, color: C.textFaint, marginTop: 3,
-    fontFamily: Platform.OS === 'android' ? 'monospace' : 'Menlo',
-  },
-
-  // ── Perfume Card ──
-  perfumeCard: { borderColor: C.goldBorder },
-  perfumeHeader: { flexDirection: 'row', alignItems: 'center', marginBottom: 8 },
-  perfumeEmojiBadge: {
-    width: 44, height: 44, borderRadius: 12,
-    backgroundColor: C.offWhite, borderWidth: 1,
-    borderColor: C.divider, alignItems: 'center',
-    justifyContent: 'center', marginRight: 12,
-  },
-  perfumeEmoji: { fontSize: 24 },
-  perfumeName: { fontSize: 16, fontWeight: '800', color: C.green },
-  perfumeBrand: { fontSize: 12, color: C.textMuted, marginTop: 1 },
-  perfumeRankBadge: {
-    backgroundColor: C.gold, borderRadius: 8,
-    paddingHorizontal: 9, paddingVertical: 4,
-  },
-  perfumeRankText: { fontSize: 12, fontWeight: '800', color: C.green },
-  perfumeDesc: { fontSize: 13, color: C.textMuted, lineHeight: 20, marginBottom: 10 },
-  perfumeFooter: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, alignItems: 'center' },
-  perfumeTag: {
-    backgroundColor: C.greenFaint, borderRadius: 6,
-    paddingHorizontal: 8, paddingVertical: 3,
-    borderWidth: 1, borderColor: C.greenBorder,
-  },
-  perfumeNoteTag: {
-    backgroundColor: C.goldFaint, borderRadius: 6,
-    paddingHorizontal: 8, paddingVertical: 3,
-    borderWidth: 1, borderColor: C.goldBorder,
-  },
-  perfumeNoteTagText: { fontSize: 11, fontWeight: '600', color: C.goldDark },
-  perfumePrice: { marginLeft: 'auto', fontSize: 14, fontWeight: '800', color: C.green },
-
-  // ── Input / Chemist ──
   inputLabel: {
     fontSize: 11, fontWeight: '700', color: C.green,
     marginBottom: 8, letterSpacing: 1, textTransform: 'uppercase',
+  },
+  catLabel: {
+    fontSize: 12, fontWeight: '700', color: C.textMuted,
+    marginBottom: 6,
   },
   textInput: {
     backgroundColor: C.offWhite, borderRadius: 12,
@@ -807,7 +913,9 @@ const styles = StyleSheet.create({
     fontFamily: Platform.OS === 'android' ? 'monospace' : 'Menlo',
   },
 
-  // ── Prediction ──
+  loadingRow: { flexDirection: 'row', alignItems: 'center', marginTop: 16, justifyContent: 'center', gap: 10 },
+  loadingText: { fontSize: 12, color: C.textMuted, fontStyle: 'italic' },
+
   thresholdRow: { flexDirection: 'row', alignItems: 'center', marginVertical: 12 },
   thresholdDash: { flex: 1, height: 1, backgroundColor: C.divider },
   thresholdText: { fontSize: 11, color: C.textFaint, marginHorizontal: 10, fontWeight: '600' },
@@ -823,12 +931,27 @@ const styles = StyleSheet.create({
   },
   predBadgeText: { fontSize: 10, fontWeight: '700', color: C.goldDark },
   barBg: { height: 6, backgroundColor: C.divider, borderRadius: 3, overflow: 'hidden' },
-  barFill: { height: '100%', borderRadius: 3 },
+  barFill: { height: '100%', borderRadius: 3, position: 'absolute', left: 0 },
+  thresholdTick: { width: 2, height: '100%', backgroundColor: '#D4AF37', position: 'absolute' },
   predScore: { fontSize: 13, fontWeight: '700', color: C.green, width: 40, textAlign: 'right' },
   methodBox: { marginTop: 14, paddingTop: 12, borderTopWidth: 1, borderTopColor: C.divider },
   methodText: { fontSize: 11, color: C.textFaint, textAlign: 'center' },
 
-  // ── Gold Button ──
+  molMetaCard: { backgroundColor: '#F0FDF4', borderRadius: 12, padding: 14, marginBottom: 14, borderWidth: 1, borderColor: '#DCFCE7' },
+  molMetaRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 12 },
+  molMetaItem: { flex: 1, minWidth: 80 },
+  molMetaLabel: { fontSize: 10, color: '#166534', textTransform: 'uppercase', letterSpacing: 0.5, fontWeight: '600', marginBottom: 2 },
+  molMetaValue: { fontSize: 13, color: '#14532D', fontWeight: '500' },
+
+  warningBanner: { flexDirection: 'row', backgroundColor: '#FEF3C7', borderRadius: 12, padding: 12, marginBottom: 14, borderWidth: 1, borderColor: '#FDE68A', alignItems: 'center' },
+  warningBannerIcon: { fontSize: 20, marginRight: 10 },
+  warningBannerText: { flex: 1, fontSize: 12, color: '#92400E', lineHeight: 18 },
+
+  emptyState: { alignItems: 'center', paddingVertical: 20 },
+  emptyStateEmoji: { fontSize: 40, marginBottom: 10 },
+  emptyStateTitle: { fontSize: 16, fontWeight: '700', color: C.green, marginBottom: 6 },
+  emptyStateDesc: { fontSize: 13, color: C.textMuted, textAlign: 'center', paddingHorizontal: 20 },
+
   goldBtn: {
     borderRadius: 13, backgroundColor: C.gold,
     paddingVertical: 14, alignItems: 'center', justifyContent: 'center',
@@ -850,7 +973,6 @@ const styles = StyleSheet.create({
   },
   goldBtnTextDisabled: { color: 'rgba(22,59,44,0.4)', textShadowColor: 'transparent' },
 
-  // ── Clear / Home button ──
   clearButton: {
     backgroundColor: C.offWhite, borderRadius: 12,
     paddingVertical: 14, paddingHorizontal: 18, alignItems: 'center',
@@ -866,4 +988,53 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.4, shadowRadius: 8, elevation: 8,
   },
   homeBtnText: { fontSize: 20, color: C.gold },
+
+  explorerTabBar: { flexDirection: 'row', backgroundColor: C.white, borderBottomWidth: 1, borderBottomColor: C.divider, paddingHorizontal: 16, paddingTop: 10 },
+  explorerTab: { flex: 1, alignItems: 'center', paddingVertical: 12, borderBottomWidth: 3, borderBottomColor: 'transparent' },
+  explorerTabActive: { borderBottomColor: C.gold },
+  explorerTabText: { fontSize: 13, fontWeight: '600', color: C.textFaint },
+  explorerTabTextActive: { color: C.green },
+  explorerSearch: { backgroundColor: C.white, borderRadius: 12, paddingHorizontal: 16, paddingVertical: 14, fontSize: 15, color: C.green, borderWidth: 1, borderColor: C.divider, marginBottom: 16 },
+  explorerHint: { fontSize: 13, color: C.textMuted, textAlign: 'center', marginTop: 40, paddingHorizontal: 20 },
+  explorerEmpty: { fontSize: 14, color: C.textMuted, textAlign: 'center', marginTop: 40, fontStyle: 'italic' },
+  explorerCard: { backgroundColor: C.white, borderRadius: 16, padding: 16, marginBottom: 12, borderWidth: 1, borderColor: C.divider, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.05, shadowRadius: 6, elevation: 2 },
+  explorerCardBrand: { fontSize: 11, color: C.textMuted, textTransform: 'uppercase', letterSpacing: 1, marginBottom: 4 },
+  explorerCardName: { fontSize: 16, fontWeight: '700', color: C.green, marginBottom: 6 },
+  explorerCardAccords: { fontSize: 13, color: C.goldDark, fontWeight: '500' },
+  explorerScoreBadge: { backgroundColor: C.goldFaint, paddingHorizontal: 8, paddingVertical: 4, borderRadius: 8, borderWidth: 1, borderColor: C.goldBorder },
+  explorerScoreText: { fontSize: 12, fontWeight: '700', color: C.goldDark },
+  explorerSectionTitle: { fontSize: 16, fontWeight: '700', color: C.green, marginBottom: 12 },
+  labelChipWrap: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 20 },
+  labelChip: { backgroundColor: C.white, borderWidth: 1, borderColor: C.divider, borderRadius: 20, paddingHorizontal: 12, paddingVertical: 8 },
+  labelChipActive: { backgroundColor: C.green, borderColor: C.greenDark },
+  labelChipText: { fontSize: 13, color: C.textMuted },
+  labelChipTextActive: { color: C.gold, fontWeight: '600' },
+  editBtn: { padding: 6, backgroundColor: C.goldFaint, borderRadius: 6 },
+  deleteBtn: { padding: 6, backgroundColor: '#fee2e2', borderRadius: 6 },
+
+  modalOverlay: { flex: 1, backgroundColor: 'rgba(15,43,32,0.6)', justifyContent: 'flex-end' },
+  modalView: { backgroundColor: C.white, borderTopLeftRadius: 24, borderTopRightRadius: 24, padding: 24, paddingBottom: Platform.OS === 'ios' ? 40 : 24, shadowColor: '#000', shadowOffset: { width: 0, height: -4 }, shadowOpacity: 0.1, shadowRadius: 12, elevation: 10 },
+  modalSheet: { backgroundColor: C.white, borderTopLeftRadius: 24, borderTopRightRadius: 24, padding: 24, paddingBottom: Platform.OS === 'ios' ? 40 : 24, maxHeight: '85%' },
+  modalTitle: { fontSize: 20, fontWeight: '700', color: C.green, marginBottom: 20 },
+  modalInput: { backgroundColor: C.offWhite, borderWidth: 1, borderColor: C.divider, borderRadius: 12, paddingHorizontal: 16, paddingVertical: 14, fontSize: 15, color: C.green, marginBottom: 16 },
+  modeRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', backgroundColor: C.offWhite, padding: 12, borderRadius: 12, marginBottom: 16 },
+  modeLabelText: { fontSize: 13, fontWeight: '600', color: C.green },
+  modalLabelRow: { flexDirection: 'row', alignItems: 'center', paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: C.divider },
+  modalLabelRowActive: { backgroundColor: C.greenFaint },
+  modalLabelText: { fontSize: 15, color: C.green },
+  percentBtns: { flexDirection: 'row', gap: 4 },
+  percentBtn: { paddingHorizontal: 8, paddingVertical: 6, borderRadius: 6, backgroundColor: C.offWhite, borderWidth: 1, borderColor: C.divider },
+  percentBtnActive: { backgroundColor: C.gold, borderColor: C.goldDark },
+  percentBtnText: { fontSize: 11, color: C.textMuted },
+  percentBtnTextActive: { color: '#163B2C', fontWeight: '700' },
+  modalActions: { flexDirection: 'row', marginTop: 20, gap: 12 },
+  modalCancelBtn: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingVertical: 14, borderRadius: 12, backgroundColor: C.offWhite, borderWidth: 1, borderColor: C.divider },
+
+  errorModalTitle: { fontSize: 20, fontWeight: '800', color: '#B91C1C', marginBottom: 12 },
+  errorReasonBox: { backgroundColor: '#FEF2F2', padding: 12, borderRadius: 8, marginBottom: 12, borderWidth: 1, borderColor: '#FCA5A5' },
+  errorReasonLabel: { fontSize: 11, color: '#991B1B', fontWeight: '700', textTransform: 'uppercase', marginBottom: 4 },
+  errorReason: { fontSize: 14, color: '#7F1D1D' },
+  errorTipBox: { backgroundColor: '#F0FDF4', padding: 12, borderRadius: 8, marginBottom: 20, borderWidth: 1, borderColor: '#86EFAC' },
+  errorTipLabel: { fontSize: 11, color: '#166534', fontWeight: '700', textTransform: 'uppercase', marginBottom: 4 },
+  errorTip: { fontSize: 14, color: '#14532D', lineHeight: 20 },
 });

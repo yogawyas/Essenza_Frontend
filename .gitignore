@@ -81,3 +81,10 @@ yarn-error.log
 .env.test
 .env.production
 
+# APK & Build Binaries
+*.apk
+*.apk.idsig
+.gradle-temp/
+*.log
+
+
