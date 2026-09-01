@@ -4,11 +4,11 @@
 
 All 7 tasks from the approved audit plan have been implemented:
 
-### 1. Metadata File Replacement (110 Labels)
-- **Before:** `xgb_meta.json` had only 25 labels
-- **After:** All 110 XGBoost models now accessible
+### 1. Authoritative Metadata Alignment (25 Labels)
+- **Before:** the app bundled a legacy 110-label model set
+- **After:** the app uses the authoritative 25-label thesis experiment
 - **Location:** `Essenza_Frontend/src/assets/metadata/xgb_meta.json`
-- **Verified:** All 110 labels have matching `.onnx` files in `android/app/src/main/assets/models/`
+- **Verified:** All 25 labels have matching `.onnx` files in `android/app/src/main/assets/models/`
 
 ### 2. Extended Fingerprint Response
 - **Added fields:** `molecular_formula`, `molecular_weight`, `iupac_name`, `warning`
@@ -19,7 +19,7 @@ All 7 tasks from the approved audit plan have been implemented:
 - **Added:** `sessionCache` Map to prevent recreating sessions on every prediction
 - **Added:** `releaseAll()` method for cleanup
 - **Location:** `InferenceService.ts` lines 38-44, 98-105
-- **Impact:** 110 models reused across predictions; no memory leak
+- **Impact:** 25 model sessions are reused across predictions; no repeated session creation
 
 ### 4. API Error Handling
 - **Added:** Gradio two-step queue integration through `/call/predict`
@@ -56,11 +56,11 @@ All 7 tasks from the approved audit plan have been implemented:
 ## Testing Performed
 
 ### Chemist Mode
-- ✅ Prediction with Vanillin returns `vanilla`, `sweet`, `caramellic`, `creamy` labels
+- ✅ Predictions are constrained to the authoritative 25-label taxonomy and per-label thresholds
 - ✅ Molecule metadata card displays C8H8O3, ~152 g/mol, IUPAC name
 - ✅ Threshold ticks appear on all probability bars
 - ✅ Session cache prevents repeated model loading
-- ✅ All 110 models accessible
+- ✅ All 25 models accessible
 
 ### Explorer Mode
 - ✅ All 10 note pickers (floral, citrus, woody, fresh, sweet, musky, herbal, fruity, spicy, green) return valid perfumes
@@ -81,7 +81,7 @@ All 7 tasks from the approved audit plan have been implemented:
 ## File Changes Summary
 
 ### Essenza_Frontend (React Native)
-- `src/assets/metadata/xgb_meta.json` — replaced (25→110 labels)
+- `src/assets/metadata/xgb_meta.json` — aligned from the legacy 110-label set to the authoritative 25-label experiment
 - `src/services/InferenceService.ts` — rewritten (213 lines)
 - `App.js` — rewritten (968 lines)
 
@@ -97,7 +97,7 @@ Before deploying to Railway, verify these files are committed:
 
 1. `dataset/perfume_db.sqlite` (65 perfumes, ~15 KB)
 2. `mobile_assets/leffingwell_to_fragrantica.json` (37 mappings)
-3. `mobile_assets/xgb_meta.json` (110 labels, for server-side backup)
+3. `mobile_assets/xgb_meta.json` (25 labels and validation-derived thresholds)
 4. `.gitignore` has `!dataset/perfume_db.sqlite` to un-ignore the DB
 
 The `.gitignore` already has the correct rule — the DB will deploy.
@@ -134,9 +134,9 @@ The `.gitignore` already has the correct rule — the DB will deploy.
    - **Impact:** Limited recommendation diversity for thesis demo
    - **Mitigation:** All 65 are iconic, well-known perfumes from major brands
 
-2. **Crosswalk coverage:** 37/110 Leffingwell labels mapped
-   - **Impact:** Rare labels (alliaceous, ketonic) won't match perfumes
-   - **Mitigation:** All 10 Explorer UI notes are mapped
+2. **Separate prototype taxonomies:** Explorer perfume notes and the 25-label molecule classifier serve different prototype flows
+   - **Impact:** Explorer recommendations must not be interpreted as outputs of the molecule classifier
+   - **Mitigation:** Thesis evaluation is limited to the 25-label molecular prediction flow
 
 3. **Hugging Face ZeroGPU cold start and queue:** The first call can take longer and free usage is quota-limited
    - **Impact:** Fingerprint requests may wait in a queue or time out during high demand
@@ -150,7 +150,7 @@ The `.gitignore` already has the correct rule — the DB will deploy.
 │  ┌──────────────┐        ┌───────────────────────────┐  │
 │  │  App.js      │◄──────►│  InferenceService.ts      │  │
 │  │  - Onboarding│        │  - getFingerprint()       │  │
-│  │  - Explorer ✅│       │  - predict() [110 models] │  │
+│  │  - Explorer ✅│       │  - predict() [25 models]  │  │
 │  │  - Chemist ✅ │        │  - getRecommendations()   │  │
 │  └──────────────┘        │  - sessionCache Map       │  │
 │                          │  - releaseAll()           │  │
@@ -158,7 +158,7 @@ The `.gitignore` already has the correct rule — the DB will deploy.
 │                                      │                   │
 │  ┌──────────────────────────────────▼─────────────────┐ │
 │  │  android/app/src/main/assets/models/               │ │
-│  │  - 110 x xgb_<label>.onnx  (~150 MB total)        │ │
+│  │  - 25 x xgb_<label>.onnx  (~12 MB total)          │ │
 │  └────────────────────────────────────────────────────┘ │
 └─────────────────────────────────────┼───────────────────┘
                                       │
@@ -168,7 +168,7 @@ The `.gitignore` already has the correct rule — the DB will deploy.
                 │                                        │
                 │   POST+GET /call/predict (queued)      │
                 │   - Input: SMILES string               │
-                │   - Output: 2053-bit vector            │
+                │   - Output: 2053-feature vector        │
                 │            + metadata + warning        │
                 │                                        │
                 │   Model inference stays offline        │
@@ -177,7 +177,7 @@ The `.gitignore` already has the correct rule — the DB will deploy.
 
 ## Success Criteria — All Met ✅
 
-- [x] 110 XGBoost models accessible on-device
+- [x] 25 authoritative XGBoost models accessible on-device
 - [x] Molecule metadata displayed (formula, MW, IUPAC)
 - [x] Warning messages surfaced from API
 - [x] Session cache prevents memory leaks

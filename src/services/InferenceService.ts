@@ -81,7 +81,7 @@ export interface PerfumeResult {
 export class InferenceService {
   /**
    * Lazy session cache — sessions are created once per app lifecycle
-   * and reused on subsequent predictions (110 XGBoost models).
+   * and reused on subsequent predictions (25 XGBoost models).
    */
   private static sessionCache = new Map<string, InferenceSession>();
 
@@ -178,7 +178,7 @@ export class InferenceService {
   }
 
   /**
-   * Runs on-device ONNX inference across all 110 XGBoost Binary Relevance models.
+   * Runs on-device ONNX inference across all 25 authoritative XGBoost Binary Relevance models.
    * Sessions are cached after first creation for performance.
    * Input tensor shape: [1, 2053] (2048 Morgan bits + 5 RDKit descriptors)
    */
@@ -220,7 +220,7 @@ export class InferenceService {
 
         const results = await session.run(feeds);
 
-        // Extract class-1 probability from skl2onnx Binary Classifier output
+        // Extract class-1 probability from onnxmltools XGBoost classifier output
         const probOutput = results[session.outputNames[1]];
         let prob = 0;
 

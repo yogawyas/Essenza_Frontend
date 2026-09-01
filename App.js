@@ -164,7 +164,7 @@ const ModeSelector = ({ onSelect }) => (
       </View>
       <Text style={styles.architectureArrow}>→</Text>
       <View style={styles.architectureItem}>
-        <Text style={styles.architectureValue}>110 ONNX</Text>
+        <Text style={styles.architectureValue}>25 ONNX</Text>
         <Text style={styles.architectureLabel}>Offline models</Text>
       </View>
       <Text style={styles.architectureArrow}>→</Text>
@@ -600,7 +600,7 @@ const ChemistScreen = () => {
         setWarningText(fpData.warning);
       }
 
-      setStatusText('Running 110 XGBoost models securely on-device...');
+      setStatusText('Running 25 XGBoost models securely on-device...');
       const results = await InferenceService.predict(fpData.fingerprint);
       setPredictions(results);
     } catch (e) {
@@ -676,7 +676,7 @@ const ChemistScreen = () => {
           </View>
           <Text style={styles.labHeroTitle}>From structure to scent profile.</Text>
           <Text style={styles.labHeroDesc}>
-            RDKit creates the molecular features online. Your 110 XGBoost models interpret them privately on this device.
+            RDKit creates the molecular features online. The 25 XGBoost models interpret them privately on this device.
           </Text>
           <View style={styles.pipelineRow}>
             <View style={styles.pipelinePill}><Text style={styles.pipelinePillText}>1 · SMILES</Text></View>
@@ -863,7 +863,7 @@ const ChemistScreen = () => {
               ))}
 
               <View style={styles.methodBox}>
-                <Text style={styles.methodText}>Online: Morgan FP + RDKit descriptors  ·  Offline: 110 ONNX XGBoost classifiers</Text>
+                <Text style={styles.methodText}>Online: Morgan FP + RDKit descriptors  ·  Offline: 25 ONNX XGBoost classifiers</Text>
               </View>
             </View>
           </View>
