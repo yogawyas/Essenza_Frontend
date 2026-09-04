@@ -66,7 +66,7 @@ cd android
 
 Perintah tersebut belum dijalankan; pastikan ABI perangkat sesuai dan NDK tersedia. Build release kini meminta signing release, bukan memakai debug key. Simpan ESSENZA_UPLOAD_STORE_FILE, ESSENZA_UPLOAD_STORE_PASSWORD, ESSENZA_UPLOAD_KEY_ALIAS, ESSENZA_UPLOAD_KEY_PASSWORD di user Gradle properties/CI secrets. Tidak ada key baru yang dibuat.
 
-Sebelum rilis: fresh install, upgrade cache, single-molecule correctness, request cancellation, API downtime, offline Explorer, CRUD persistence, native/ONNX parity di perangkat, waktu dan RAM keseluruhan alur. Belum ada APK baru, signing, maupun deployment aplikasi/API pada perubahan ini. Publikasi source ke branch main dilakukan terpisah dari tahap tersebut.
+Sebelum rilis: fresh install, upgrade cache, single-molecule correctness, request cancellation, API downtime, offline Explorer, CRUD persistence, native/ONNX parity di perangkat, waktu dan RAM keseluruhan alur. Belum ada APK baru, signing, maupun deployment aplikasi/API pada perubahan ini. Publikasi source ke branch marvel di yogawyas/Essenza_Frontend dilakukan terpisah dari tahap tersebut.
 
 Daftar 12 poin dan referensi penelitian/rekayasa: [status implementasi di repository ML](https://github.com/marvelkn/Perfume-MultiLabel-Classifier/blob/main/IMPLEMENTATION_STATUS.md). Laporan skripsi menunggu hasil eksperimen yang sah.
 
