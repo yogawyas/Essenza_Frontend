@@ -88,3 +88,6 @@ yarn-error.log
 *.log
 
 
+
+# React Native Gradle Plugin generates the current release bundle.
+/android/app/src/main/assets/index.android.bundle

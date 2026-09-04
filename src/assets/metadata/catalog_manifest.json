@@ -1,0 +1,33 @@
+{
+  "version": 1,
+  "records": 2029,
+  "sha256": "58ab03c4b8b781d1dbfe9307022760f693034024ac0675c80878f16d9f6ab197",
+  "accords": [
+    "anisic",
+    "aromatic",
+    "balsamic",
+    "caramellic",
+    "citrus",
+    "cocoa",
+    "earthy",
+    "floral",
+    "fresh",
+    "fruity",
+    "green",
+    "herbal",
+    "honey",
+    "mint",
+    "musky",
+    "powdery",
+    "rose",
+    "smoky",
+    "spicy",
+    "sweet",
+    "tobacco",
+    "vanilla",
+    "winey",
+    "woody"
+  ],
+  "provenance_status": "Historical bundled catalog; original source export and transformation log are unavailable. Values are catalog strengths, not molecule odor labels or measured probabilities.",
+  "ranking": "Arithmetic mean of distinct selected accord strengths; ties use rating then pid."
+}

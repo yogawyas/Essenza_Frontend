@@ -50,6 +50,8 @@ react {
     //   The list of flags to pass to the Hermes compiler. By default is "-O", "-output-source-map"
     // hermesFlags = ["-O", "-output-source-map"]
 
+    nodeExecutableAndArgs = ["node", "--max-old-space-size=2048"]
+
     /* Autolinking */
     autolinkLibrariesWithApp()
 }
@@ -86,6 +88,14 @@ android {
         versionName "1.0"
     }
     signingConfigs {
+        release {
+            if (project.hasProperty('ESSENZA_UPLOAD_STORE_FILE')) {
+                storeFile file(ESSENZA_UPLOAD_STORE_FILE)
+                storePassword ESSENZA_UPLOAD_STORE_PASSWORD
+                keyAlias ESSENZA_UPLOAD_KEY_ALIAS
+                keyPassword ESSENZA_UPLOAD_KEY_PASSWORD
+            }
+        }
         debug {
             storeFile file('debug.keystore')
             storePassword 'android'
@@ -98,9 +108,7 @@ android {
             signingConfig signingConfigs.debug
         }
         release {
-            // Caution! In production, you need to generate your own keystore file.
-            // see https://reactnative.dev/docs/signed-apk-android.
-            signingConfig signingConfigs.debug
+            signingConfig signingConfigs.release
             minifyEnabled enableProguardInReleaseBuilds
             proguardFiles getDefaultProguardFile("proguard-android.txt"), "proguard-rules.pro"
         }
@@ -115,5 +123,16 @@ dependencies {
         implementation("com.facebook.react:hermes-android")
     } else {
         implementation jscFlavor
+    }
+}
+
+// Never silently sign a release with the public debug key.
+gradle.taskGraph.whenReady { graph ->
+    if (graph.allTasks.any { it.project == project && it.name.toLowerCase().contains('release') }) {
+        ['ESSENZA_UPLOAD_STORE_FILE', 'ESSENZA_UPLOAD_STORE_PASSWORD', 'ESSENZA_UPLOAD_KEY_ALIAS', 'ESSENZA_UPLOAD_KEY_PASSWORD'].each { key ->
+            if (!project.hasProperty(key)) {
+                throw new GradleException("Release signing requires " + key + " in user Gradle properties or CI secrets.")
+            }
+        }
     }
 }

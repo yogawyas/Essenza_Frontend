@@ -1,11 +1,13 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import {
   StyleSheet, View, Text, TextInput, TouchableOpacity,
   ScrollView, StatusBar, Platform, Modal, ActivityIndicator,
   Alert, Switch,
 } from 'react-native';
-import { InferenceService } from './src/services/InferenceService';
-import { DatabaseService } from './src/services/DatabaseService';
+import { MODEL_INFO } from './src/services/InferenceService';
+import { useMolecularAnalysis } from './src/hooks/useMolecularAnalysis';
+import moleculeLibrary from './src/assets/data/ingredients.json';
+import { DatabaseService, CATALOG_LABELS } from './src/services/DatabaseService';
 
 
 // ── Brand Colors ──────────────────────────────────────────────
@@ -34,42 +36,7 @@ const C = {
 };
 
 // ── Data: Scent Mixology Categories ────────────────────────────
-const MOLECULE_CATEGORIES = [
-  {
-    name: '🍬 Sweet / Gourmand',
-    items: [
-      { name: 'Vanillin', smiles: 'O=Cc1ccc(O)c(OC)c1' },
-      { name: 'Coumarin', smiles: 'O=C1OC2=CC=CC=C2C=C1' },
-    ]
-  },
-  {
-    name: '🍋 Citrus',
-    items: [
-      { name: 'Limonene', smiles: 'CC1=CCC(CC1)C(=C)C' },
-      { name: 'Citral', smiles: 'CC(=CCCC(=CC=O)C)C' },
-    ]
-  },
-  {
-    name: '🌸 Floral',
-    items: [
-      { name: 'Linalool', smiles: 'CC(=CCCC(C)(C=C)O)C' },
-      { name: 'Geraniol', smiles: 'CC(=CCCC(=CCO)C)C' },
-    ]
-  },
-  {
-    name: '🪵 Spicy / Woody',
-    items: [
-      { name: 'Eugenol', smiles: 'COc1cc(CC=C)ccc1O' },
-      { name: 'Iso E Super', smiles: 'CC(=C)C1CCC2C1(C)CCCC2(C)C' },
-    ]
-  },
-  {
-    name: '🦨 Musk',
-    items: [
-      { name: 'Galaxolide', smiles: 'CC12CCC3C(C)(C)CC(C)(C)C3C1CCC2' },
-    ]
-  }
-];
+const MOLECULE_CATEGORIES = [{name: 'Example molecules', items: moleculeLibrary}];
 
 // ── Shared Components ─────────────────────────────────────────
 const GoldButton = ({ onPress, disabled, children, style }) => (
@@ -164,7 +131,7 @@ const ModeSelector = ({ onSelect }) => (
       </View>
       <Text style={styles.architectureArrow}>→</Text>
       <View style={styles.architectureItem}>
-        <Text style={styles.architectureValue}>25 ONNX</Text>
+        <Text style={styles.architectureValue}>{MODEL_INFO.models.length} ONNX</Text>
         <Text style={styles.architectureLabel}>Offline models</Text>
       </View>
       <Text style={styles.architectureArrow}>→</Text>
@@ -218,11 +185,7 @@ const ModeSelector = ({ onSelect }) => (
 );
 
 // ── SCREEN: Explorer Mode (Offline + CRUD) ──────────────────
-const ALL_LABELS = [
-  'floral','fruity','woody','sweet','citrus','aromatic','musky','fresh',
-  'spicy','balsamic','vanilla','powdery','earthy','smoky','tobacco','anisic',
-  'aldehydic','rose','green','herbal','mint','caramellic','cocoa','honey','winey',
-];
+const ALL_LABELS = CATALOG_LABELS;
 
 const ExplorerScreen = () => {
   // ── State ─────────────────────────────────────────────────
@@ -242,39 +205,52 @@ const ExplorerScreen = () => {
   const [formMode, setFormMode]         = useState('simple');  // 'simple'|'advanced'
   const [formAccords, setFormAccords]   = useState({});
 
-  // ── Init DB ────────────────────────────────────────────────
+  const searchGeneration = useRef(0);
+  const filterGeneration = useRef(0);
+  const mounted = useRef(false);
+  const [catalogError, setCatalogError] = useState('');
+  const [hasFiltered, setHasFiltered] = useState(false);
   useEffect(() => {
-    DatabaseService.init()
-      .then(() => { setDbReady(true); loadUserPerfumes(); })
-      .catch(e => console.error('[Explorer] DB init failed:', e));
+    mounted.current = true;
+    const searchCounter = searchGeneration, filterCounter = filterGeneration;
+    let active = true;
+    Promise.all([DatabaseService.init(), DatabaseService.getAllUserPerfumes()])
+      .then(([,items]) => { if (active) { setDbReady(true); setUserPerfumes(items); } })
+      .catch(e => { if (active) { setCatalogError(e.message); } });
+    return () => { active = false; mounted.current = false; searchCounter.current++; filterCounter.current++; };
   }, []);
-
   const loadUserPerfumes = async () => {
     const items = await DatabaseService.getAllUserPerfumes();
-    setUserPerfumes(items);
+    if (mounted.current) { setUserPerfumes(items); }
   };
-
-  // ── Search Parfum Komersial ────────────────────────────────
   const handleSearch = useCallback(async (q) => {
-    setSearchQuery(q);
-    if (!dbReady || q.trim().length < 2) { setSearchResults([]); return; }
-    const res = await DatabaseService.searchPerfumes(q.trim());
-    setSearchResults(res);
+    const id = ++searchGeneration.current;
+    setSearchQuery(q); setSearchResults([]); setCatalogError('');
+    if (!dbReady || q.trim().length < 2) { return; }
+    try {
+      const res = await DatabaseService.searchPerfumes(q.trim());
+      if (mounted.current && id === searchGeneration.current) { setSearchResults(res); }
+    } catch (e) {
+      if (mounted.current && id === searchGeneration.current) { setCatalogError(e.message); }
+    }
   }, [dbReady]);
-
-  // ── Filter by Label ────────────────────────────────────────
   const toggleLabel = (label) => {
-    setFilterLabels(prev =>
-      prev.includes(label) ? prev.filter(l => l !== label) : [...prev, label]
-    );
+    filterGeneration.current++;
+    setPerfumeResults([]); setHasFiltered(false); setIsLoading(false); setCatalogError('');
+    setFilterLabels(prev => prev.includes(label) ? prev.filter(l => l !== label) : [...prev, label]);
   };
-
   const handleFindByLabel = async () => {
-    if (filterLabels.length === 0 || !dbReady) return;
-    setIsLoading(true);
-    const res = await DatabaseService.getPerfumesByLabels(filterLabels, 0.05, 20);
-    setPerfumeResults(res);
-    setIsLoading(false);
+    if (!filterLabels.length || !dbReady) { return; }
+    const id = ++filterGeneration.current;
+    setIsLoading(true); setCatalogError(''); setHasFiltered(false);
+    try {
+      const res = await DatabaseService.getPerfumesByLabels(filterLabels, 0.05, 20);
+      if (mounted.current && id === filterGeneration.current) { setPerfumeResults(res); setHasFiltered(true); }
+    } catch (e) {
+      if (mounted.current && id === filterGeneration.current) { setCatalogError(e.message); }
+    } finally {
+      if (mounted.current && id === filterGeneration.current) { setIsLoading(false); }
+    }
   };
 
   // ── CRUD Operations ────────────────────────────────────────
@@ -301,21 +277,25 @@ const ExplorerScreen = () => {
     }
     const top = Object.entries(formAccords).sort((a,b)=>b[1]-a[1]).slice(0,3).map(([k])=>k).join(', ');
     const data = { name: formName.trim(), accords: formAccords, top_accords: top, mode: formMode };
+    try {
     if (editTarget) {
       await DatabaseService.updateUserPerfume(editTarget.id, data);
     } else {
       await DatabaseService.createUserPerfume(data);
     }
     setModalVisible(false);
-    loadUserPerfumes();
+    await loadUserPerfumes();
+    } catch (e) { Alert.alert('Could not save', e.message); }
   };
 
   const handleDelete = (item) => {
     Alert.alert('Delete Perfume', `Delete "${item.name}"?`, [
       { text: 'Cancel', style: 'cancel' },
       { text: 'Delete', style: 'destructive', onPress: async () => {
-        await DatabaseService.deleteUserPerfume(item.id);
-        loadUserPerfumes();
+        try {
+          await DatabaseService.deleteUserPerfume(item.id);
+          await loadUserPerfumes();
+        } catch (e) { Alert.alert('Could not delete', e.message); }
       }},
     ]);
   };
@@ -347,10 +327,10 @@ const ExplorerScreen = () => {
           <Text style={styles.explorerCardName}>{item.name}</Text>
           <Text style={styles.explorerCardAccords}>{item.top_accords}</Text>
         </View>
-        {showSimilarity && item.similarityScore !== undefined && (
+        {showSimilarity && item.matchScore !== undefined && (
           <View style={styles.explorerScoreBadge}>
             <Text style={styles.explorerScoreText}>
-              {Math.round(item.similarityScore * 100)}%
+              {Math.round(item.matchScore * 100)} / 100
             </Text>
           </View>
         )}
@@ -388,8 +368,11 @@ const ExplorerScreen = () => {
         <View style={styles.explorerHero}>
           <Text style={styles.explorerHeroEyebrow}>YOUR OFFLINE SCENT LIBRARY</Text>
           <Text style={styles.explorerHeroTitle}>Find a fragrance that feels like you.</Text>
-          <Text style={styles.explorerHeroDesc}>Search the curated collection or combine scent labels to surface your closest matches.</Text>
+          <Text style={styles.explorerHeroDesc}>Search the curated collection or combine scent labels to surface your matches by average selected accord strength.</Text>
         </View>
+
+        {!!catalogError && <Text accessibilityRole="alert" style={styles.explorerEmpty}>{catalogError}</Text>}
+        {tab === 'filter' && hasFiltered && !perfumeResults.length && <Text style={styles.explorerEmpty}>No matching perfumes.</Text>}
 
         {/* ── TAB: Search ────────────────────────────── */}
         {tab === 'search' && (
@@ -567,102 +550,8 @@ const ExplorerScreen = () => {
 
 // ── SCREEN: Chemist Mode (Real ML Backend) ───────────────────
 const ChemistScreen = () => {
-  const [smilesInput, setSmilesInput] = useState('');
-  const [predictions, setPredictions]     = useState(null);
-  const [moleculeInfo, setMoleculeInfo]   = useState(null);
-  const [warningText, setWarningText]     = useState(null);
-  const [isLoading, setIsLoading]         = useState(false);
-  const [statusText, setStatusText]       = useState('');
-  const [errorModal, setErrorModal]       = useState({ visible: false, title: '', reason: '', tip: '' });
-
-  useEffect(() => {
-    return () => {
-      InferenceService.releaseAll();
-    };
-  }, []);
-
-  const handlePredict = async () => {
-    if (!smilesInput.trim()) return;
-    setIsLoading(true);
-    setPredictions(null);
-    setMoleculeInfo(null);
-    setWarningText(null);
-    try {
-      setStatusText('Connecting to the RDKit fingerprint service...');
-      const fpData = await InferenceService.getFingerprint(smilesInput.trim());
-
-      setMoleculeInfo({
-        formula:   fpData.molecular_formula,
-        weight:    fpData.molecular_weight,
-        iupacName: fpData.iupac_name,
-      });
-      if (fpData.warning) {
-        setWarningText(fpData.warning);
-      }
-
-      setStatusText('Running 25 XGBoost models securely on-device...');
-      const results = await InferenceService.predict(fpData.fingerprint);
-      setPredictions(results);
-    } catch (e) {
-      const msg = e.message || 'An error occurred.';
-      if (msg.includes('timed out')) {
-        setErrorModal({
-          visible: true,
-          title: '⏳ Service Is Waking Up',
-          reason: msg,
-          tip: 'The Hugging Face Space may be starting or waiting in the free queue. Keep the app open, then try once more.',
-        });
-      } else if (msg.includes('No network')) {
-        setErrorModal({
-          visible: true,
-          title: '📡 No Connection',
-          reason: msg,
-          tip: 'Check your Wi-Fi or mobile data and try again.',
-        });
-      } else if (msg.includes('terlalu berat') || msg.includes('MW') || msg.includes('molecular weight')) {
-        setErrorModal({
-          visible: true,
-          title: '⚖️ Compound Not Volatile',
-          reason: msg,
-          tip: 'Fragrance compounds must be volatile (molecular weight <400 g/mol). Try compounds like Linalool, Limonene, or Vanillin.',
-        });
-      } else if (msg.includes('tidak ditemukan') || msg.includes('not found') || msg.includes('Invalid SMILES')) {
-        setErrorModal({
-          visible: true,
-          title: '🔍 Compound Not Recognized',
-          reason: msg,
-          tip: 'Ensure the SMILES is valid. Use the example molecules below as a reference.',
-        });
-      } else {
-        setErrorModal({
-          visible: true,
-          title: '⚠️ Analysis Failed',
-          reason: msg,
-          tip: 'Ensure your internet connection is active and try again.',
-        });
-      }
-    } finally {
-      setIsLoading(false);
-      setStatusText('');
-    }
-  };
-
-  const handleClear = () => {
-    setSmilesInput('');
-    setPredictions(null);
-    setMoleculeInfo(null);
-    setWarningText(null);
-  };
-
-  const handleSmilesChange = (value) => {
-    setSmilesInput(value);
-    // Never leave a result on screen after its source molecule has changed.
-    if (predictions || moleculeInfo || warningText) {
-      setPredictions(null);
-      setMoleculeInfo(null);
-      setWarningText(null);
-    }
-  };
+  const {smilesInput, predictions, moleculeInfo, warningText, isLoading, statusText,
+    errorModal, setErrorModal, handlePredict, handleClear, handleSmilesChange} = useMolecularAnalysis();
 
   return (
     <>
@@ -676,7 +565,7 @@ const ChemistScreen = () => {
           </View>
           <Text style={styles.labHeroTitle}>From structure to scent profile.</Text>
           <Text style={styles.labHeroDesc}>
-            RDKit creates the molecular features online. The 25 XGBoost models interpret them privately on this device.
+            RDKit creates the molecular features online. The {MODEL_INFO.models.length} {MODEL_INFO.algorithm.toUpperCase()} models run on this device.
           </Text>
           <View style={styles.pipelineRow}>
             <View style={styles.pipelinePill}><Text style={styles.pipelinePillText}>1 · SMILES</Text></View>
@@ -718,27 +607,18 @@ const ChemistScreen = () => {
             </View>
 
             <Text style={[styles.inputLabel, { marginTop: 18, marginBottom: 4 }]}>Quick molecule library</Text>
-            <Text style={styles.inputHelper}>Tap a molecule to fill the input, or select several for a prototype mixture demonstration.</Text>
+            <Text style={styles.inputHelper}>Tap one molecule to fill the input.</Text>
             {MOLECULE_CATEGORIES.map((cat, catIdx) => (
               <View key={catIdx} style={{ marginBottom: 12 }}>
                 <Text style={styles.catLabel}>{cat.name}</Text>
                 <ScrollView horizontal showsHorizontalScrollIndicator={false}>
                   {cat.items.map((mol, i) => {
-                    const currentSmiles = smilesInput.split('.').map(s => s.trim()).filter(Boolean);
-                    const isActive = currentSmiles.includes(mol.smiles);
+                    const isActive = smilesInput.trim() === mol.smiles;
                     return (
                       <TouchableOpacity
                         key={i}
                         style={[styles.exampleChip, isActive && { borderColor: C.gold, backgroundColor: C.goldFaint }]}
-                        onPress={() => {
-                          let next = [...currentSmiles];
-                          if (isActive) {
-                            next = next.filter(s => s !== mol.smiles);
-                          } else {
-                            next.push(mol.smiles);
-                          }
-                          handleSmilesChange(next.join('.'));
-                        }}
+                        onPress={() => handleSmilesChange(isActive ? '' : mol.smiles)}
                         activeOpacity={0.7}
                       >
                         <Text style={[styles.exampleName, isActive && { color: C.gold }]}>
@@ -755,7 +635,7 @@ const ChemistScreen = () => {
             <View style={styles.prototypeNote}>
               <Text style={styles.prototypeNoteIcon}>i</Text>
               <Text style={styles.prototypeNoteText}>
-                Mixology is a UI prototype only; it does not model concentration or mixture interactions.
+                Analyze one molecule at a time. Odor predictions do not describe mixture interactions or concentrations.
               </Text>
             </View>
 
@@ -826,7 +706,7 @@ const ChemistScreen = () => {
               <View style={styles.resultHeadingRow}>
                 <View style={{ flex: 1 }}>
                   <Text style={styles.resultEyebrow}>ANALYSIS COMPLETE</Text>
-                  <Text style={styles.resultTitle}>Detected odor profile</Text>
+                  <Text style={styles.resultTitle}>Predicted odor labels</Text>
                 </View>
                 <View style={styles.resultCountBadge}>
                   <Text style={styles.resultCountValue}>{predictions.length}</Text>
@@ -863,7 +743,8 @@ const ChemistScreen = () => {
               ))}
 
               <View style={styles.methodBox}>
-                <Text style={styles.methodText}>Online: Morgan FP + RDKit descriptors  ·  Offline: 25 ONNX XGBoost classifiers</Text>
+                <Text style={styles.methodText}>Model scores are uncalibrated and do not measure certainty about human perception.</Text>
+                <Text style={styles.methodText}>Online: Morgan FP + RDKit descriptors  ·  Offline: {MODEL_INFO.models.length} ONNX {MODEL_INFO.algorithm.toUpperCase()} classifiers</Text>
               </View>
             </View>
           </View>

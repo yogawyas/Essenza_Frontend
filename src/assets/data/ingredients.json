@@ -1,14 +1,50 @@
 [
-  { "id": "1", "name": "Linalool", "smiles": "CC(=CCCC(C)(C=C)O)C", "type": "Heart Note" },
-  { "id": "2", "name": "Limonene", "smiles": "CC1=CCC(C(C)=C)CC1", "type": "Top Note" },
-  { "id": "3", "name": "Vanillin", "smiles": "O=Cc1ccc(O)c(OC)c1", "type": "Base Note" },
-  { "id": "4", "name": "Eugenol", "smiles": "COc1cc(CC=C)ccc1O", "type": "Heart Note" },
-  { "id": "5", "name": "Iso E Super", "smiles": "CC1(C)CCCC2(C)C1CCC2(C)C(=O)C", "type": "Base Note" },
-  { "id": "6", "name": "Hedione", "smiles": "CCCCC1C(=O)CC(C1)CC(=O)OC", "type": "Heart Note" },
-  { "id": "7", "name": "Citral", "smiles": "CC(=CCCC(=CC=O)C)C", "type": "Top Note" },
-  { "id": "8", "name": "Geraniol", "smiles": "CC(=CCCC(=CCO)C)C", "type": "Heart Note" },
-  { "id": "9", "name": "Coumarin", "smiles": "O=C1C=Cc2ccccc2O1", "type": "Base Note" },
-  { "id": "10", "name": "Calone", "smiles": "O=C1COc2ccccc2O1", "type": "Heart Note" },
-  { "id": "11", "name": "Benzyl acetate", "smiles": "CC(=O)OCc1ccccc1", "type": "Top Note" },
-  { "id": "12", "name": "Alpha-Pinene", "smiles": "CC1=CCC2CC1C2(C)C", "type": "Top Note" }
+  {
+    "id": "1183",
+    "name": "Vanillin",
+    "smiles": "COC1=C(C=CC(=C1)C=O)O",
+    "formula": "C8H8O3",
+    "source_url": "https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/name/Vanillin/property/SMILES,IUPACName,MolecularFormula/JSON",
+    "type": "Verified molecular example"
+  },
+  {
+    "id": "323",
+    "name": "Coumarin",
+    "smiles": "C1=CC=C2C(=C1)C=CC(=O)O2",
+    "formula": "C9H6O2",
+    "source_url": "https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/name/Coumarin/property/SMILES,IUPACName,MolecularFormula/JSON",
+    "type": "Verified molecular example"
+  },
+  {
+    "id": "22311",
+    "name": "Limonene",
+    "smiles": "CC1=CCC(CC1)C(=C)C",
+    "formula": "C10H16",
+    "source_url": "https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/name/Limonene/property/SMILES,IUPACName,MolecularFormula/JSON",
+    "type": "Verified molecular example"
+  },
+  {
+    "id": "6549",
+    "name": "Linalool",
+    "smiles": "CC(=CCCC(C)(C=C)O)C",
+    "formula": "C10H18O",
+    "source_url": "https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/name/Linalool/property/SMILES,IUPACName,MolecularFormula/JSON",
+    "type": "Verified molecular example"
+  },
+  {
+    "id": "3314",
+    "name": "Eugenol",
+    "smiles": "COC1=C(C=CC(=C1)CC=C)O",
+    "formula": "C10H12O2",
+    "source_url": "https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/name/Eugenol/property/SMILES,IUPACName,MolecularFormula/JSON",
+    "type": "Verified molecular example"
+  },
+  {
+    "id": "637566",
+    "name": "Geraniol",
+    "smiles": "CC(=CCC/C(=C/CO)/C)C",
+    "formula": "C10H18O",
+    "source_url": "https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/name/Geraniol/property/SMILES,IUPACName,MolecularFormula/JSON",
+    "type": "Verified molecular example"
+  }
 ]

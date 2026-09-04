@@ -1,145 +1,115 @@
-﻿/**
- * DatabaseService.ts
- * ==================
- * Versi JSON-based (tanpa native SQLite module).
- * - perfumes.json  : 2000+ parfum dari Kaggle (bundled asset, read-only)
- * - AsyncStorage   : parfum custom user (CRUD penuh, persisten)
- *
- * 100% OFFLINE, tidak memerlukan native module tambahan.
- */
-
+/** Bundled catalog ranking and serialized, versioned local user storage. */
 import AsyncStorage from '@react-native-async-storage/async-storage';
-
-// ---- Interfaces --------------------------------------------------------------
+import catalogData from '../assets/perfumes.json';
 
 export interface Perfume {
-  pid: number;
-  brand: string;
-  name: string;
-  gender: string;
-  rating: string;
-  accords: Record<string, number>;
-  top_accords: string;
-  is_custom?: 0 | 1;
+  pid: number; brand: string; name: string; gender: string; rating: string;
+  accords: Record<string, number>; top_accords: string; is_custom?: 0 | 1;
 }
-
 export interface UserPerfume {
-  id?: string;
-  name: string;
-  accords: Record<string, number>;
-  top_accords: string;
-  mode: 'simple' | 'advanced';
-  notes?: string;
-  created_at?: string;
-  updated_at?: string;
+  id?: string; name: string; accords: Record<string, number>; top_accords: string;
+  mode: 'simple' | 'advanced'; notes?: string; created_at?: string; updated_at?: string;
 }
-
-// ---- Internal State ----------------------------------------------------------
-
-let _perfumesCache: Perfume[] | null = null;
 const STORAGE_KEY = '@essenza_user_perfumes';
-
-// ---- DatabaseService ---------------------------------------------------------
-
+export const CATALOG_LABELS = Array.from(new Set(catalogData.flatMap(p => Object.keys(p.accords)))).sort();
+const known = new Set(CATALOG_LABELS);
+function validAccords(value: unknown, catalog = false): value is Record<string, number> {
+  return !!value && typeof value === 'object' && !Array.isArray(value) &&
+    Object.entries(value).every(([k, v]) => k.trim().length > 0 && (!catalog || known.has(k)) &&
+      typeof v === 'number' && Number.isFinite(v) && v >= 0 && v <= 1);
+}
+function validateUser(item: any, persisted = true): asserts item is UserPerfume {
+  if (!item || typeof item.name !== 'string' || !item.name.trim() || !validAccords(item.accords) ||
+      !Object.keys(item.accords).length || !['simple', 'advanced'].includes(item.mode) ||
+      (persisted && (typeof item.id !== 'string' || !item.id))) {
+    throw new Error('Invalid saved perfume data. Existing storage has been preserved.');
+  }
+}
+function topAccords(accords: Record<string, number>) {
+  return Object.entries(accords).sort((a,b) => b[1]-a[1] || a[0].localeCompare(b[0]))
+    .slice(0,3).map(([key]) => key).join(', ');
+}
+let validated: Perfume[] | null = null;
+let operations: Promise<unknown> = Promise.resolve();
+function serial<T>(task: () => Promise<T>): Promise<T> {
+  const next = operations.then(task, task);
+  operations = next.catch(() => undefined);
+  return next;
+}
+async function readAll(): Promise<UserPerfume[]> {
+  const raw = await AsyncStorage.getItem(STORAGE_KEY);
+  if (!raw) { return []; }
+  let parsed: any;
+  try { parsed = JSON.parse(raw); } catch { throw new Error('Saved perfume data is corrupt. Existing storage has been preserved.'); }
+  // Legacy arrays remain readable; upgrade happens only during a successful user write.
+  const items = Array.isArray(parsed) ? parsed : parsed?.version === 1 ? parsed.items : null;
+  if (!Array.isArray(items)) { throw new Error('Unsupported saved perfume format. Existing storage has been preserved.'); }
+  items.forEach(item => validateUser(item));
+  if (new Set(items.map(p => p.id)).size !== items.length) { throw new Error('Duplicate saved perfume identifiers.'); }
+  return items;
+}
+async function writeAll(items: UserPerfume[]) {
+  await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify({version: 1, items}));
+}
 export class DatabaseService {
-
-  /** Load catalog parfum dari bundled JSON asset (lazy, cached). */
   private static async getCatalog(): Promise<Perfume[]> {
-    if (_perfumesCache) return _perfumesCache;
-    const data = require('../assets/perfumes.json');
-    _perfumesCache = data as Perfume[];
-    return _perfumesCache;
+    if (validated) { return validated; }
+    const ids = new Set<number>();
+    for (const p of catalogData) {
+      if (!Number.isInteger(p.pid) || ids.has(p.pid) || typeof p.name !== 'string' || !p.name.trim() ||
+          typeof p.brand !== 'string' || !validAccords(p.accords, true) || !Number.isFinite(Number(p.rating))) {
+        throw new Error('The bundled catalog is invalid.');
+      }
+      ids.add(p.pid);
+    }
+    validated = catalogData as unknown as Perfume[];
+    return validated;
   }
-
-  /** (No-op untuk kompatibilitas - tidak perlu init khusus). */
-  static async init(): Promise<void> {
-    await DatabaseService.getCatalog();
-    console.log('[DB] Catalog loaded from JSON asset.');
-  }
-
-  // ---- READ: Parfum Komersial ------------------------------------------------
-
-  /** Full-text search berdasarkan nama atau brand. Max 30 hasil. */
+  static async init() { await this.getCatalog(); }
   static async searchPerfumes(query: string): Promise<Perfume[]> {
-    const catalog = await DatabaseService.getCatalog();
-    const q = query.toLowerCase().trim();
-    return catalog
-      .filter(p => p.name?.toLowerCase().includes(q) || p.brand?.toLowerCase().includes(q))
-      .sort((a, b) => parseFloat(b.rating || '0') - parseFloat(a.rating || '0'))
-      .slice(0, 30);
+    const q = query.trim().toLowerCase();
+    if (!q) { return []; }
+    return (await this.getCatalog()).filter(p => p.name.toLowerCase().includes(q) || p.brand.toLowerCase().includes(q))
+      .sort((a,b) => Number(b.rating)-Number(a.rating) || a.pid-b.pid).slice(0,30);
   }
-
-  /**
-   * Filter parfum berdasarkan label aroma.
-   * Menghitung cosine-like similarity score per parfum.
-   */
-  static async getPerfumesByLabels(
-    targetLabels: string[],
-    minScore = 0.05,
-    topK = 20
-  ): Promise<(Perfume & { similarityScore: number })[]> {
-    if (targetLabels.length === 0) return [];
-    const catalog = await DatabaseService.getCatalog();
-    return catalog
-      .map(p => {
-        let score = 0;
-        for (const label of targetLabels) score += p.accords[label] ?? 0;
-        return { ...p, similarityScore: score / targetLabels.length };
-      })
-      .filter(p => p.similarityScore >= minScore)
-      .sort((a, b) => b.similarityScore - a.similarityScore)
-      .slice(0, topK);
+  /** Arithmetic mean of selected catalog accord strengths; not cosine or an ML prediction. */
+  static async getPerfumesByLabels(targetLabels: string[], minScore = .05, topK = 20): Promise<(Perfume & {matchScore: number})[]> {
+    const labels = [...new Set(targetLabels)];
+    if (labels.some(l => !known.has(l)) || !Number.isFinite(minScore) || minScore < 0 || minScore > 1 ||
+        !Number.isInteger(topK) || topK < 1) { throw new Error('Invalid catalog filter.'); }
+    if (!labels.length) { return []; }
+    return (await this.getCatalog()).map(p => ({...p, matchScore: labels.reduce((s,l) => s+(p.accords[l] || 0),0)/labels.length}))
+      .filter(p => p.matchScore >= minScore).sort((a,b) => b.matchScore-a.matchScore || Number(b.rating)-Number(a.rating) || a.pid-b.pid)
+      .slice(0,topK);
   }
-
-  // ---- CRUD: Parfum Custom (AsyncStorage) -----------------------------------
-
-  private static async _readAll(): Promise<UserPerfume[]> {
-    const raw = await AsyncStorage.getItem(STORAGE_KEY);
-    return raw ? JSON.parse(raw) : [];
+  static getAllUserPerfumes() { return serial(readAll); }
+  static createUserPerfume(data: UserPerfume): Promise<string> {
+    return serial(async () => {
+      validateUser(data, false);
+      const items = await readAll();
+      const base = Date.now().toString();
+      let id = base, suffix = 0;
+      while (items.some(p => p.id === id)) { id = base + '-' + (++suffix); }
+      const now = new Date().toISOString();
+      await writeAll([{...data, id, name: data.name.trim(), top_accords: topAccords(data.accords), created_at: now, updated_at: now}, ...items]);
+      return id;
+    });
   }
-
-  private static async _writeAll(items: UserPerfume[]): Promise<void> {
-    await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(items));
+  static updateUserPerfume(id: string, data: Partial<UserPerfume>): Promise<void> {
+    return serial(async () => {
+      const items = await readAll(), index = items.findIndex(p => p.id === id);
+      if (index < 0) { throw new Error('Saved perfume no longer exists.'); }
+      const item = {...items[index], ...data, id, created_at: items[index].created_at, updated_at: new Date().toISOString()};
+      validateUser(item);
+      item.name = item.name.trim(); item.top_accords = topAccords(item.accords);
+      items[index] = item; await writeAll(items);
+    });
   }
-
-  /** CREATE: Simpan parfum custom baru. */
-  static async createUserPerfume(data: UserPerfume): Promise<string> {
-    const items = await DatabaseService._readAll();
-    const top = Object.entries(data.accords)
-      .sort((a, b) => b[1] - a[1]).slice(0, 3).map(([k]) => k).join(', ');
-    const newItem: UserPerfume = {
-      ...data,
-      id: Date.now().toString(),
-      top_accords: top,
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
-    };
-    await DatabaseService._writeAll([newItem, ...items]);
-    return newItem.id!;
-  }
-
-  /** READ ALL: Ambil semua parfum custom user. */
-  static async getAllUserPerfumes(): Promise<UserPerfume[]> {
-    return DatabaseService._readAll();
-  }
-
-  /** UPDATE: Edit parfum custom berdasarkan ID. */
-  static async updateUserPerfume(id: string, data: Partial<UserPerfume>): Promise<void> {
-    const items = await DatabaseService._readAll();
-    const top = data.accords
-      ? Object.entries(data.accords).sort((a, b) => b[1] - a[1]).slice(0, 3).map(([k]) => k).join(', ')
-      : undefined;
-    const updated = items.map(item =>
-      item.id === id
-        ? { ...item, ...data, top_accords: top ?? item.top_accords, updated_at: new Date().toISOString() }
-        : item
-    );
-    await DatabaseService._writeAll(updated);
-  }
-
-  /** DELETE: Hapus parfum custom berdasarkan ID. */
-  static async deleteUserPerfume(id: string): Promise<void> {
-    const items = await DatabaseService._readAll();
-    await DatabaseService._writeAll(items.filter(item => item.id !== id));
+  static deleteUserPerfume(id: string): Promise<void> {
+    return serial(async () => {
+      const items = await readAll();
+      if (!items.some(p => p.id === id)) { throw new Error('Saved perfume no longer exists.'); }
+      await writeAll(items.filter(p => p.id !== id));
+    });
   }
 }

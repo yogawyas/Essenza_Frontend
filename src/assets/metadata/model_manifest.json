@@ -1,0 +1,251 @@
+{
+  "version": 1,
+  "algorithm": "xgb",
+  "asset_subdir": "",
+  "feature_spec": {
+    "radius": 2,
+    "n_bits": 2048,
+    "include_chirality": false,
+    "use_descriptors": true,
+    "fragment_policy": "single",
+    "dtype": "float32",
+    "version": 1,
+    "rdkit_version": "2026.03.4"
+  },
+  "feature_schema_id": "9e273bb397f2da39b28523bfc2fcf3146c714f29fe98ba324011a254b4846794",
+  "models": [
+    {
+      "label": "apple",
+      "filename": "xgb_apple.onnx",
+      "sha256": "fb34fd787978ff75a27db0aacfaa2e04a7dbcc2475e44a6c108ae6dca416d274",
+      "threshold": 0.74,
+      "input_name": "float_input",
+      "probability_output": "probabilities",
+      "positive_index": 1
+    },
+    {
+      "label": "balsamic",
+      "filename": "xgb_balsamic.onnx",
+      "sha256": "b30153b88bb03c0abe81da7b38b10f25adc1a7d0bec1d0c35614a8c3192b5f88",
+      "threshold": 0.67,
+      "input_name": "float_input",
+      "probability_output": "probabilities",
+      "positive_index": 1
+    },
+    {
+      "label": "citrus",
+      "filename": "xgb_citrus.onnx",
+      "sha256": "970d0d688fa05794d3cdd8a77970f6f15c00f851d5627efb7816ab400260be54",
+      "threshold": 0.53,
+      "input_name": "float_input",
+      "probability_output": "probabilities",
+      "positive_index": 1
+    },
+    {
+      "label": "earthy",
+      "filename": "xgb_earthy.onnx",
+      "sha256": "e8171cd8815243ba953ff1c69e0ff747f12e0747f866eafa8595215a349c005b",
+      "threshold": 0.39,
+      "input_name": "float_input",
+      "probability_output": "probabilities",
+      "positive_index": 1
+    },
+    {
+      "label": "ethereal",
+      "filename": "xgb_ethereal.onnx",
+      "sha256": "df5d22fe771f023284a6e6bb42c9c1a9a2b8aaa99b7723913082719dea9531cd",
+      "threshold": 0.6799999999999999,
+      "input_name": "float_input",
+      "probability_output": "probabilities",
+      "positive_index": 1
+    },
+    {
+      "label": "fatty",
+      "filename": "xgb_fatty.onnx",
+      "sha256": "85b1836c568ab4d9ebdbf89334813055d3df22c603af8a6a59471f843d7dc503",
+      "threshold": 0.5,
+      "input_name": "float_input",
+      "probability_output": "probabilities",
+      "positive_index": 1
+    },
+    {
+      "label": "floral",
+      "filename": "xgb_floral.onnx",
+      "sha256": "7c363d0d6b095a05cfb0c2b2c22a6b19cd5942b2637379820af8c8e5db725ceb",
+      "threshold": 0.43000000000000005,
+      "input_name": "float_input",
+      "probability_output": "probabilities",
+      "positive_index": 1
+    },
+    {
+      "label": "fresh",
+      "filename": "xgb_fresh.onnx",
+      "sha256": "8c1eb5e4cc9e05dcedf100be352b4cbfd6c502908d8ebeea6a829979cb961f6d",
+      "threshold": 0.48,
+      "input_name": "float_input",
+      "probability_output": "probabilities",
+      "positive_index": 1
+    },
+    {
+      "label": "fruity",
+      "filename": "xgb_fruity.onnx",
+      "sha256": "7b6bfc3dfe0310c7166ee1518ccbccdae781757a5e223812acb563a84485f2e5",
+      "threshold": 0.4,
+      "input_name": "float_input",
+      "probability_output": "probabilities",
+      "positive_index": 1
+    },
+    {
+      "label": "green",
+      "filename": "xgb_green.onnx",
+      "sha256": "915c1ffd2ba971fde60dbcc539c4a69915f55b90bb86cb3cfe683fc5a8aa5033",
+      "threshold": 0.42000000000000004,
+      "input_name": "float_input",
+      "probability_output": "probabilities",
+      "positive_index": 1
+    },
+    {
+      "label": "herbal",
+      "filename": "xgb_herbal.onnx",
+      "sha256": "537027fba78488eb8cb5a3cf385169ff2aceaecfee3ed997fdf7bfad1e1be98c",
+      "threshold": 0.45999999999999996,
+      "input_name": "float_input",
+      "probability_output": "probabilities",
+      "positive_index": 1
+    },
+    {
+      "label": "meaty",
+      "filename": "xgb_meaty.onnx",
+      "sha256": "d1133c197740e9371bd39d8976d16f6452cf8fb544e2dbb1c0122d2ac3c75ddf",
+      "threshold": 0.63,
+      "input_name": "float_input",
+      "probability_output": "probabilities",
+      "positive_index": 1
+    },
+    {
+      "label": "mint",
+      "filename": "xgb_mint.onnx",
+      "sha256": "d01c6380fb50ad390c92ad966114cba5f3e8d6b892dfc7f22c6779d23ec9989d",
+      "threshold": 0.59,
+      "input_name": "float_input",
+      "probability_output": "probabilities",
+      "positive_index": 1
+    },
+    {
+      "label": "nutty",
+      "filename": "xgb_nutty.onnx",
+      "sha256": "ce3fe12aa67ec76a4734b78f9f98fa6507ec1f44b9d629bbd8f9fe99b2cfb33a",
+      "threshold": 0.5700000000000001,
+      "input_name": "float_input",
+      "probability_output": "probabilities",
+      "positive_index": 1
+    },
+    {
+      "label": "oily",
+      "filename": "xgb_oily.onnx",
+      "sha256": "ed452d9ea0988f98c2c3eab41e982bde2087ccd0e1864d3a510734e0b8a76107",
+      "threshold": 0.56,
+      "input_name": "float_input",
+      "probability_output": "probabilities",
+      "positive_index": 1
+    },
+    {
+      "label": "pineapple",
+      "filename": "xgb_pineapple.onnx",
+      "sha256": "afc0abd2df888d59be97c3973888133b56635c946dc920ba7d8f2d50dfe09060",
+      "threshold": 0.6799999999999999,
+      "input_name": "float_input",
+      "probability_output": "probabilities",
+      "positive_index": 1
+    },
+    {
+      "label": "rose",
+      "filename": "xgb_rose.onnx",
+      "sha256": "24cffa45984947fd673cd11342ab8bcf807e89f92b8710b2eb2da2c38deb8dfe",
+      "threshold": 0.5700000000000001,
+      "input_name": "float_input",
+      "probability_output": "probabilities",
+      "positive_index": 1
+    },
+    {
+      "label": "spicy",
+      "filename": "xgb_spicy.onnx",
+      "sha256": "54df04ea29f4570bc185de0945a46c358e2b8c1ec5f393ccd87545baa1fbdfc9",
+      "threshold": 0.59,
+      "input_name": "float_input",
+      "probability_output": "probabilities",
+      "positive_index": 1
+    },
+    {
+      "label": "sulfurous",
+      "filename": "xgb_sulfurous.onnx",
+      "sha256": "a526a060f2579698331d35fe2c4dd23349f9f0d8330bcbb0ef5d69729a87b74f",
+      "threshold": 0.55,
+      "input_name": "float_input",
+      "probability_output": "probabilities",
+      "positive_index": 1
+    },
+    {
+      "label": "sweet",
+      "filename": "xgb_sweet.onnx",
+      "sha256": "517cfd57d6684bf89c1ae1c96fd8e7d13a6acda5cc0b0bd98d61df140a076cd9",
+      "threshold": 0.45000000000000007,
+      "input_name": "float_input",
+      "probability_output": "probabilities",
+      "positive_index": 1
+    },
+    {
+      "label": "tropical",
+      "filename": "xgb_tropical.onnx",
+      "sha256": "c11092191e1c521d7dffffbaa94f912d7186b12238e8ce4e23b31d61ab57bb6e",
+      "threshold": 0.6,
+      "input_name": "float_input",
+      "probability_output": "probabilities",
+      "positive_index": 1
+    },
+    {
+      "label": "vegetable",
+      "filename": "xgb_vegetable.onnx",
+      "sha256": "252a356d4ec8b13053efc55048f8e95ca67acd4d64bc8bcc4fd02cad23efc3e9",
+      "threshold": 0.64,
+      "input_name": "float_input",
+      "probability_output": "probabilities",
+      "positive_index": 1
+    },
+    {
+      "label": "waxy",
+      "filename": "xgb_waxy.onnx",
+      "sha256": "83f638bb9257ccc3572fd6b9b4099e236deedb7ef0b5e197ebf95741ba37ebe4",
+      "threshold": 0.58,
+      "input_name": "float_input",
+      "probability_output": "probabilities",
+      "positive_index": 1
+    },
+    {
+      "label": "winey",
+      "filename": "xgb_winey.onnx",
+      "sha256": "e76c8439180ded561ab580a0b81f9e3f1467cadf10467e1201da3143a3bde8ac",
+      "threshold": 0.63,
+      "input_name": "float_input",
+      "probability_output": "probabilities",
+      "positive_index": 1
+    },
+    {
+      "label": "woody",
+      "filename": "xgb_woody.onnx",
+      "sha256": "f4ae3cdc61d14a30b20c492d70ead49ca5083066e7c5c991b765a054292db9be",
+      "threshold": 0.44000000000000006,
+      "input_name": "float_input",
+      "probability_output": "probabilities",
+      "positive_index": 1
+    }
+  ],
+  "provenance": "Historical bundled models; this manifest does not certify a new training run.",
+  "bundle_id": "e1b7e9bd448d2ebf50a7999e6645ef95f4a07215f3b55e760ab08dc13dd75887",
+  "feature_compatibility": {
+    "rdkit": "2026.03.4",
+    "historical_training_rows_checked": 5091,
+    "max_abs_error": 0.0,
+    "excluded_multifragment_rows": 170
+  }
+}
