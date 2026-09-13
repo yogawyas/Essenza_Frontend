@@ -1,0 +1,61 @@
+import { StyleSheet } from 'react-native';
+
+export const colors = {
+  green: '#163B2C',
+  greenDark: '#102B20',
+  sage: '#DDE6D9',
+  gold: '#D4AF37',
+  ivory: '#F8F6EE',
+  white: '#FFFFFF',
+  ink: '#18261F',
+  muted: '#53645A',
+  line: '#E2E5DA',
+  danger: '#A83D38',
+  lightGold: '#F0E6C7',
+};
+
+export const s = StyleSheet.create({
+  page: { flex: 1, backgroundColor: colors.ivory },
+  content: { paddingHorizontal: 22, paddingBottom: 32, gap: 20 },
+  row: { flexDirection: 'row', alignItems: 'center', gap: 12 },
+  between: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: 12,
+  },
+  flex: { flex: 1 },
+  wrap: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
+  h1: { fontFamily: 'serif', fontSize: 34, lineHeight: 42, color: colors.ink },
+  h2: { fontFamily: 'serif', fontSize: 25, lineHeight: 33, color: colors.ink },
+  h3: { fontSize: 17, lineHeight: 24, fontWeight: '700', color: colors.ink },
+  body: { fontSize: 14, lineHeight: 22, color: colors.muted },
+  small: { fontSize: 12, lineHeight: 18, color: colors.muted },
+  label: {
+    fontSize: 10,
+    fontWeight: '700',
+    letterSpacing: 1.8,
+    color: colors.muted,
+  },
+  card: {
+    backgroundColor: colors.white,
+    borderWidth: 1,
+    borderColor: colors.line,
+    borderRadius: 20,
+    padding: 18,
+    gap: 12,
+  },
+  input: {
+    backgroundColor: colors.white,
+    borderWidth: 1,
+    borderColor: colors.line,
+    borderRadius: 14,
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+    fontSize: 15,
+    color: colors.ink,
+    minHeight: 50,
+  },
+  divider: { height: 1, backgroundColor: colors.line },
+  error: { fontSize: 13, lineHeight: 20, color: colors.danger },
+});
