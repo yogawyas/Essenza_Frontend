@@ -11,7 +11,10 @@ import {
   View,
   ViewStyle,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import {
+  SafeAreaView,
+  useSafeAreaInsets,
+} from 'react-native-safe-area-context';
 import Svg, {
   Defs,
   Ellipse,
@@ -26,6 +29,8 @@ import { fragranceById } from '../domain/catalog';
 import { colors, s } from './theme';
 
 const paths = {
+  studio:
+    'M9 3h6M10 3v6L4 19q-1 2 2 2h12q3 0 2-2L14 9V3M8 14h8M9 17h.01M14 18h.01',
   today:
     'M12 3v2m0 14v2M3 12h2m14 0h2M5.6 5.6L7 7m10 10 1.4 1.4M5.6 18.4 7 17M17 7l1.4-1.4M16 12a4 4 0 1 1-8 0 4 4 0 0 1 8 0',
   search: 'M20 20l-5-5M17 10a7 7 0 1 1-14 0 7 7 0 0 1 14 0',
@@ -77,16 +82,23 @@ export function Icon({
 export function Screen({
   children,
   scroll = true,
+  scrollRef,
 }: {
   children: React.ReactNode;
   scroll?: boolean;
+  scrollRef?: React.RefObject<ScrollView | null>;
 }) {
+  const insets = useSafeAreaInsets();
   return (
     <SafeAreaView style={s.page} edges={['top', 'left', 'right']}>
       {scroll ? (
         <ScrollView
+          ref={scrollRef}
           keyboardShouldPersistTaps="handled"
-          contentContainerStyle={s.content}
+          contentContainerStyle={[
+            s.content,
+            { paddingBottom: 32 + insets.bottom },
+          ]}
           showsVerticalScrollIndicator={false}
         >
           {children}
@@ -216,10 +228,12 @@ export function Chip({
   label,
   selected = false,
   onPress,
+  compact = false,
 }: {
   label: string;
   selected?: boolean;
   onPress?: () => void;
+  compact?: boolean;
 }) {
   return (
     <Pressable
@@ -227,9 +241,9 @@ export function Chip({
       accessibilityRole={onPress ? 'button' : undefined}
       accessibilityState={onPress ? { selected } : undefined}
       onPress={onPress}
-      style={[styles.chip, selected && styles.chipSelected]}
+      style={[styles.chip, compact && styles.compactChip, selected && styles.chipSelected]}
     >
-      <Text style={[styles.chipText, selected && styles.chipTextSelected]}>
+      <Text style={[styles.chipText, compact && styles.compactChipText, selected && styles.chipTextSelected]}>
         {label}
       </Text>
     </Pressable>
@@ -504,6 +518,8 @@ const styles = StyleSheet.create({
     backgroundColor: colors.white,
   },
   chipSelected: { backgroundColor: colors.green, borderColor: colors.green },
+  compactChip: { flex: 1, paddingHorizontal: 4 },
+  compactChipText: { fontSize: 11, textAlign: 'center' },
   chipText: { fontSize: 12, color: colors.muted, textTransform: 'capitalize' },
   chipTextSelected: { color: colors.white },
   fragranceRow: {

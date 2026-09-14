@@ -1,7 +1,7 @@
 import React from 'react';
 import { Alert, Text, View } from 'react-native';
 import { RouteProp, useRoute } from '@react-navigation/native';
-import { RootParams, useAppNavigation } from '../navigation/types';
+import { RootParams, openShelf, useAppNavigation } from '../navigation/types';
 import { useApp } from '../storage/AppProvider';
 import { visibleLists } from '../domain/state';
 import { CURATORS, fragranceById } from '../domain/catalog';
@@ -111,6 +111,14 @@ export function ListScreen() {
         </View>
       )}
       <View>
+        {!mine && state.savedListIds.includes(list.id) && (
+          <Button
+            label="Lihat scentlists di My Shelf"
+            icon="shelf"
+            variant="secondary"
+            onPress={() => openShelf(nav, { section: 'lists' })}
+          />
+        )}
         {list.items.length ? (
           list.items.map((item, index) => {
             const fragrance = fragranceById(item.fragranceId);

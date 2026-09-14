@@ -5,7 +5,11 @@ import {
   usePreventRemove,
   useRoute,
 } from '@react-navigation/native';
-import { RootParams, useAppNavigation } from '../navigation/types';
+import {
+  RootParams,
+  shelfDestination,
+  useAppNavigation,
+} from '../navigation/types';
 import { useApp } from '../storage/AppProvider';
 import { CATALOG, fragranceById } from '../domain/catalog';
 import {
@@ -59,9 +63,20 @@ export function EditListScreen() {
   );
   useEffect(() => {
     if (saved) {
-      nav.goBack();
+      if (original) {
+        nav.goBack();
+      } else {
+        nav.popTo(
+          'Home',
+          shelfDestination({
+            section: 'lists',
+            highlightId: id,
+            requestId: String(Date.now()),
+          }),
+        );
+      }
     }
-  }, [saved, nav]);
+  }, [saved, nav, original, id]);
   const save = async () => {
     setBusy(true);
     if (

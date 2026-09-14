@@ -19,15 +19,19 @@ import { EditListScreen } from './screens/EditListScreen';
 import { WearScreen } from './screens/WearScreen';
 import { JournalScreen } from './screens/JournalScreen';
 import { ProfileScreen } from './screens/ProfileScreen';
+import { StudioScreen } from './screens/StudioScreen';
+import { StudioEditorScreen } from './screens/StudioEditorScreen';
+import { RecipeScreen } from './screens/RecipeScreen';
 import { Button, Icon, IconName } from './ui/components';
 import { colors } from './ui/theme';
 
-const Stack = createNativeStackNavigator<RootParams>();
-const Tabs = createBottomTabNavigator<TabParams>();
+const Root = createNativeStackNavigator<RootParams>();
+const Feature = createNativeStackNavigator<RootParams>();
+const Tabs = createBottomTabNavigator<TabParams, 'EssenzaTabs'>();
 const tabIcons: Record<keyof TabParams, IconName> = {
   Today: 'today',
   Discover: 'search',
-  Scentlists: 'lists',
+  Studio: 'studio',
   Shelf: 'shelf',
 };
 const theme = {
@@ -41,10 +45,61 @@ const theme = {
     border: colors.line,
   },
 };
+const homes = {
+  TodayHome: TodayScreen,
+  DiscoverHome: DiscoverScreen,
+  StudioHome: StudioScreen,
+  ShelfHome: ShelfScreen,
+};
+function FeatureStack({ home }: { home: keyof typeof homes }) {
+  return (
+    <Feature.Navigator
+      initialRouteName={home}
+      screenOptions={{
+        headerShown: false,
+        contentStyle: { backgroundColor: colors.ivory },
+      }}
+    >
+      <Feature.Screen name={home} component={homes[home]} />
+      <Feature.Screen
+        name="Fragrance"
+        component={FragranceScreen}
+        getId={({ params }) => params.id}
+      />
+      <Feature.Screen
+        name="List"
+        component={ListScreen}
+        getId={({ params }) => params.id}
+      />
+      <Feature.Screen name="Scentlists" component={ScentlistsScreen} />
+      <Feature.Screen
+        name="Recipe"
+        component={RecipeScreen}
+        getId={({ params }) => params.id}
+      />
+      <Feature.Screen name="Journal" component={JournalScreen} />
+    </Feature.Navigator>
+  );
+}
+function TodayStack() {
+  return <FeatureStack home="TodayHome" />;
+}
+function DiscoverStack() {
+  return <FeatureStack home="DiscoverHome" />;
+}
+function StudioStack() {
+  return <FeatureStack home="StudioHome" />;
+}
+function ShelfStack() {
+  return <FeatureStack home="ShelfHome" />;
+}
+
 function HomeTabs() {
   const insets = useSafeAreaInsets();
   return (
     <Tabs.Navigator
+      id="EssenzaTabs"
+      backBehavior="history"
       screenOptions={({ route }) => ({
         headerShown: false,
         tabBarActiveTintColor: colors.green,
@@ -56,19 +111,19 @@ function HomeTabs() {
           paddingTop: 7,
           paddingBottom: Math.max(insets.bottom, 8),
         },
-        tabBarLabelStyle: { fontSize: 10, fontWeight: '600' },
+        tabBarLabelStyle: { fontSize: 11, fontWeight: '600' },
         tabBarIcon: ({ color }) => (
           <Icon name={tabIcons[route.name]} color={color} />
         ),
         tabBarHideOnKeyboard: true,
       })}
     >
-      <Tabs.Screen name="Today" component={TodayScreen} />
-      <Tabs.Screen name="Discover" component={DiscoverScreen} />
-      <Tabs.Screen name="Scentlists" component={ScentlistsScreen} />
+      <Tabs.Screen name="Today" component={TodayStack} />
+      <Tabs.Screen name="Discover" component={DiscoverStack} />
+      <Tabs.Screen name="Studio" component={StudioStack} />
       <Tabs.Screen
         name="Shelf"
-        component={ShelfScreen}
+        component={ShelfStack}
         options={{ title: 'My Shelf' }}
       />
     </Tabs.Navigator>
@@ -81,35 +136,33 @@ function Navigation() {
   const { state } = useApp();
   return (
     <NavigationContainer theme={theme}>
-      <Stack.Navigator
+      <Root.Navigator
         screenOptions={{
           headerShown: false,
           contentStyle: { backgroundColor: colors.ivory },
-          animation: 'slide_from_right',
         }}
       >
         {state.onboarded ? (
-          <Stack.Group navigationKey="member">
-            <Stack.Screen name="Home" component={HomeTabs} />
-            <Stack.Screen name="Fragrance" component={FragranceScreen} />
-            <Stack.Screen name="List" component={ListScreen} />
-            <Stack.Screen name="EditList" component={EditListScreen} />
-            <Stack.Screen name="Wear" component={WearScreen} />
-            <Stack.Screen name="Journal" component={JournalScreen} />
-            <Stack.Screen name="Profile" component={ProfileScreen} />
-          </Stack.Group>
+          <Root.Group navigationKey="member">
+            <Root.Screen name="Home" component={HomeTabs} />
+            <Root.Group screenOptions={{ presentation: 'modal' }}>
+              <Root.Screen name="EditList" component={EditListScreen} />
+              <Root.Screen name="Wear" component={WearScreen} />
+              <Root.Screen name="StudioEditor" component={StudioEditorScreen} />
+              <Root.Screen name="Profile" component={ProfileScreen} />
+            </Root.Group>
+          </Root.Group>
         ) : (
-          <Stack.Screen
+          <Root.Screen
             name="Home"
             component={Welcome}
             navigationKey="welcome"
           />
         )}
-      </Stack.Navigator>
+      </Root.Navigator>
     </NavigationContainer>
   );
 }
-
 class ErrorBoundary extends React.Component<
   { children: React.ReactNode },
   { failed: boolean }
@@ -145,7 +198,6 @@ class ErrorBoundary extends React.Component<
     );
   }
 }
-
 export default function App() {
   return (
     <SafeAreaProvider>

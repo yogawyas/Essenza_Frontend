@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Pressable, Text, View } from 'react-native';
 import { useApp } from '../storage/AppProvider';
-import { useAppNavigation } from '../navigation/types';
+import { RootParams, useAppNavigation } from '../navigation/types';
+import { RouteProp, useRoute } from '@react-navigation/native';
 import { visibleLists } from '../domain/state';
 import { CURATORS } from '../domain/catalog';
 import {
@@ -17,7 +18,14 @@ import { s } from '../ui/theme';
 export function ScentlistsScreen() {
   const { state } = useApp();
   const nav = useAppNavigation();
-  const [filter, setFilter] = useState('Explore');
+  const { params } = useRoute<RouteProp<RootParams, 'Scentlists'>>();
+  const [filter, setFilter] = useState(params?.filter || 'Explore');
+  useEffect(() => {
+    if (params?.filter) {
+      setFilter(params.filter);
+      nav.setParams({ filter: undefined });
+    }
+  }, [params?.filter, nav]);
   const lists = visibleLists(state).filter(list =>
     filter === 'Milikku'
       ? list.authorId === state.profile.id
@@ -31,6 +39,7 @@ export function ScentlistsScreen() {
     <Screen>
       <Header
         title="SCENTLISTS"
+        onBack={() => nav.goBack()}
         name={state.profile.name}
         onProfile={() => nav.navigate('Profile')}
       />
@@ -51,7 +60,7 @@ export function ScentlistsScreen() {
             key={item}
             label={item}
             selected={filter === item}
-            onPress={() => setFilter(item)}
+            onPress={() => setFilter(item as typeof filter)}
           />
         ))}
       </View>

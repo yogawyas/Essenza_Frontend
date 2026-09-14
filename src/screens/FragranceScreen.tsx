@@ -1,10 +1,9 @@
 import React, { useState } from 'react';
 import { Alert, Text, View } from 'react-native';
 import { RouteProp, useRoute } from '@react-navigation/native';
-import { RootParams, useAppNavigation } from '../navigation/types';
+import { RootParams, openShelf, useAppNavigation } from '../navigation/types';
 import { useApp } from '../storage/AppProvider';
 import { fragranceById } from '../domain/catalog';
-import { BottleFormat, ShelfStatus } from '../domain/models';
 import {
   Bottle,
   Button,
@@ -14,6 +13,7 @@ import {
   IconButton,
   Screen,
 } from '../ui/components';
+import { SHELF_LABELS, ShelfEditor } from '../ui/ShelfEditor';
 import { s } from '../ui/theme';
 
 export function FragranceScreen() {
@@ -22,11 +22,7 @@ export function FragranceScreen() {
   const { state, dispatch } = useApp();
   const fragrance = fragranceById(params.id);
   const item = state.shelf.find(entry => entry.fragranceId === params.id);
-  const [status, setStatus] = useState<ShelfStatus>(item?.status || 'want');
-  const [format, setFormat] = useState<BottleFormat>(
-    item?.format || 'Full bottle',
-  );
-  const [busy, setBusy] = useState(false);
+  const [editing, setEditing] = useState(false);
   if (!fragrance) {
     return (
       <Screen>
@@ -38,39 +34,13 @@ export function FragranceScreen() {
       </Screen>
     );
   }
-  const save = async () => {
-    setBusy(true);
-    if (
-      await dispatch({
-        type: 'shelf',
-        item: { fragranceId: fragrance.id, status, format },
-      })
-    ) {
-      Alert.alert(
-        'Tersimpan',
-        `${fragrance.name} sudah diperbarui di My Shelf.`,
-      );
-    }
-    setBusy(false);
-  };
   return (
     <Screen>
       <Header title="THE FRAGRANCE" onBack={() => nav.goBack()} />
-      <View
-        style={{
-          backgroundColor: fragrance.color + '60',
-          borderRadius: 24,
-          alignItems: 'center',
-          paddingVertical: 18,
-        }}
-      >
-        <Bottle fragrance={fragrance} size={170} />
-        <Text style={[s.small, { marginBottom: 7 }]}>Ilustrasi produk</Text>
-      </View>
       <View style={s.between}>
         <View style={s.flex}>
           <Text style={s.label}>{fragrance.brand.toUpperCase()}</Text>
-          <Text style={[s.h1, { marginTop: 7 }]}>{fragrance.name}</Text>
+          <Text style={s.h1}>{fragrance.name}</Text>
           <Text style={s.small}>{fragrance.concentration}</Text>
         </View>
         <IconButton
@@ -82,86 +52,98 @@ export function FragranceScreen() {
           }}
         />
       </View>
+      <View
+        style={{
+          backgroundColor: fragrance.color + '60',
+          borderRadius: 24,
+          alignItems: 'center',
+          padding: 12,
+        }}
+      >
+        <Bottle fragrance={fragrance} size={125} />
+        <Text style={s.small}>Ilustrasi produk · katalog demo</Text>
+      </View>
+      <Button
+        label={item ? 'Kelola koleksi' : 'Tambah ke My Shelf'}
+        icon={item ? 'check' : 'plus'}
+        onPress={() => setEditing(true)}
+      />
+      {item && (
+        <View style={s.card}>
+          <Text style={s.label}>
+            MY SHELF · {SHELF_LABELS[item.status].toUpperCase()}
+          </Text>
+          <Text style={s.body}>{item.format} · Tersimpan di perangkatmu.</Text>
+          <Button
+            label="Lihat My Shelf"
+            variant="secondary"
+            icon="shelf"
+            onPress={() =>
+              openShelf(nav, {
+                section: 'perfumes',
+                status: item.status,
+                highlightId: fragrance.id,
+              })
+            }
+          />
+        </View>
+      )}
       <View style={s.wrap}>
         {fragrance.accords.map(accord => (
           <Chip label={accord} key={accord} />
         ))}
       </View>
       <Text style={s.body}>{fragrance.description}</Text>
-      <View style={s.card}>
-        <Text style={s.h3}>
-          {item ? 'Kelola koleksi' : 'Simpan ke My Shelf'}
-        </Text>
-        <View style={s.wrap}>
-          {(
-            [
-              { id: 'have', label: 'Have' },
-              { id: 'want', label: 'Want' },
-              { id: 'had', label: 'Had' },
-            ] as const
-          ).map(option => (
-            <Chip
-              key={option.id}
-              label={option.label}
-              selected={status === option.id}
-              onPress={() => setStatus(option.id)}
-            />
-          ))}
-        </View>
-        <Text style={s.label}>FORMAT</Text>
-        <View style={s.wrap}>
-          {(['Full bottle', 'Decant', 'Sample'] as BottleFormat[]).map(
-            option => (
-              <Chip
-                key={option}
-                label={option}
-                selected={format === option}
-                onPress={() => setFormat(option)}
-              />
-            ),
-          )}
-        </View>
-        <Button
-          label={item ? 'Simpan perubahan' : 'Simpan ke shelf'}
-          onPress={save}
-          loading={busy}
-        />
-        {item && (
-          <Button
-            label="Hapus dari shelf"
-            variant="danger"
-            onPress={() =>
-              Alert.alert(
-                'Hapus dari shelf?',
-                `Catatan pemakaian dan favorit ${fragrance.name} tetap tersimpan.`,
-                [
-                  { text: 'Batal', style: 'cancel' },
-                  {
-                    text: 'Hapus',
-                    style: 'destructive',
-                    onPress: () => {
-                      dispatch({
-                        type: 'removeShelf',
-                        fragranceId: fragrance.id,
-                      });
-                    },
-                  },
-                ],
-              )
-            }
-          />
-        )}
-      </View>
       <Button
         label="Catat pemakaian"
         icon="drop"
         variant="secondary"
         onPress={() => nav.navigate('Wear', { fragranceId: fragrance.id })}
       />
+      {item && (
+        <Button
+          label="Hapus dari shelf"
+          variant="danger"
+          onPress={() =>
+            Alert.alert(
+              'Hapus dari shelf?',
+              'Catatan pemakaian dan favorit tetap tersimpan.',
+              [
+                { text: 'Batal', style: 'cancel' },
+                {
+                  text: 'Hapus',
+                  style: 'destructive',
+                  onPress: () => {
+                    dispatch({
+                      type: 'removeShelf',
+                      fragranceId: fragrance.id,
+                    });
+                  },
+                },
+              ],
+            )
+          }
+        />
+      )}
       <Text style={s.small}>
-        Data katalog contoh. Profil aroma tidak menjamin pengalaman atau
-        ketahanan yang sama pada setiap pemakai.
+        Metadata contoh. Profil aroma tidak menjamin pengalaman atau ketahanan
+        yang sama pada setiap pemakai.
       </Text>
+      {editing && (
+        <ShelfEditor
+          fragrance={fragrance}
+          item={item}
+          onClose={() => setEditing(false)}
+          onView={status => {
+            setEditing(false);
+            openShelf(nav, {
+              section: 'perfumes',
+              status,
+              highlightId: fragrance.id,
+            });
+          }}
+        />
+      )}
     </Screen>
   );
 }

@@ -9,6 +9,7 @@ import {
   createInitialState,
 } from './models';
 import { CATALOG, CURATORS, EDITORIAL_LISTS, fragranceById } from './catalog';
+import { validateDraft, validateRecipe } from './studio';
 
 export type Action =
   | { type: 'profile'; profile: AppState['profile']; onboard?: boolean }
@@ -23,6 +24,9 @@ export type Action =
   | { type: 'report'; report: AppState['reports'][number] }
   | { type: 'wear'; log: WearLog }
   | { type: 'deleteWear'; id: string }
+  | { type: 'saveRecipe'; recipe: AppState['recipes'][number] }
+  | { type: 'deleteRecipe'; id: string }
+  | { type: 'studioDraft'; draft: AppState['studioDraft'] }
   | { type: 'reset' };
 
 function toggle(values: string[], id: string) {
@@ -207,6 +211,29 @@ export function reduceState(state: AppState, action: Action): AppState {
       return { ...state, logs: state.logs.filter(log => log.id !== action.id) };
     case 'reset':
       return createInitialState();
+    case 'studioDraft':
+      if (action.draft) {
+        validateDraft(action.draft);
+      }
+      return { ...state, studioDraft: action.draft };
+    case 'saveRecipe': {
+      validateRecipe(action.recipe);
+      return {
+        ...state,
+        recipes: [
+          { ...action.recipe, title: action.recipe.title.trim() },
+          ...state.recipes.filter(recipe => recipe.id !== action.recipe.id),
+        ],
+        studioDraft: null,
+      };
+    }
+    case 'deleteRecipe':
+      return {
+        ...state,
+        recipes: state.recipes.filter(recipe => recipe.id !== action.id),
+        studioDraft:
+          state.studioDraft?.recipeId === action.id ? null : state.studioDraft,
+      };
   }
 }
 
@@ -214,7 +241,7 @@ export function reduceState(state: AppState, action: Action): AppState {
 export function parseState(raw: string): AppState {
   const data = JSON.parse(raw) as AppState;
   if (
-    data.schemaVersion !== 1 ||
+    ![1, 2].includes(data.schemaVersion) ||
     typeof data.onboarded !== 'boolean' ||
     ![
       'shelf',
@@ -230,6 +257,13 @@ export function parseState(raw: string): AppState {
     throw new Error('Format data lokal tidak dikenali.');
   }
   let state = createInitialState();
+  if (
+    data.schemaVersion === 2 &&
+    (!Array.isArray(data.recipes) ||
+      !(data.studioDraft === null || typeof data.studioDraft === 'object'))
+  ) {
+    throw new Error('Format Studio lokal tidak dikenali.');
+  }
   if (data.onboarded) {
     state = reduceState(state, {
       type: 'profile',
@@ -249,6 +283,18 @@ export function parseState(raw: string): AppState {
   }
   for (const log of data.logs) {
     state = reduceState(state, { type: 'wear', log });
+  }
+  // Version 1 has no Studio data; upgrading must preserve the existing collection.
+  if (data.schemaVersion === 2) {
+    for (const recipe of [...data.recipes].reverse()) {
+      state = reduceState(state, { type: 'saveRecipe', recipe });
+    }
+    if (data.studioDraft) {
+      state = reduceState(state, {
+        type: 'studioDraft',
+        draft: data.studioDraft,
+      });
+    }
   }
   for (const authorId of new Set(data.blocked)) {
     state = reduceState(state, { type: 'block', authorId });

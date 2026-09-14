@@ -1,12 +1,11 @@
-import React, { useCallback, useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
-import { useFocusEffect } from '@react-navigation/native';
+import React, { useEffect, useRef, useState } from 'react';
+import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useApp } from '../storage/AppProvider';
-import { useAppNavigation } from '../navigation/types';
-import { Accord, localDay, Occasion, OCCASIONS } from '../domain/models';
+import { openShelf, useAppNavigation } from '../navigation/types';
+import { Accord, Occasion, OCCASIONS } from '../domain/models';
 import { fragranceById } from '../domain/catalog';
 import { recommend } from '../domain/recommendations';
-import { visibleLists } from '../domain/state';
+import { todayLog, weeklyRecap } from '../domain/today';
 import {
   Bottle,
   Button,
@@ -15,10 +14,10 @@ import {
   FragranceRow,
   Header,
   Icon,
-  ListCover,
   Screen,
   Section,
 } from '../ui/components';
+import { useNow } from '../ui/useNow';
 import { colors, s } from '../ui/theme';
 
 export function TodayScreen() {
@@ -26,32 +25,36 @@ export function TodayScreen() {
   const nav = useAppNavigation();
   const [occasion, setOccasion] = useState<Occasion>('Kuliah');
   const [mood, setMood] = useState<Accord | null>(null);
-  const [now, setNow] = useState(new Date());
-  useFocusEffect(
-    useCallback(() => {
-      setNow(new Date());
-    }, []),
-  );
+  const [choosing, setChoosing] = useState(false);
+  const now = useNow();
   const owned = state.shelf.filter(item => item.status === 'have');
   const picks = recommend(state, 'owned', occasion, mood, now);
-  const discovery = recommend(state, 'discovery', occasion, mood, now).slice(
-    0,
-    3,
-  );
-  const current = state.logs.find(
-    log => localDay(log.wornAt) === localDay(now),
-  );
+  const current = todayLog(state, now);
+  const scroll = useRef<ScrollView>(null);
+  const previousLog = useRef(current?.id);
+  useEffect(() => {
+    if (previousLog.current !== current?.id) {
+      previousLog.current = current?.id;
+      const frame = requestAnimationFrame(() => scroll.current?.scrollTo({ y: 0, animated: false }));
+      return () => cancelAnimationFrame(frame);
+    }
+  }, [current?.id]);
   const currentFragrance = current && fragranceById(current.fragranceId);
   const hero = picks[0];
-  const lists = visibleLists(state).slice(0, 3);
+  const recap = weeklyRecap(state, now);
+  const top = recap.top && fragranceById(recap.top);
+  const discovery = recommend(state, 'discovery', occasion, mood, now).slice(
+    0,
+    2,
+  );
   return (
-    <Screen>
+    <Screen scrollRef={scroll}>
       <Header
         title="ESSENZA"
         name={state.profile.name}
         onProfile={() => nav.navigate('Profile')}
       />
-      <View style={{ gap: 9 }}>
+      <View style={{ gap: 8 }}>
         <Text style={s.label}>
           {now
             .toLocaleDateString('id-ID', {
@@ -61,96 +64,42 @@ export function TodayScreen() {
             })
             .toUpperCase()}
         </Text>
-        <Text style={s.h1}>A little scent.{'\n'}A little you.</Text>
+        <Text style={s.h1}>
+          {current
+            ? 'Your day,' + '\n' + 'beautifully scented.'
+            : 'Hari ini,' + '\n' + 'pakai apa?'}
+        </Text>
         <Text style={s.body}>
-          Hai, {state.profile.name}. Wangi apa yang menemani harimu?
+          {current
+            ? 'Momenmu sudah tercatat. Bagaimana kesannya?'
+            : 'Hai, ' +
+              state.profile.name +
+              '. Mulai dari wangi yang sudah kamu punya.'}
         </Text>
       </View>
-      <ScrollView
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        contentContainerStyle={{ gap: 8 }}
-      >
-        {OCCASIONS.map(item => (
-          <Chip
-            key={item}
-            label={item}
-            selected={occasion === item}
-            onPress={() => setOccasion(item)}
-          />
-        ))}
-      </ScrollView>
-      <View style={s.wrap}>
-        {(['fresh', 'woody', 'sweet'] as Accord[]).map(item => (
-          <Chip
-            key={item}
-            label={`Mood ${item}`}
-            selected={mood === item}
-            onPress={() => setMood(mood === item ? null : item)}
-          />
-        ))}
-      </View>
-      {hero ? (
-        <View style={styles.hero}>
-          <View style={styles.ring} />
-          <View style={styles.heroTop}>
-            <View style={{ flex: 1, gap: 12, zIndex: 1 }}>
-              <Text style={styles.eyebrow}>TODAY’S SCENT</Text>
-              <Text style={styles.heroTitle}>{hero.fragrance.name}</Text>
-              <Text style={styles.heroBrand}>
-                {hero.fragrance.brand} · {hero.fragrance.concentration}
-              </Text>
-              <Text style={styles.heroBadge}>DARI KOLEKSIMU</Text>
-            </View>
-            <Bottle fragrance={hero.fragrance} size={120} />
+      {current && currentFragrance && (
+        <View style={styles.hero} accessibilityLiveRegion="polite">
+          <View style={s.row}>
+            <Icon name="check" color={colors.gold} />
+            <Text style={styles.eyebrow}>NOW WEARING · HARI INI</Text>
           </View>
-          <Text style={styles.heroReason}>
-            {hero.reasons.slice(0, 2).join(' ')}
+          <View style={s.row}>
+            <View style={s.flex}>
+              <Text style={styles.heroTitle}>{currentFragrance.name}</Text>
+              <Text style={styles.copy}>
+                {current.occasion} · Catatan pribadi
+              </Text>
+            </View>
+            <Bottle fragrance={currentFragrance} size={86} />
+          </View>
+          <Text style={styles.copy}>
+            {current.note ||
+              'Tambahkan satu kalimat tentang pengalamanmu. Tidak harus sekarang.'}
           </Text>
           <Button
-            label="Pakai hari ini"
-            icon="drop"
+            label={current.note ? 'Edit kesan' : 'Tambah kesan'}
+            icon="edit"
             variant="secondary"
-            onPress={() =>
-              nav.navigate('Wear', { fragranceId: hero.fragrance.id })
-            }
-          />
-          <Button
-            label="Lihat parfumnya"
-            variant="ghost"
-            style={{ backgroundColor: colors.ivory }}
-            onPress={() => nav.navigate('Fragrance', { id: hero.fragrance.id })}
-          />
-        </View>
-      ) : (
-        <Empty
-          title={
-            owned.length
-              ? 'Belum ada pilihan yang sesuai'
-              : 'Mulai dari koleksimu'
-          }
-          body={
-            owned.length
-              ? 'Preferensi aroma yang dihindari menyaring semua pilihan. Kamu bisa meninjau preferensi di profil.'
-              : 'Tambahkan parfum yang kamu punya. Kami bantu memilih satu untuk harimu.'
-          }
-          action={owned.length ? 'Edit preferensi' : 'Jelajahi parfum'}
-          onAction={() =>
-            owned.length
-              ? nav.navigate('Profile')
-              : nav.navigate('Home', { screen: 'Discover' })
-          }
-        />
-      )}
-      {current && currentFragrance && (
-        <View style={s.card}>
-          <View style={s.row}>
-            <Icon name="check" />
-            <Text style={s.label}>NOW WEARING · HARI INI</Text>
-          </View>
-          <FragranceRow
-            fragrance={currentFragrance}
-            subtitle={`${current.occasion} · catatan pribadi`}
             onPress={() =>
               nav.navigate('Wear', {
                 fragranceId: current.fragranceId,
@@ -158,40 +107,157 @@ export function TodayScreen() {
               })
             }
           />
-          <Text style={s.small}>
-            {current.note ||
-              'Momenmu sudah tersimpan. Tambahkan kesan kapan saja.'}
-          </Text>
+          <Button
+            label={choosing ? 'Tutup pilihan lain' : 'Pilih wangi lain'}
+            variant="secondary"
+            onPress={() => setChoosing(!choosing)}
+          />
         </View>
       )}
-      {picks.length > 1 && (
-        <View>
-          <Section title="Pilihan lainnya" />
-          {picks.slice(1, 3).map(item => (
-            <FragranceRow
-              key={item.fragrance.id}
-              fragrance={item.fragrance}
-              onPress={() =>
-                nav.navigate('Fragrance', { id: item.fragrance.id })
+      {(!current || choosing) && (
+        <>
+          <View style={s.wrap}>
+            {OCCASIONS.map(item => (
+              <Chip
+                key={item}
+                label={item}
+                selected={occasion === item}
+                onPress={() => setOccasion(item)}
+              />
+            ))}
+          </View>
+          <View style={s.wrap}>
+            {(['fresh', 'woody', 'sweet'] as Accord[]).map(item => (
+              <Chip
+                key={item}
+                label={'Mood ' + item}
+                selected={mood === item}
+                onPress={() => setMood(mood === item ? null : item)}
+              />
+            ))}
+          </View>
+          {hero ? (
+            <View style={styles.hero}>
+              <Text style={styles.eyebrow}>PILIHAN DARI KOLEKSIMU</Text>
+              <View style={s.row}>
+                <View style={s.flex}>
+                  <Text style={styles.heroTitle}>{hero.fragrance.name}</Text>
+                  <Text style={styles.copy}>{hero.fragrance.brand}</Text>
+                </View>
+                <Bottle fragrance={hero.fragrance} size={85} />
+              </View>
+              <Text style={styles.copy}>
+                {hero.reasons.slice(0, 2).join(' ')}
+              </Text>
+              <Button
+                label="Pakai hari ini"
+                icon="drop"
+                variant="secondary"
+                onPress={() => {
+                  setChoosing(false);
+                  nav.navigate('Wear', {
+                    fragranceId: hero.fragrance.id,
+                    occasion,
+                    quick: true,
+                  });
+                }}
+              />
+              <Button
+                label="Lihat parfumnya"
+                variant="secondary"
+                onPress={() =>
+                  nav.navigate('Fragrance', { id: hero.fragrance.id })
+                }
+              />
+            </View>
+          ) : (
+            <Empty
+              title={
+                owned.length
+                  ? 'Belum ada pilihan yang sesuai'
+                  : 'Satu parfum untuk memulai'
+              }
+              body={
+                owned.length
+                  ? 'Semua pilihan tersaring preferensi aroma yang dihindari. Kamu bisa meninjaunya di profil.'
+                  : 'Tambahkan parfum ke kategori Punya, bukan Wishlist. Rekomendasi harian akan muncul di sini.'
+              }
+              action={
+                owned.length ? 'Edit preferensi' : 'Tambahkan parfum pertama'
+              }
+              onAction={() =>
+                owned.length
+                  ? nav.navigate('Profile')
+                  : nav.navigate('Home', { screen: 'Discover' })
               }
             />
-          ))}
-        </View>
+          )}
+          {picks.length > 1 && (
+            <View>
+              <Text style={s.h3}>Atau pilih yang ini</Text>
+              {picks.slice(1, 3).map(item => (
+                <FragranceRow
+                  key={item.fragrance.id}
+                  fragrance={item.fragrance}
+                  onPress={() =>
+                    nav.navigate('Fragrance', { id: item.fragrance.id })
+                  }
+                />
+              ))}
+            </View>
+          )}
+        </>
       )}
-      <View style={styles.stats}>
-        {[
-          { value: owned.length, label: 'di koleksi' },
-          { value: state.logs.length, label: 'wear logs' },
-          { value: state.lists.length, label: 'scentlists' },
-        ].map(item => (
-          <View
-            key={item.label}
-            style={{ alignItems: 'center', flex: 1, gap: 3 }}
-          >
-            <Text style={styles.statValue}>{item.value}</Text>
-            <Text style={s.small}>{item.label}</Text>
-          </View>
-        ))}
+      <Button
+        label={'Buka My Shelf · ' + owned.length + ' parfum punya'}
+        icon="shelf"
+        variant="secondary"
+        onPress={() => openShelf(nav, { section: 'perfumes', status: 'have' })}
+      />
+      <View style={s.card}>
+        <Text style={s.label}>YOUR WEEK IN SCENTS · 7 HARI TERAKHIR</Text>
+        {recap.ready && top ? (
+          <>
+            <Text style={s.h2}>
+              {recap.unique} wangi,{'\n'}
+              {recap.days} hari bercerita.
+            </Text>
+            <Text style={s.body}>
+              {top.name} termasuk yang paling sering tercatat. Ada {recap.total}{' '}
+              catatan dalam periode ini.
+            </Text>
+          </>
+        ) : (
+          <>
+            <Text style={s.h2}>Pelan-pelan,{'\n'}kenali seleramu.</Text>
+            <Text style={s.body}>
+              {recap.days} hari tercatat. Ringkasan muncul setelah kamu mencatat
+              pemakaian di 3 hari berbeda dalam 7 hari terakhir.
+            </Text>
+          </>
+        )}
+        <Button
+          label="Buka journal pribadi"
+          icon="drop"
+          variant="ghost"
+          onPress={() => nav.navigate('Journal')}
+        />
+      </View>
+      <View style={s.card}>
+        <View style={s.row}>
+          <Icon name="studio" />
+          <Text style={s.label}>A LITTLE EXPERIMENT</Text>
+        </View>
+        <Text style={s.h2}>Bagaimana kalau{'\n'}dua wangimu bertemu?</Text>
+        <Text style={s.body}>
+          Eksplorasi karakter virtual di Studio. Tidak perlu membeli parfum
+          baru.
+        </Text>
+        <Button
+          label="Eksplorasi di Studio"
+          icon="arrow"
+          onPress={() => nav.navigate('Home', { screen: 'Studio' })}
+        />
       </View>
       <View style={{ gap: 12 }}>
         <Section
@@ -199,45 +265,22 @@ export function TodayScreen() {
           action="Discover"
           onAction={() => nav.navigate('Home', { screen: 'Discover' })}
         />
-        <Text style={s.body}>
-          Referensi untuk dicoba, dipilih dari preferensimu.
-        </Text>
-        {discovery.length ? (
-          discovery.map(item => (
-            <FragranceRow
-              key={item.fragrance.id}
-              fragrance={item.fragrance}
-              onPress={() =>
-                nav.navigate('Fragrance', { id: item.fragrance.id })
-              }
-            />
-          ))
-        ) : (
+        {discovery.map(item => (
+          <FragranceRow
+            key={item.fragrance.id}
+            fragrance={item.fragrance}
+            onPress={() => nav.navigate('Fragrance', { id: item.fragrance.id })}
+          />
+        ))}
+        {!discovery.length && (
           <Text style={s.body}>
             Belum ada kandidat baru dari katalog demo ini.
           </Text>
         )}
       </View>
-      <View style={{ gap: 14 }}>
-        <Section
-          title="Stories in a scentlist"
-          action="Lihat"
-          onAction={() => nav.navigate('Home', { screen: 'Scentlists' })}
-        />
-        {lists.map(list => (
-          <Pressable
-            key={list.id}
-            accessibilityRole="button"
-            accessibilityLabel={`Buka scentlist ${list.title}`}
-            onPress={() => nav.navigate('List', { id: list.id })}
-          >
-            <ListCover list={list} />
-          </Pressable>
-        ))}
-      </View>
       <Text style={s.small}>
-        Demo lokal · metadata dan kurator contoh. Rekomendasi berbasis aturan,
-        bukan hasil model ML.
+        Demo lokal · rekomendasi berbasis aturan dari koleksi dan catatanmu,
+        bukan model ML atau data cuaca.
       </Text>
     </Screen>
   );
@@ -247,41 +290,19 @@ const styles = StyleSheet.create({
     backgroundColor: colors.green,
     borderRadius: 24,
     padding: 22,
-    gap: 14,
-    overflow: 'hidden',
-  },
-  heroTop: { flexDirection: 'row', alignItems: 'center', gap: 2 },
-  ring: {
-    position: 'absolute',
-    width: 260,
-    height: 260,
-    borderWidth: 1,
-    borderColor: '#D4AF3740',
-    borderRadius: 130,
-    right: -110,
-    top: -65,
+    gap: 16,
   },
   eyebrow: {
+    color: colors.lightGold,
     fontSize: 10,
-    color: '#DCC78B',
-    letterSpacing: 2,
+    letterSpacing: 1.4,
     fontWeight: '700',
   },
   heroTitle: {
     fontFamily: 'serif',
-    fontSize: 32,
-    lineHeight: 38,
+    fontSize: 28,
+    lineHeight: 35,
     color: colors.ivory,
   },
-  heroBrand: { color: '#D2DFD5', fontSize: 12, lineHeight: 18 },
-  heroBadge: { fontSize: 9, color: '#EED99E', letterSpacing: 1, marginTop: 5 },
-  heroReason: { color: '#DDE8DF', fontSize: 13, lineHeight: 21 },
-  stats: {
-    flexDirection: 'row',
-    paddingVertical: 19,
-    borderTopWidth: 1,
-    borderBottomWidth: 1,
-    borderColor: colors.line,
-  },
-  statValue: { fontFamily: 'serif', fontSize: 26, color: colors.green },
+  copy: { color: colors.sage, fontSize: 13, lineHeight: 21 },
 });

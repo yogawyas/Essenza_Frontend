@@ -55,7 +55,7 @@ export interface WearLog {
 }
 
 export interface AppState {
-  schemaVersion: 1;
+  schemaVersion: 2;
   onboarded: boolean;
   profile: {
     id: string;
@@ -72,6 +72,31 @@ export interface AppState {
   blocked: string[];
   reports: { id: string; listId: string; reason: string; createdAt: string }[];
   logs: WearLog[];
+  recipes: LayeringRecipe[];
+  studioDraft: StudioDraft | null;
+}
+
+export type Dominance = 'a' | 'balanced' | 'b';
+export interface StudioInput {
+  fragranceA: string;
+  fragranceB: string;
+  dominance: Dominance;
+}
+export interface StudioDraft {
+  id: string;
+  recipeId?: string;
+  fragranceA: string | null;
+  fragranceB: string | null;
+  dominance: Dominance;
+  title: string;
+  note: string;
+}
+export interface LayeringRecipe extends StudioInput {
+  id: string;
+  title: string;
+  note: string;
+  engineVersion: 'mock-accord-v1';
+  updatedAt: string;
 }
 
 export const LOCAL_USER_ID = 'local-profile';
@@ -96,7 +121,7 @@ export const COVER_COLORS = [
 
 export function createInitialState(): AppState {
   return {
-    schemaVersion: 1,
+    schemaVersion: 2,
     onboarded: false,
     profile: { id: LOCAL_USER_ID, name: '', bio: '', likes: [], avoids: [] },
     shelf: [],
@@ -107,6 +132,8 @@ export function createInitialState(): AppState {
     blocked: [],
     reports: [],
     logs: [],
+    recipes: [],
+    studioDraft: null,
   };
 }
 

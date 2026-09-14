@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useRef, useState } from 'react';
 import { Alert, Text, View } from 'react-native';
 import { RouteProp, useRoute } from '@react-navigation/native';
 import { RootParams, useAppNavigation } from '../navigation/types';
@@ -25,11 +25,13 @@ export function WearScreen() {
   const [id] = useState(original?.id || makeId('wear'));
   const [note, setNote] = useState(original?.note || '');
   const [occasion, setOccasion] = useState<Occasion>(
-    original?.occasion || 'Kuliah',
+    original?.occasion || params.occasion || 'Kuliah',
   );
   const [date, setDate] = useState(localDay(original?.wornAt || new Date()));
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
+  const [expanded, setExpanded] = useState(!params.quick || !!original);
+  const locked = useRef(false);
   if (!fragrance) {
     return (
       <Screen>
@@ -41,24 +43,29 @@ export function WearScreen() {
     );
   }
   const save = async () => {
-    const parsed = new Date(`${date}T12:00:00`);
+    if (locked.current) {
+      return;
+    }
     const now = new Date();
+    const selectedDate = params.quick && !expanded ? localDay(now) : date;
+    const parsed = new Date(`${selectedDate}T12:00:00`);
     if (
-      !/^\d{4}-\d{2}-\d{2}$/.test(date) ||
+      !/^\d{4}-\d{2}-\d{2}$/.test(selectedDate) ||
       !Number.isFinite(parsed.getTime()) ||
-      localDay(parsed) !== date ||
-      date > localDay(now)
+      localDay(parsed) !== selectedDate ||
+      selectedDate > localDay(now)
     ) {
       setError('Gunakan tanggal valid YYYY-MM-DD, maksimal hari ini.');
       return;
     }
     const wornAt =
-      original && localDay(original.wornAt) === date
+      original && localDay(original.wornAt) === selectedDate
         ? original.wornAt
-        : date === localDay(now)
+        : selectedDate === localDay(now)
         ? now.toISOString()
         : parsed.toISOString();
     setError('');
+    locked.current = true;
     setBusy(true);
     if (
       await dispatch({
@@ -69,26 +76,30 @@ export function WearScreen() {
       nav.goBack();
     }
     setBusy(false);
+    locked.current = false;
   };
   return (
     <Screen>
       <Header title="NOW WEARING" onBack={() => nav.goBack()} />
       <View style={{ alignItems: 'center', gap: 4 }}>
-        <Bottle fragrance={fragrance} size={120} />
+        <Bottle fragrance={fragrance} size={expanded ? 95 : 65} />
         <Text style={s.label}>{fragrance.brand.toUpperCase()}</Text>
         <Text style={s.h2}>{fragrance.name}</Text>
       </View>
       <Text style={s.body}>
         Simpan momen kecil hari ini. Catatanmu tetap pribadi.
       </Text>
-      <Field
-        label="Tanggal pemakaian"
-        value={date}
-        onChangeText={setDate}
-        placeholder="YYYY-MM-DD"
-        maxLength={10}
-        keyboardType="numbers-and-punctuation"
-      />
+      {!expanded && <Text style={s.h3}>Hari ini · {occasion}</Text>}
+      {expanded && (
+        <Field
+          label="Tanggal pemakaian"
+          value={date}
+          onChangeText={setDate}
+          placeholder="YYYY-MM-DD"
+          maxLength={10}
+          keyboardType="numbers-and-punctuation"
+        />
+      )}
       <Text style={s.label}>AKTIVITAS</Text>
       <View style={s.wrap}>
         {OCCASIONS.map(item => (
@@ -100,17 +111,32 @@ export function WearScreen() {
           />
         ))}
       </View>
-      <Field
-        label="Kesanmu (opsional)"
-        value={note}
-        onChangeText={setNote}
-        placeholder="Bagaimana rasanya dipakai hari ini?"
-        multiline
-        maxLength={280}
-      />
+      {expanded && (
+        <Field
+          label="Kesanmu (opsional)"
+          value={note}
+          onChangeText={setNote}
+          placeholder="Bagaimana rasanya dipakai hari ini?"
+          multiline
+          maxLength={280}
+        />
+      )}
+      {!expanded && (
+        <Button
+          label="Tambahkan kesan atau ubah tanggal"
+          variant="ghost"
+          onPress={() => setExpanded(true)}
+        />
+      )}
       {!!error && <Text style={s.error}>{error}</Text>}
       <Button
-        label={original ? 'Simpan perubahan' : 'Simpan pemakaian'}
+        label={
+          original
+            ? 'Simpan perubahan'
+            : params.quick && !expanded
+            ? 'Konfirmasi pemakaian hari ini'
+            : 'Simpan pemakaian'
+        }
         icon="check"
         loading={busy}
         onPress={save}

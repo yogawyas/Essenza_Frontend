@@ -6,6 +6,7 @@ import { useApp } from '../storage/AppProvider';
 import { useAppNavigation } from '../navigation/types';
 import {
   Bottle,
+  Button,
   Chip,
   Empty,
   Header,
@@ -14,6 +15,7 @@ import {
   Screen,
 } from '../ui/components';
 import { colors, s } from '../ui/theme';
+import { SHELF_LABELS } from '../ui/ShelfEditor';
 
 export function DiscoverScreen() {
   const { state, dispatch } = useApp();
@@ -40,6 +42,12 @@ export function DiscoverScreen() {
           Ikuti rasa penasaranmu. Mulai dari satu aroma.
         </Text>
       </View>
+      <Button
+        label="Scentlists & inspirasi"
+        icon="lists"
+        variant="secondary"
+        onPress={() => nav.navigate('Scentlists', { filter: 'Explore' })}
+      />
       <View style={[s.input, s.row]}>
         <Icon name="search" />
         <TextInput
@@ -120,6 +128,15 @@ export function DiscoverScreen() {
               <Text style={s.small}>
                 {item.accords.slice(0, 2).join(' · ')} / {item.concentration}
               </Text>
+              {state.shelf.some(entry => entry.fragranceId === item.id) && (
+                <Text style={s.label}>
+                  MY SHELF ·{' '}
+                  {SHELF_LABELS[
+                    state.shelf.find(entry => entry.fragranceId === item.id)!
+                      .status
+                  ].toUpperCase()}
+                </Text>
+              )}
             </View>
           ))}
         </View>

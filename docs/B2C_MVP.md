@@ -2,19 +2,19 @@
 
 ## Scope
 
-Android-first offline demo, approved in this task. Profile/preferences, catalog, shelf, favorites, scentlists, Today recommendations, and private wear logs persist on the device. Cloud auth, live community, and sync are not implemented in this milestone.
+Android-first offline demo, approved in this task. Profile/preferences, catalog, shelf, favorites, scentlists, Today recommendations, private wear logs, Studio recipes, and an explicit saved Studio draft persist on the device. Cloud auth, live community, and sync are not implemented in this milestone. See [UX_REDESIGN.md](UX_REDESIGN.md) for the P0–P2 redesign and remaining device checks.
 
 Public scentlists are visible only in the simulated Explore on this device. Curators are explicitly labeled fixtures. Reports are local records and are not delivered to a moderator. There are no fabricated community counts, match probabilities, or weather readings.
 
 ## Implementation
 
 - `App.js` delegates to `src/App.tsx`.
-- `src/screens`: feature screens with React Navigation native stack and four tabs.
+- `src/screens`: per-tab native stacks for Today, Discover, Studio, and My Shelf; root modals for focused editing.
 - `src/ui`: design tokens, shared components, original generic vector bottle illustrations.
 - `src/domain`: typed models, catalog fixtures, validation, visibility rules, deterministic ranking.
 - `src/storage`: AsyncStorage repository with serialized commit-before-publish writes and a React provider.
 
-Storage key: `@essenza/b2c-v1`. Load validates persisted data. Unknown/corrupt data shows recovery UI without automatic overwrite. Failed writes do not publish success; subsequent operations may retry. A local repository is not a server authorization boundary.
+Storage key: `@essenza/b2c-v1`. Schema 1 migrates to schema 2 without resetting prior data; schema 2 adds recipes and a nullable draft. Load validates persisted data. Unknown/corrupt data shows recovery UI without automatic overwrite. Failed writes do not publish success; subsequent operations may retry. A local repository is not a server authorization boundary.
 
 Have/Want/Had are independent of favorites. Removing a shelf item preserves history. Wear records are private. Scentlist items are unique and ordered. Blocking hides curator content and removes bookmarks/follows. Repeat writes of the same wear operation ID are idempotent.
 
@@ -81,14 +81,14 @@ Planned API contracts (not running endpoints), relative to `/api/v1`:
 | Discovery | `GET /recommendations/daily`, `GET /recommendations/discovery`, `POST /recommendations/feedback` |
 | Moderation | `POST /reports`, `PUT/DELETE /me/blocks/{userId}`, moderator-only review endpoints |
 
-Then evaluate live social interactions, weekly discovery, monthly recap, and eventually Scent Blend/yearly Wrapped. Layering recipes and hybrid ML need separate validation and real interaction data.
+Next: Community demo, then authenticated social interactions and synchronization. Studio recipes currently use a deterministic mock engine; real layering prediction and hybrid ML need separate validation and representative inputs/data. Scent Blend/yearly Wrapped remain future milestones.
 
 ## Verification status
 
 - Branch: `codex/essenza-b2c`; changes remain local and uncommitted.
 - TypeScript: passed.
-- Jest: 13 tests passed, including multiple-scentlist order across repeated restarts.
+- Jest: 40 tests passed, including migration, route targets, midnight handling, Studio screen interactions, recipe/draft reload, edit/remix, and write failure recovery.
 - ESLint: no errors in changed application/test code; inline-style warnings remain.
-- Android native build: successful; APK installed on Samsung SM-G990E, Android 16.
-- Device smoke test (2026-09-13): Today, Discover, fragrance detail, Scentlists, and My Shelf opened on the connected phone; no AndroidRuntime or ReactNativeJS errors were present in the current app process log. Existing profile data was preserved. Full CRUD/restart touch walkthrough remains pending; automated tests do not replace that verification.
+- Android native build: previously successful; APK installed on Samsung SM-G990E, Android 16. The P0–P2 redesign adds no native dependencies. Its Android production JS bundle also builds successfully.
+- Device smoke test for the redesign: Today/Now Wearing and Discover loaded with the existing local profile/wear record and the new Studio tab. See UX_REDESIGN.md for the separate physical-device checklist; automated component tests mock navigation and do not establish full touch verification.
 - Cloud authentication, remote API, real multi-user data, and iOS are outside this approved local-demo milestone.
