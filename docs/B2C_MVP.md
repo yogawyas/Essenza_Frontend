@@ -85,10 +85,10 @@ Next: Community demo, then authenticated social interactions and synchronization
 
 ## Verification status
 
-- Branch: `codex/essenza-b2c`; changes remain local and uncommitted.
+- Branch: `codex/essenza-b2c`; implementation is recorded in commit 7c211c4. Verification notes were updated on 15 September 2026.
 - TypeScript: passed.
-- Jest: 40 tests passed, including migration, route targets, midnight handling, Studio screen interactions, recipe/draft reload, edit/remix, and write failure recovery.
+- Jest: 41 tests in six suites passed, including migration, route targets, midnight handling, Today scroll-to-result, Studio screen interactions, recipe/draft reload, edit/remix, and write failure recovery.
 - ESLint: no errors in changed application/test code; inline-style warnings remain.
 - Android native build: previously successful; APK installed on Samsung SM-G990E, Android 16. The P0–P2 redesign adds no native dependencies. Its Android production JS bundle also builds successfully.
-- Device smoke test for the redesign: Today/Now Wearing and Discover loaded with the existing local profile/wear record and the new Studio tab. See UX_REDESIGN.md for the separate physical-device checklist; automated component tests mock navigation and do not establish full touch verification.
+- Physical-device walkthrough: Discover → Wishlist → Punya → Today/Now Wearing, wear note edit/delete, Studio simulation/save/edit, and draft persistence across restart passed. QA-only records were removed; the original profile, four shelf items, and Light Blue journal entry remain. See UX_REDESIGN.md for exact checks and the remaining touch-test gaps; component tests mock navigation.
 - Cloud authentication, remote API, real multi-user data, and iOS are outside this approved local-demo milestone.

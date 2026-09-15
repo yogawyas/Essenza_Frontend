@@ -12,6 +12,7 @@ P0 navigation, P1 Today ritual, and P2 mock Scent Studio. The next milestone is 
 - Scentlists moved into Discover (public inspiration) and My Shelf (owned/saved lists); none were deleted.
 - My Shelf sections: Parfum, Scentlists, Resep, Journal.
 - UI status names: Punya = have, Wishlist = want, Pernah punya = had. Favorit remains independent.
+- Shelf section and status chips share compact rows, verified on the physical device.
 
 ### Discover → Shelf
 
@@ -30,6 +31,7 @@ Private scentlist creation now leads to My Shelf instead of returning to public 
 - Before recording: choose an occasion/mood, see a rule-based suggestion from owned items, and confirm wearing.
 - Quick confirmation inherits the selected occasion; adding notes or changing the date remains optional.
 - After recording: Now Wearing replaces the main recommendation prompt. The latest current-day log is shown, with an edit-note action.
+- When the current log changes, Today scrolls to the top so the saved result is visible even if confirmation started lower down the page.
 - Date refreshes on focus, on app resume, and once per minute while Today is focused. Quick confirmation uses the actual current date even if opened before midnight.
 - Seven-day recap requires at least three distinct local dates with logs. Counts are based on stored records, not fabricated engagement.
 - No streak penalties, synthetic activity, weather claims, or automatic sharing.
@@ -58,18 +60,27 @@ Unknown versions and malformed data show recovery rather than being silently cle
 
 Automated checks cover migration, status selection and navigation payloads, retry/failure handling, quick wear, local-day recap, Studio input validation, simulation determinism, recipe/draft persistence, edit/remix identity, and screen-level interactions. Navigation hooks are mocked in component tests; these tests are not a substitute for a complete physical-device walkthrough.
 
-Device inspection confirmed that the redesign loaded through Metro, retained the existing profile/wear record, displayed Now Wearing, and opened Discover with the new Studio tab. USB disconnected before the save/Studio touch walkthrough; no QA collection entries or recipes were created on the phone.
+Validation completed across 13 and 15 September 2026 on Samsung SM-G990E (Android 16), using Metro on port 8083. TypeScript, all 41 tests in six suites, ESLint error checks, and the Android production JavaScript bundle passed. The production bundle check is not a release APK/signing test.
 
-### Remaining physical-device checklist
+The device walkthrough exposed a Today scroll-position issue: the saved Now Wearing result could remain above the viewport. The fix scrolls to the top when the current log changes; a regression test and a repeat device walkthrough passed. Compact Shelf chips were also verified on the device.
 
-- [ ] Discover → detail: tab bar stays visible.
-- [ ] Save a new fragrance to Wishlist → Lihat My Shelf opens Wishlist and highlights it.
-- [ ] Change status to Punya; Today includes the fragrance.
-- [ ] Confirm wearing; Today becomes Now Wearing; edit/delete the test log.
-- [ ] Create a private scentlist and find it immediately in My Shelf.
-- [ ] Studio: choose A/B, compare dominance, save a clearly marked test recipe.
-- [ ] Open/edit/remix the recipe; restart and verify local persistence.
-- [ ] Save a partial draft, restart, resume, and check unsaved-change confirmation.
-- [ ] Remove only QA-created records; retain user data.
+### Physical-device checklist
+
+- [x] Discover → detail: tab bar stays visible.
+- [x] Add CK One as Wishlist / Sample → Lihat My Shelf opens Wishlist and highlights it.
+- [x] Change CK One to Punya; Today includes it without duplicating the shelf item.
+- [x] Confirm wearing from a scrolled Today screen; Now Wearing is immediately visible; edit and delete the QA log.
+- [x] Studio: choose CK One / Light Blue, simulate balanced dominance, and save QA UX CHECK to My Shelf → Resep.
+- [x] Edit the recipe to A dominant, save a draft, restart, resume, simulate, and save changes; only one recipe remains.
+- [x] Delete the QA recipe and verify that no saved QA draft remains.
+- [x] Remove the QA-only CK One shelf item and its two test wear logs (13 and 15 September); retain the existing profile, four original shelf entries, and Light Blue journal entry. These temporary records were deleted through the app and have no undo.
+
+### Not yet touch-verified
+
+- [ ] Create a private scentlist and land in My Shelf.
+- [ ] Remix a recipe into a distinct saved recipe.
+- [ ] Exercise the unsaved-change confirmation before leaving Studio.
+
+These paths have automated coverage, but a physical touch walkthrough is still recommended. Live ML, community, cloud sync, iOS, and a signed release build are not established by this verification.
 
 See B2C_MVP.md for the PowerShell environment and Metro port 8083 commands. This milestone changes JavaScript/TypeScript only; no new native dependency was added.
