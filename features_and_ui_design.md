@@ -1,61 +1,49 @@
-# Fitur & Desain Antarmuka Essenza ("Spotify-nya Parfum")
+# Fitur & Desain Antarmuka Essenza ("Digital Scent Lab")
 
-Berikut adalah penjabaran fitur Essenza yang dirancang 100% untuk B2C (Konsumen), beserta bayangan desain UI/UX-nya untuk memberikan pengalaman seperti menggunakan Spotify atau aplikasi gaya hidup modern.
+Berikut adalah penjabaran fitur Essenza yang telah difokuskan menjadi **Sistem Prediksi Pencampuran Aroma Berbasis SMILES**. Desain antarmukanya berfokus pada pengalaman "Eksperimen Laboratorium Digital", dengan tetap mempertahankan estetika mewah dan elegan (Dark Mode & Emas).
 
 ---
 
-## 1. Onboarding & Pembuatan "Scent DNA" (Mirip Spotify 'Pilih Artis Favorit')
-*   **Tujuan:** Mengumpulkan data preferensi awal pengguna untuk melatih *Random Forest* tanpa membuat pengguna merasa sedang mengisi formulir kaku.
+## 1. Onboarding & Pengenalan Lab
+*   **Tujuan:** Mengenalkan pengguna pada konsep eksperimen wewangian secara digital.
 *   **Tampilan UI/UX:** 
-    *   Saat pertama kali mendaftar, layar dipenuhi oleh **Bubble interaktif** berisi gambar parfum ikonik atau ilustrasi suasana (misal: "Pantai Tropis", "Kabin Kayu", "Toko Roti").
-    *   Pengguna diminta mengetuk minimal 3 *bubble* yang mereka suka. *Bubble* yang dipilih akan membesar dan menyala.
-    *   Setelah selesai, muncul animasi *loading* elegan berbunyi: *"Membangun Scent DNA Anda..."* sebelum masuk ke Beranda.
+    *   Tampilan elegan dengan palet warna hitam dan emas.
+    *   Pengguna disambut dengan teks: *"Welcome to the Digital Scent Lab. Discover what happens when you mix molecules."*
+    *   Animasi struktur molekul/SMILES sederhana (berbentuk garis dan heksagon) yang bersinar di latar belakang.
 
-## 2. Beranda Utama (Home - "Discover Your Next Signature Scent")
-*   **Tujuan:** Menampilkan rekomendasi harian berbasis ML dan memudahkan penemuan parfum baru.
+## 2. Experiment Bench (Halaman Utama)
+*   **Tujuan:** Area kerja utama tempat pengguna melakukan simulasi percampuran *notes*/senyawa.
 *   **Tampilan UI/UX:**
-    *   **Daily Mix:** Baris horizontal (*Carousel*) bergaya *cover* album bertuliskan **"Scent Mix for You"**. Berisi 5 parfum yang direkomendasikan hari itu.
-    *   **Skor Kecocokan (Match Score):** Di pojok setiap kartu parfum, terdapat indikator lingkaran persentase berwarna hijau menyala (misal: **"92% Match"**).
-    *   **Trending Dupes:** *Carousel* terpisah yang menampilkan parfum lokal alternatif yang sedang ramai di-upvote oleh komunitas minggu ini.
+    *   **Molecule Picker:** Daftar kartu *notes* (Vanilla, Linalool, Citrus, dll). Pengguna bisa memilih 2 atau lebih notes.
+    *   **Ratio Sliders:** Setiap notes yang dipilih akan memunculkan *slider* interaktif. Pengguna bisa mengatur persentase (misalnya: 60% Vanillin, 40% Bergamot).
+    *   **Tombol "Predict Mixture":** Tombol emas di tengah bawah layar. Saat ditekan, sistem backend memproses struktur SMILES dan meneruskannya ke algoritma Random Forest. Animasi *loading* elegan berbunyi *"Simulating Chemical Interactions..."*.
 
-## 3. Halaman Detail Parfum & "Dupe Radar" (Mirip "Now Playing")
-*   **Tujuan:** Menampilkan detail komposisi (*notes*) dan jembatan menuju monetisasi (*Affiliate*).
+## 3. Lab Results (Hasil Prediksi AI)
+*   **Tujuan:** Menampilkan hasil prediksi Machine Learning berdasarkan campuran SMILES dari pengguna.
 *   **Tampilan UI/UX:**
-    *   Gambar botol parfum mendominasi layar dengan latar belakang gradien yang menyesuaikan warna botol utama (adaptif seperti UI Spotify).
-    *   **Scent DNA Visual:** Alih-alih daftar teks panjang, *notes* ditampilkan sebagai **Radar Chart** (Grafik Jaring Laba-laba) untuk menunjukkan dominasi wangi (Woody, Citrus, Floral, Sweet).
-    *   **Dupe Radar (Tombol FAB):** Tombol melayang di bawah layar. Jika ditekan, akan memunculkan laci dari bawah (*Bottom Sheet*) berisi daftar parfum lokal/terjangkau yang 90%+ mirip.
-    *   **Tombol Konversi:** Tombol besar bertuliskan **"Beli di Shopee/Tokopedia"** di sebelah tombol *Add to Wardrobe*.
+    *   **Odor Profile Radar:** Menampilkan *Radar Chart* yang memvisualisasikan keluarga aroma dominan (contoh: ujung jaring tertarik ke arah Woody 70%, Floral 20%, Sweet 10%).
+    *   **Compound Match:** Daftar parfum komersial (dari dataset FragDB) yang komposisi kimianya paling mendekati profil hasil campuran eksperimen pengguna (misal: *"Prediksi: Campuran Anda memiliki 92% kecocokan dengan profil aroma YSL Black Opium"*).
+    *   Terdapat tombol **"Save to Notebook"** untuk menyimpan hasil eksperimen.
 
-## 4. Virtual Perfume Wardrobe (Mirip Halaman "Your Library")
-*   **Tujuan:** Lemari digital tempat pengguna mencatat koleksi mereka (yang menjadi sumber data utama aplikasi).
+## 4. Lab Notebook (Pengganti Wardrobe)
+*   **Tujuan:** Lemari/Jurnal digital tempat pengguna menyimpan log catatan riwayat eksperimen (racikan) mereka.
 *   **Tampilan UI/UX:**
-    *   Terdapat 3 *Tab* navigasi: **"Have"** (Koleksi Saat Ini), **"Had"** (Pernah Punya), **"Want"** (Wishlist).
-    *   Tampilannya *grid* estetis menampilkan foto-foto botol parfum.
-    *   Di bagian atas layar, terdapat ringkasan AI: *"Koleksimu didominasi oleh wangi Vanilla (40%) dan White Floral (30%)."*
+    *   Daftar (*list*) berbentuk jurnal/buku catatan elegan. 
+    *   Setiap kartu entri bertuliskan nama eksperimen (misal: "Experiment #04 - Sweet Wood"), menampilkan rasio inputnya, dan hasil prediksinya.
+    *   Pengguna dapat memberi catatan manual pada log tersebut.
 
-## 5. Mix & Match / Layering Studio (Mirip Fitur "Blend")
-*   **Tujuan:** Fitur andalan yang menyarankan pengguna menyemprotkan dua parfum berbeda secara bersamaan untuk menghasilkan wangi unik.
+## 5. Peer Validation (Fitur Komunitas)
+*   **Tujuan:** Validasi algoritma dari pengguna sungguhan (*Human-in-the-loop*).
 *   **Tampilan UI/UX:**
-    *   Layar interaktif (*drag-and-drop*). Pengguna menyeret dua parfum dari lemari digital mereka ke lingkaran di tengah layar.
-    *   Muncul animasi percampuran warna, diikuti hasil prediksi model: *"Percampuran ini sangat cocok! Menghasilkan aroma mirip [Parfum Mahal X] dengan ketahanan 8 jam."*
-
-## 6. Komunitas & Validasi Dupe (Validasi Data Latih)
-*   **Tujuan:** Mengumpulkan *labeled data* (kemiripan/dupe) dari pengguna secara organik untuk melatih ulang model Random Forest agar semakin presisi.
-*   **Tampilan UI/UX:**
-    *   Setiap kali pengguna melihat daftar rekomendasi *dupe*, terdapat pertanyaan *pop-up* sederhana bergaya Tinder: *"Apakah parfum ini mirip dengan aslinya? 👍 Mirip | 👎 Beda Jauh"*
-    *   Terdapat indikator sosial di setiap *dupe* (misal: "Disetujui oleh 450 orang").
+    *   Area publik di mana pengguna bisa mempublikasikan hasil eksperimen mereka.
+    *   Pengguna lain bisa melihat hasil tersebut dan memberikan *Vote* (Validasi): *"Apakah racikan ini secara logika wangi masuk akal? 👍 Ya | 👎 Tidak"*.
+    *   Data ini akan digunakan untuk menyempurnakan bobot prediksi Random Forest di masa depan.
 
 ---
 
 ## 7. Penyesuaian Kode Frontend Saat Ini (`App.js`)
-Setelah meninjau kode `App.js` versi sekarang, berikut adalah fitur-fitur yang **harus dihapus atau dirombak total** agar sesuai dengan visi 100% B2C ("Spotify-nya Parfum"):
 
-**❌ Yang Harus Dihapus:**
-1.  **Mode Chemist / Pro Mode:** Antarmuka yang memungkinkan input rumus kimia (SMILES) seperti `CC(=CCC/C(=C/CO)C)C`. Ini terlalu rumit untuk pengguna awam dan lebih cocok untuk B2B/Pakar.
-2.  **Data Molekul (`NOTE_MOLECULES`):** Data senyawa seperti *Linalool, Geraniol, Eugenol* tidak lagi relevan. Pengguna B2C hanya peduli pada kategori wangi yang mudah dipahami (Floral, Woody, Sweet, dll).
-3.  **Teks "Scent Profile Predictor" yang Kaku:** Harus diganti dengan *tagline* yang lebih gaya hidup, misalnya *"Discover Your Signature Scent"*.
-
-**🔄 Yang Harus Disinkronkan / Ditambahkan:**
-1.  **Ubah Alur Awal (State):** Daripada langsung masuk ke pencarian wangi, aplikasi harus dibuka dengan **Halaman Onboarding (Pilih Bubble Notes/Parfum)** untuk membangun *Scent DNA* awal mereka.
-2.  **Tambahkan Mock Data "Virtual Wardrobe":** Buat *state* baru di React Native (misal: `const [wardrobe, setWardrobe] = useState([])`) agar pengguna bisa menyimpan `PERFUME_DB` ke dalam koleksi pribadi mereka.
-3.  **Ubah Tampilan Hasil (Rekomendasi):** Hasil rekomendasi jangan hanya ditampilkan sebagai daftar (*list*) sederhana, tapi diubah menjadi desain *Carousel* horizontal ala "Daily Mix" di Spotify.
+**🔄 Yang Harus Dirombak:**
+1.  **Navigasi Utama:** Ubah nama *tab* navigasi dari `Home` dan `Wardrobe` menjadi `ExperimentBench` dan `LabNotebook`.
+2.  **Layar Utama:** Hapus `HomeScreen.js` yang lama (berisi Daily Mix). Buat layar baru bernama `ExperimentBenchScreen.js` yang mengakomodasi pemilihan notes dan pengaturan persentase (Sliders).
+3.  **Tampilan Hasil:** Sesuaikan `PerfumeDetailScreen.js` menjadi `LabResultScreen.js` yang menonjolkan visualisasi *Radar Chart* dari profil wangi hasil eksperimen.
