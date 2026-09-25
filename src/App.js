@@ -81,8 +81,8 @@ export default function App() {
     <SafeAreaProvider>
       <LabProvider>
         <StatusBar
-          barStyle="dark-content"
-          backgroundColor={colors.background}
+          barStyle={showSplash ? 'light-content' : 'dark-content'}
+          backgroundColor={showSplash ? colors.splash : colors.background}
         />
         {showSplash ? (
           <SplashScreen />

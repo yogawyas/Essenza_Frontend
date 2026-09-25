@@ -1,5 +1,6 @@
 import { Platform, StyleSheet } from 'react-native';
 export const colors = {
+  splash: '#192F24',
   background: '#F5F5EF',
   paper: '#FFFFFF',
   ink: '#173A32',

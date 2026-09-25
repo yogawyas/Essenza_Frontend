@@ -53,12 +53,12 @@ test('splash is shown for 1.5 seconds before the workspace', async () => {
     tree.unmount();
     tree = TestRenderer.create(<App />);
   });
-  expect(JSON.stringify(tree.toJSON())).toContain('Menyiapkan ruang kerja');
+  expect(JSON.stringify(tree.toJSON())).toContain('Layar pembuka Essenza');
   expect(JSON.stringify(tree.toJSON())).not.toContain('Analisis molekul');
   await act(async () => {
     jest.advanceTimersByTime(SPLASH_DURATION_MS - 1);
   });
-  expect(JSON.stringify(tree.toJSON())).toContain('Menyiapkan ruang kerja');
+  expect(JSON.stringify(tree.toJSON())).toContain('Layar pembuka Essenza');
   await act(async () => {
     jest.advanceTimersByTime(1);
   });
