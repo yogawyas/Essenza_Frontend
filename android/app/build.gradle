@@ -79,7 +79,7 @@ android {
 
     namespace "com.essenza.app"
     defaultConfig {
-        applicationId "com.essenza.app"
+        applicationId "com.essenza.lab"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
         versionCode 1
