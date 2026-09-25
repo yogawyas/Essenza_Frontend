@@ -2,10 +2,15 @@ import React from 'react';
 import TestRenderer, { act } from 'react-test-renderer';
 import { TextInput, Text } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import App from '../src/App';
+import App, { SPLASH_DURATION_MS } from '../src/App';
 import { Button } from '../src/ui/components';
 import { LabProvider, useLab } from '../src/storage/LabProvider';
 let tree;
+async function finishSplash() {
+  await act(async () => {
+    jest.advanceTimersByTime(SPLASH_DURATION_MS);
+  });
+}
 beforeEach(async () => {
   jest.useFakeTimers();
   jest.clearAllMocks();
@@ -14,6 +19,7 @@ beforeEach(async () => {
   await act(async () => {
     tree = TestRenderer.create(<App />);
   });
+  await finishSplash();
 });
 afterEach(async () => {
   await act(async () => {
@@ -42,6 +48,22 @@ async function showResult() {
     jest.advanceTimersByTime(1000);
   });
 }
+test('splash is shown for 1.5 seconds before the workspace', async () => {
+  await act(async () => {
+    tree.unmount();
+    tree = TestRenderer.create(<App />);
+  });
+  expect(JSON.stringify(tree.toJSON())).toContain('Menyiapkan ruang kerja');
+  expect(JSON.stringify(tree.toJSON())).not.toContain('Analisis molekul');
+  await act(async () => {
+    jest.advanceTimersByTime(SPLASH_DURATION_MS - 1);
+  });
+  expect(JSON.stringify(tree.toJSON())).toContain('Menyiapkan ruang kerja');
+  await act(async () => {
+    jest.advanceTimersByTime(1);
+  });
+  expect(JSON.stringify(tree.toJSON())).toContain('Analisis molekul');
+});
 test('blank input reports an actionable error; demo can be saved without duplicate records', async () => {
   await act(async () => {
     button('Lihat contoh hasil').props.onPress();
@@ -118,6 +140,7 @@ test('unreadable history blocks writes until a successful reload', async () => {
   await act(async () => {
     tree = TestRenderer.create(<App />);
   });
+  await finishSplash();
   await showResult();
   expect(button('Simpan ke riwayat').props.disabled).toBe(true);
   expect(AsyncStorage.setItem).not.toHaveBeenCalled();

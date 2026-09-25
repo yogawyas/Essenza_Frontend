@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { StatusBar } from 'react-native';
 import { DefaultTheme, NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
@@ -8,11 +8,13 @@ import { AnalysisScreen } from './screens/AnalysisScreen';
 import { ResultScreen } from './screens/ResultScreen';
 import { HistoryScreen } from './screens/HistoryScreen';
 import { GuideScreen } from './screens/GuideScreen';
+import { SplashScreen } from './screens/SplashScreen';
 import { LabProvider } from './storage/LabProvider';
 import { Icon } from './ui/Icon';
 import { colors } from './ui/theme';
 const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
+export const SPLASH_DURATION_MS = 1500;
 const icons = {
   Analysis: 'flask',
   History: 'history',
@@ -68,16 +70,30 @@ function Workspace() {
   );
 }
 export default function App() {
+  const [showSplash, setShowSplash] = useState(true);
+
+  useEffect(() => {
+    const timer = setTimeout(() => setShowSplash(false), SPLASH_DURATION_MS);
+    return () => clearTimeout(timer);
+  }, []);
+
   return (
     <SafeAreaProvider>
       <LabProvider>
-        <StatusBar barStyle="dark-content" />
-        <NavigationContainer theme={theme}>
-          <Stack.Navigator screenOptions={{ headerShown: false }}>
-            <Stack.Screen name="Workspace" component={Workspace} />
-            <Stack.Screen name="Result" component={ResultScreen} />
-          </Stack.Navigator>
-        </NavigationContainer>
+        <StatusBar
+          barStyle="dark-content"
+          backgroundColor={colors.background}
+        />
+        {showSplash ? (
+          <SplashScreen />
+        ) : (
+          <NavigationContainer theme={theme}>
+            <Stack.Navigator screenOptions={{ headerShown: false }}>
+              <Stack.Screen name="Workspace" component={Workspace} />
+              <Stack.Screen name="Result" component={ResultScreen} />
+            </Stack.Navigator>
+          </NavigationContainer>
+        )}
       </LabProvider>
     </SafeAreaProvider>
   );
