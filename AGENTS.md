@@ -2,7 +2,8 @@
 
 User: Yoga. Scope: a laboratory demonstrator for the odor labels of one molecule.
 
-- `Yoga` and `main` carry this B2B app. Never change or push to
+- `Yoga` carries this B2B app. Do not push this work to `main` unless Yoga
+  explicitly changes that decision. Never change or push to
   `codex/essenza-b2c`; it belongs to a separate B2C project.
 - The app uses React Native with JavaScript (`.js` for screens, logic, and tests).
   Yoga explicitly requested JavaScript. Do not introduce TypeScript or TSX.

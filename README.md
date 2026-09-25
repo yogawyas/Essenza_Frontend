@@ -1,7 +1,7 @@
 # Essenza Lab
 
 React Native B2B demonstrator untuk analisis aroma satu molekul.
-Branch `Yoga` dan `main` berisi versi laboratorium; versi konsumen tetap ada di
+Branch `Yoga` berisi versi laboratorium ini. Versi konsumen tetap ada di
 `codex/essenza-b2c`.
 
 Saat ini aplikasi memakai **data dummy lokal**, tanpa backend/API. Label dan skor

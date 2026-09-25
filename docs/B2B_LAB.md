@@ -47,9 +47,9 @@ Android/iOS bundle ID versi B2B: `com.essenza.lab`, nama tampilan `Essenza Lab`.
 Ini memisahkan instalasi dari aplikasi B2C `com.essenza.app`. Nama modul native
 tetap Essenza agar bootstrap React Native yang ada tetap cocok.
 
-Pengembangan dilakukan di `Yoga`, lalu diterbitkan ke `main`. Branch
-`codex/essenza-b2c` dipertahankan untuk proyek terpisah. Layar dan dokumentasi B2C
-lama di Yoga dikeluarkan dari versi aktif; dapat dipulihkan lewat riwayat Git.
+Pengembangan B2B disimpan hanya di branch `Yoga`. Branch `codex/essenza-b2c`
+dipertahankan untuk proyek terpisah. Layar dan dokumentasi B2C lama di Yoga
+dikeluarkan dari versi aktif; dapat dipulihkan lewat riwayat Git.
 
 ## Pemeriksaan manual
 
