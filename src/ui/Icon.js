@@ -37,9 +37,14 @@ export function Icon({ name, color = colors.ink, size = 22 }) {
   );
 }
 /** Abstract brand illustration, not a rendering of the user's molecular structure. */
-export function MoleculeMark() {
+export function MoleculeMark({ size = 110 }) {
   return (
-    <Svg width={98} height={110} viewBox="0 0 100 110" accessible={false}>
+    <Svg
+      width={size * 0.91}
+      height={size}
+      viewBox="0 0 100 110"
+      accessible={false}
+    >
       <Path
         d="M49 13 79 30v35L49 83 19 65V30L49 13M49 83v20M79 30 95 21M19 65 4 74M26 35v24M49 22l23 13M72 60 49 74"
         stroke="#A5C2A8"

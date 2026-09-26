@@ -1,7 +1,7 @@
 import React from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { Notice, Page } from '../ui/components';
-import { colors, s } from '../ui/theme';
+import { colors, s, sans } from '../ui/theme';
 export function GuideScreen() {
   return (
     <Page>
@@ -107,6 +107,7 @@ const styles = StyleSheet.create({
     paddingVertical: 6,
   },
   number: {
+    fontFamily: sans,
     fontSize: 12,
     fontWeight: '600',
     color: colors.green,
@@ -122,6 +123,7 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   metric: {
+    fontFamily: sans,
     fontSize: 27,
     color: colors.ink,
     fontWeight: '600',

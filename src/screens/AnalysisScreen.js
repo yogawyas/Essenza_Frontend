@@ -12,7 +12,7 @@ import { inputError } from '../domain/analysis';
 import { demoPredictionService, EXAMPLES } from '../services/demoPrediction';
 import { Button, Notice, Page, SectionTitle } from '../ui/components';
 import { Icon, MoleculeMark } from '../ui/Icon';
-import { colors, mono, s } from '../ui/theme';
+import { colors, mono, s, sans } from '../ui/theme';
 export function AnalysisScreen({ service = demoPredictionService }) {
   const navigation = useNavigation();
   const [smiles, setSmiles] = useState('');
@@ -66,9 +66,12 @@ export function AnalysisScreen({ service = demoPredictionService }) {
   return (
     <Page>
       <View style={styles.hero}>
-        <Text style={styles.heroEyebrow}>RUANG KERJA LABORATORIUM</Text>
-        <View style={s.row}>
-          <View style={s.grow}>
+        <View style={styles.heroEyebrowRow}>
+          <View style={styles.heroAccent} />
+          <Text style={styles.heroEyebrow}>RUANG KERJA LABORATORIUM</Text>
+        </View>
+        <View style={styles.heroContent}>
+          <View style={styles.heroCopy}>
             <Text style={styles.heroTitle}>
               Satu molekul.{'\n'}Beragam aroma.
             </Text>
@@ -76,12 +79,7 @@ export function AnalysisScreen({ service = demoPredictionService }) {
               Eksplorasi profil aroma molekul dalam satu ruang analisis.
             </Text>
           </View>
-          <MoleculeMark />
-        </View>
-        <View style={styles.heroFooter}>
-          <View style={styles.liveDot} />
-          <Text style={styles.heroCaption}>MODE DEMO</Text>
-          <Text style={styles.heroHint}>Data contoh · tanpa koneksi API</Text>
+          <MoleculeMark size={116} />
         </View>
       </View>
 
@@ -194,48 +192,54 @@ export function AnalysisScreen({ service = demoPredictionService }) {
 }
 const styles = StyleSheet.create({
   hero: {
-    borderRadius: 22,
+    minHeight: 250,
+    borderRadius: 26,
     backgroundColor: colors.ink,
-    padding: 22,
-    gap: 18,
+    paddingHorizontal: 24,
+    paddingVertical: 25,
+    gap: 20,
     overflow: 'hidden',
   },
+  heroEyebrowRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 9,
+  },
+  heroAccent: {
+    width: 22,
+    height: 2,
+    borderRadius: 1,
+    backgroundColor: colors.gold,
+  },
   heroEyebrow: {
+    fontFamily: sans,
     fontSize: 9,
     letterSpacing: 1.8,
     fontWeight: '600',
     color: '#C6D9C7',
   },
-  heroTitle: {
-    fontSize: 29,
-    lineHeight: 36,
-    letterSpacing: -0.9,
-    fontWeight: '500',
-    color: '#FFFFFF',
-  },
-  heroBody: { fontSize: 12, lineHeight: 19, color: '#C6D9C7', marginTop: 10 },
-  heroFooter: {
-    borderTopWidth: 1,
-    borderColor: '#436054',
-    paddingTop: 16,
+  heroContent: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
-    flexWrap: 'wrap',
+    gap: 12,
   },
-  liveDot: {
-    width: 5,
-    height: 5,
-    borderRadius: 3,
-    backgroundColor: colors.gold,
+  heroCopy: { flex: 1, zIndex: 1 },
+  heroTitle: {
+    fontFamily: sans,
+    fontSize: 28,
+    lineHeight: 35,
+    letterSpacing: -0.7,
+    fontWeight: '700',
+    color: '#FFFFFF',
   },
-  heroCaption: {
-    color: colors.gold,
-    fontSize: 9,
-    fontWeight: '600',
-    letterSpacing: 1,
+  heroBody: {
+    fontFamily: sans,
+    fontSize: 12,
+    lineHeight: 19,
+    color: '#C6D9C7',
+    marginTop: 12,
+    maxWidth: 240,
   },
-  heroHint: { color: '#C6D9C7', fontSize: 10, marginLeft: 5 },
   fieldGroup: { gap: 9 },
   smiles: {
     minHeight: 105,
@@ -265,12 +269,13 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   exampleName: {
+    fontFamily: sans,
     fontSize: 15,
     color: colors.ink,
     fontWeight: '600',
     marginBottom: 2,
   },
-  exampleIndex: { fontFamily: mono, color: colors.muted, fontSize: 11 },
+  exampleIndex: { fontFamily: sans, color: colors.muted, fontSize: 11 },
   pressed: { opacity: 0.7 },
   footer: { flexDirection: 'row', gap: 10, paddingHorizontal: 3 },
 });

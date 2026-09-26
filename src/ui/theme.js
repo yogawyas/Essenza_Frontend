@@ -15,6 +15,11 @@ export const colors = {
   errorBg: '#FBECE8',
 };
 export const mono = Platform.select({ ios: 'Menlo', default: 'monospace' });
+export const sans = Platform.select({
+  ios: 'System',
+  android: 'sans-serif',
+  default: 'sans-serif',
+});
 export const s = StyleSheet.create({
   row: { flexDirection: 'row', alignItems: 'center', gap: 10 },
   between: {
@@ -34,12 +39,14 @@ export const s = StyleSheet.create({
     gap: 16,
   },
   eyebrow: {
+    fontFamily: sans,
     fontSize: 10,
     fontWeight: '700',
     letterSpacing: 2,
     color: colors.muted,
   },
   title: {
+    fontFamily: sans,
     fontSize: 30,
     lineHeight: 37,
     fontWeight: '600',
@@ -47,16 +54,33 @@ export const s = StyleSheet.create({
     color: colors.ink,
   },
   heading: {
+    fontFamily: sans,
     fontSize: 18,
     fontWeight: '600',
     color: colors.ink,
     letterSpacing: -0.4,
   },
-  body: { fontSize: 14, lineHeight: 22, color: colors.muted },
-  small: { fontSize: 12, lineHeight: 19, color: colors.muted },
+  body: {
+    fontFamily: sans,
+    fontSize: 14,
+    lineHeight: 22,
+    color: colors.muted,
+  },
+  small: {
+    fontFamily: sans,
+    fontSize: 12,
+    lineHeight: 19,
+    color: colors.muted,
+  },
   mono: { fontFamily: mono, fontSize: 12, lineHeight: 21, color: colors.ink },
-  label: { fontSize: 12, color: colors.ink, fontWeight: '600' },
+  label: {
+    fontFamily: sans,
+    fontSize: 12,
+    color: colors.ink,
+    fontWeight: '600',
+  },
   field: {
+    fontFamily: sans,
     minHeight: 50,
     paddingHorizontal: 14,
     paddingVertical: 12,

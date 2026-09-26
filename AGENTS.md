@@ -2,6 +2,15 @@
 
 User: Yoga. Scope: a laboratory demonstrator for the odor labels of one molecule.
 
+- Never invent or guess Yoga's intended design, asset, screen, behavior, or
+  project state. Inspect the exact referenced branch, file, screenshot, and
+  existing asset first. If more than one interpretation remains and it would
+  change the result, ask Yoga before editing.
+- Reuse the exact project asset or design Yoga identifies. Do not redraw,
+  replace, or "improve" it from memory unless Yoga explicitly requests that.
+- Clearly separate verified facts, inferences, proposals, and unknowns. Never
+  claim a test, device run, push, or visual check without direct evidence.
+
 - `Yoga` carries this B2B app. Do not push this work to `main` unless Yoga
   explicitly changes that decision. Never change or push to
   `codex/essenza-b2c`; it belongs to a separate B2C project.

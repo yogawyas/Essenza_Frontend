@@ -11,7 +11,7 @@ import { useNavigation } from '@react-navigation/native';
 import { useLab } from '../storage/LabProvider';
 import { Button, dateLabel, DemoBadge, Notice, Page } from '../ui/components';
 import { Icon } from '../ui/Icon';
-import { colors, s } from '../ui/theme';
+import { colors, s, sans } from '../ui/theme';
 export function HistoryScreen() {
   const navigation = useNavigation();
   const { records, ready, error, reload } = useLab();
@@ -138,6 +138,7 @@ const styles = StyleSheet.create({
     paddingLeft: 14,
   },
   searchInput: {
+    fontFamily: sans,
     flex: 1,
     minHeight: 50,
     color: colors.ink,
@@ -148,6 +149,7 @@ const styles = StyleSheet.create({
   pressed: { opacity: 0.7 },
   labels: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, flex: 1 },
   chip: {
+    fontFamily: sans,
     fontSize: 11,
     color: colors.green,
     backgroundColor: colors.pale,

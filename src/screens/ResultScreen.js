@@ -8,7 +8,8 @@ import {
   Page,
   SectionTitle,
 } from '../ui/components';
-import { colors, s } from '../ui/theme';
+import { odorSymbol } from '../ui/odorSymbols';
+import { colors, s, sans } from '../ui/theme';
 export function ResultScreen({ route, navigation }) {
   const { result } = route.params;
   const lab = useLab();
@@ -85,19 +86,11 @@ export function ResultScreen({ route, navigation }) {
             >
               <View style={s.between}>
                 <View style={s.row}>
-                  <View
-                    style={[
-                      styles.swatch,
-                      {
-                        backgroundColor:
-                          index === 0
-                            ? colors.green
-                            : index === 1
-                            ? '#849F83'
-                            : colors.gold,
-                      },
-                    ]}
-                  />
+                  <View style={styles.aromaSymbol} accessible={false}>
+                    <Text style={styles.aromaEmoji}>
+                      {odorSymbol(item.label)}
+                    </Text>
+                  </View>
                   <Text style={styles.aroma}>{item.label}</Text>
                 </View>
                 <Text style={styles.score}>
@@ -199,14 +192,26 @@ export function ResultScreen({ route, navigation }) {
 }
 const styles = StyleSheet.create({
   scoreRow: { gap: 10, paddingVertical: 5 },
-  swatch: { height: 9, width: 9, borderRadius: 3 },
+  aromaSymbol: {
+    width: 36,
+    height: 36,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: colors.pale,
+    borderWidth: 1,
+    borderColor: colors.line,
+  },
+  aromaEmoji: { fontSize: 18, lineHeight: 24 },
   aroma: {
+    fontFamily: sans,
     fontSize: 16,
     color: colors.ink,
     textTransform: 'capitalize',
     fontWeight: '500',
   },
   score: {
+    fontFamily: sans,
     fontSize: 23,
     color: colors.ink,
     fontWeight: '500',
@@ -221,5 +226,5 @@ const styles = StyleSheet.create({
   bar: { height: 7, borderRadius: 4 },
   empty: { gap: 12, paddingVertical: 12 },
   delete: { alignItems: 'center', padding: 15 },
-  deleteText: { color: colors.error, fontSize: 13 },
+  deleteText: { fontFamily: sans, color: colors.error, fontSize: 13 },
 });

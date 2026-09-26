@@ -1,6 +1,7 @@
 import React from 'react';
 import {
   ActivityIndicator,
+  Image,
   KeyboardAvoidingView,
   Platform,
   Pressable,
@@ -10,7 +11,7 @@ import {
   View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { colors, s } from './theme';
+import { colors, s, sans } from './theme';
 import { Icon } from './Icon';
 export function Button({
   label,
@@ -79,14 +80,20 @@ export function Page({ children, back, title }) {
           </Pressable>
         ) : (
           <View style={styles.logo}>
-            <Icon name="flask" color={colors.green} size={23} />
+            <Image
+              accessibilityIgnoresInvertColors
+              source={require('../../assets/icon/Icon_Essenza.png')}
+              style={styles.logoImg}
+              resizeMode="cover"
+            />
           </View>
         )}
         <View style={s.grow}>
-          <Text style={styles.brand}>{title || 'essenza.'}</Text>
+          <Text style={title ? styles.headerTitle : styles.brand}>
+            {title || 'essenza.'}
+          </Text>
           <Text style={styles.tagline}>DIGITAL SCENT LAB</Text>
         </View>
-        <DemoBadge />
       </View>
       <KeyboardAvoidingView
         style={s.grow}
@@ -146,20 +153,31 @@ const styles = StyleSheet.create({
     borderColor: colors.line,
   },
   logo: {
-    backgroundColor: colors.pale,
     borderRadius: 13,
     width: 43,
     height: 43,
-    alignItems: 'center',
-    justifyContent: 'center',
+    overflow: 'hidden',
+  },
+  logoImg: {
+    width: 43,
+    height: 43,
   },
   brand: {
+    fontFamily: sans,
     fontSize: 26,
     color: colors.ink,
-    fontWeight: '600',
-    letterSpacing: -1.2,
+    fontWeight: '800',
+    letterSpacing: 0.6,
+  },
+  headerTitle: {
+    fontFamily: sans,
+    fontSize: 21,
+    color: colors.ink,
+    fontWeight: '700',
+    letterSpacing: -0.4,
   },
   tagline: {
+    fontFamily: sans,
     color: colors.muted,
     fontSize: 8,
     letterSpacing: 1.8,
@@ -176,6 +194,7 @@ const styles = StyleSheet.create({
   },
   dot: { width: 5, height: 5, borderRadius: 3, backgroundColor: colors.amber },
   badgeText: {
+    fontFamily: sans,
     color: colors.amber,
     fontSize: 9,
     letterSpacing: 1,
@@ -201,7 +220,12 @@ const styles = StyleSheet.create({
     gap: 10,
   },
   secondary: { backgroundColor: colors.pale },
-  buttonText: { fontSize: 14, fontWeight: '600', color: '#FFFFFF' },
+  buttonText: {
+    fontFamily: sans,
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#FFFFFF',
+  },
   secondaryText: { color: colors.ink },
   pressed: { opacity: 0.76 },
   disabled: { opacity: 0.55 },
@@ -213,11 +237,17 @@ const styles = StyleSheet.create({
     alignItems: 'flex-start',
     gap: 9,
   },
-  noticeText: { color: colors.amber, fontSize: 12, lineHeight: 19, flex: 1 },
+  noticeText: {
+    fontFamily: sans,
+    color: colors.amber,
+    fontSize: 12,
+    lineHeight: 19,
+    flex: 1,
+  },
   error: { backgroundColor: colors.errorBg },
   errorText: { color: colors.error },
   number: {
-    fontFamily: 'monospace',
+    fontFamily: sans,
     fontSize: 11,
     color: colors.green,
     backgroundColor: colors.pale,
