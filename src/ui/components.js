@@ -90,7 +90,7 @@ export function Page({ children, back, title }) {
         )}
         <View style={s.grow}>
           <Text style={title ? styles.headerTitle : styles.brand}>
-            {title || 'essenza.'}
+            {title || 'Essenza'}
           </Text>
           <Text style={styles.tagline}>DIGITAL SCENT LAB</Text>
         </View>
