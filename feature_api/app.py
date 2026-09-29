@@ -2,6 +2,8 @@
 
 import json
 import os
+import re
+from functools import lru_cache
 from pathlib import Path
 from urllib.parse import quote
 
@@ -32,12 +34,141 @@ CURATED_NAMES = {
     "linalool": ("CC(=CCCC(C)(C=C)O)C", None),
     "geraniol": ("CC(C)=CCC/C(C)=C/CO", None),
 }
+CATALOG = json.loads((ROOT / "src/assets/catalog/compounds.json").read_text(encoding="utf-8"))["compounds"]
+MAX_CANDIDATES = 20
+FORMULA_PATTERN = re.compile(r"(?:[A-Z][a-z]?\d*)+")
+COMMON_NAMES = {
+    "air": ("Air (H2O)", "O", "H2O"),
+    "water": ("Water (H2O)", "O", "H2O"),
+    "co2": ("Karbon dioksida (CO2)", "O=C=O", "CO2"),
+    "carbon dioxide": ("Carbon dioxide (CO2)", "O=C=O", "CO2"),
+}
+INDONESIAN_NAMES = {
+    "vanilin": "Vanillin",
+    "etanol": "Ethanol",
+    "etil asetat": "Ethyl acetate",
+    "asam asetat": "Acetic acid",
+}
+CATALOG_SMILES = {item["smiles"] for item in CATALOG}
 
 
 class FeatureRequest(BaseModel):
     smiles: str | None = Field(default=None, max_length=2000)
     compound_name: str | None = Field(default=None, max_length=200)
     feature_schema_id: str
+
+
+class ResolveRequest(BaseModel):
+    query: str = Field(min_length=1, max_length=200)
+
+
+def candidate(name, smiles, source, cid=None, formula=None):
+    mol = Chem.MolFromSmiles(smiles)
+    if mol is None or mol.GetNumAtoms() == 0 or len(Chem.GetMolFrags(mol)) != 1:
+        return None
+    canonical = Chem.MolToSmiles(mol, isomericSmiles=True)
+    return {
+        "name": name, "smiles": canonical,
+        "molecular_formula": formula or rdMolDescriptors.CalcMolFormula(mol),
+        "cid": str(cid) if cid is not None else None,
+        "source": source,
+        "in_catalog": source == "catalog" or canonical in CATALOG_SMILES,
+        "prediction_supported": (canonical not in {"O", "O=C=O"}
+                                 and any(atom.GetAtomicNum() == 6 for atom in mol.GetAtoms())),
+    }
+
+
+@lru_cache(maxsize=32)
+def catalog_matches(query, is_formula):
+    matches = []
+    for item in CATALOG:
+        if is_formula:
+            mol = Chem.MolFromSmiles(item["smiles"])
+            if mol is None or rdMolDescriptors.CalcMolFormula(mol) != query:
+                continue
+        elif query.casefold() not in (item["name"].casefold(),
+                                       *(alias.casefold() for alias in item["aliases"])):
+            continue
+        resolved = candidate(item["name"], item["smiles"], "catalog", item["cid"])
+        if resolved is None:
+            continue
+        matches.append(resolved)
+        if len(matches) > MAX_CANDIDATES:
+            break
+    return matches
+
+
+def pubchem_json(url):
+    try:
+        response = requests.get(url, timeout=(5, 10))
+        if response.status_code == 404:
+            return None
+        response.raise_for_status()
+        return response.json()
+    except (requests.RequestException, ValueError) as exc:
+        raise HTTPException(503, detail={"code": "LOOKUP_UNAVAILABLE",
+                                         "message": "Pencarian senyawa sedang tidak tersedia. Coba lagi."}) from exc
+
+
+def pubchem_matches(query, is_formula):
+    encoded = quote(query, safe="")
+    if is_formula:
+        endpoint = f"fastformula/{encoded}/cids/JSON?MaxRecords={MAX_CANDIDATES + 1}"
+    else:
+        endpoint = f"name/{encoded}/cids/JSON?name_type=complete"
+    root = "https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/"
+    identifiers = pubchem_json(root + endpoint)
+    if identifiers is None:
+        return []
+    try:
+        cids = identifiers["IdentifierList"]["CID"]
+    except (KeyError, TypeError) as exc:
+        raise HTTPException(503, detail={"code": "LOOKUP_UNAVAILABLE",
+                                         "message": "Respons pencarian senyawa tidak valid."}) from exc
+    if len(cids) > MAX_CANDIDATES:
+        raise HTTPException(422, detail={"code": "TOO_MANY_MATCHES",
+                                         "message": "Terlalu banyak struktur yang cocok. Masukkan nama yang lebih spesifik."})
+    if not cids:
+        return []
+    properties = pubchem_json(root + f"cid/{','.join(map(str, cids))}/property/SMILES,MolecularFormula,IUPACName,Title/JSON")
+    try:
+        records = properties["PropertyTable"]["Properties"]
+    except (KeyError, TypeError) as exc:
+        raise HTTPException(503, detail={"code": "LOOKUP_UNAVAILABLE",
+                                         "message": "Detail senyawa tidak tersedia."}) from exc
+    matches = []
+    seen = set()
+    for record in records:
+        item = candidate(record.get("Title") or record.get("IUPACName") or query,
+                         record.get("SMILES", ""), "pubchem", record.get("CID"),
+                         record.get("MolecularFormula"))
+        if item and item["smiles"] not in seen:
+            matches.append(item)
+            seen.add(item["smiles"])
+    return matches
+
+
+@app.post("/resolve")
+def resolve(request: ResolveRequest):
+    query = request.query.strip()
+    if not query:
+        raise HTTPException(422, detail={"code": "EMPTY_QUERY", "message": "Masukkan nama atau rumus senyawa."})
+    common = COMMON_NAMES.get(query.casefold())
+    if common:
+        matches = [candidate(common[0], common[1], "common_name", formula=common[2])]
+    else:
+        mapped_name = INDONESIAN_NAMES.get(query.casefold(), query)
+        is_formula = bool(FORMULA_PATTERN.fullmatch(mapped_name))
+        matches = catalog_matches(mapped_name, is_formula)
+        if len(matches) > MAX_CANDIDATES:
+            raise HTTPException(422, detail={"code": "TOO_MANY_MATCHES",
+                                             "message": "Banyak molekul punya rumus ini. Masukkan nama yang lebih spesifik."})
+        if not matches:
+            matches = pubchem_matches(mapped_name, is_formula)
+    if not matches:
+        raise HTTPException(404, detail={"code": "COMPOUND_NOT_FOUND",
+                                         "message": "Senyawa tidak ditemukan. Coba nama atau rumus lain."})
+    return {"query": query, "candidates": matches}
 
 
 def lookup_name(name):

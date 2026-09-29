@@ -2,7 +2,7 @@
 
 Tanggal: 29 September 2026.
 
-1. Pengguna memilih senyawa dari katalog lokal **6.686 molekul** yang berasal dari dataset final. Tiap pilihan sudah memiliki SMILES kanonis, sehingga nama bebas tidak perlu dicocokkan melalui PubChem. Pencarian katalog dapat memakai nama, alias, CID, atau SMILES. Mode SMILES lanjutan tetap tersedia untuk molekul valid di luar katalog.
+1. Pengguna memilih senyawa dari katalog lokal **6.686 molekul** atau mengetik nama/rumus pada mode input bebas. Mode kedua memanggil `POST /resolve`: nama dicocokkan secara tepat dengan nama/alias katalog terlebih dahulu, lalu dicari di PubChem jika belum ada; rumus dicocokkan dengan struktur katalog dan dapat menghasilkan beberapa isomer. Pengguna harus memilih satu kandidat sebelum prediksi. `Air` dan `CO2` dikenali sebagai contoh senyawa di luar cakupan aroma dan tidak diprediksi. Input SMILES murni tersedia di bagian lanjutan.
 2. `feature_api/app.py` memvalidasi satu molekul dengan RDKit, mengkanonisasi SMILES, lalu menghasilkan vektor `float32` berisi **2.048 bit Morgan radius 2 tanpa chirality** dan delapan deskriptor sesuai urutan manifest v7.
 3. Aplikasi membandingkan `model_id`, `bundle_id`, `feature_schema_id`, panjang dan nilai vektor. Native bridge Android memeriksa SHA-256 setiap aset ONNX dan menjalankan **109 model LightGBM D**. Kegagalan satu model membatalkan seluruh prediksi; tidak ada hasil parsial.
 4. Layar hasil menampilkan label dengan skor >= **0,5** dan menyediakan seluruh 109 skor. Hasil beserta input, SMILES kanonis, waktu, dan identitas model dapat disimpan secara lokal. Pengguna dapat menyimpan senyawa ke Koleksi, menambah nama panggilan/catatan, menghapusnya, dan memprediksi ulang dari struktur yang tersimpan.
@@ -11,13 +11,13 @@ API hanya mengekstraksi fitur; **inferensi ML berlangsung di perangkat**. Model 
 
 Komponen utama:
 
-- `feature_api/app.py`: endpoint `GET /health` dan `POST /fingerprint`.
+- `feature_api/app.py`: endpoint `GET /health`, `POST /resolve`, dan `POST /fingerprint`.
 - `scripts/export-v7-onnx.py`: ekspor dan uji kesetaraan model.
 - `src/services/v7Prediction.js`: validasi kontrak API, antrean inferensi, hasil dan error.
 - `src/services/featureApiConfig.js`: alamat API tersimpan terpisah dari riwayat.
 - `scripts/build-compound-catalog.py` dan `src/assets/catalog/compounds.json`: pilihan senyawa lokal yang dapat direproduksi dari dataset beku, tanpa mengubah backend riset.
 - `android/app/src/main/java/com/com.essenza.app/EssenzaOnnxModule.kt`: inferensi ONNX Android.
 - `src/screens/`: Analisis, Hasil, Koleksi, Riwayat, Panduan. `src/storage/` menyimpan maksimal 200 senyawa dan 100 hasil dalam namespace terpisah.
-- `src/tutorial/`: tutorial empat langkah saat pertama dibuka dan dapat diulang dari Panduan.
+- `src/tutorial/`: tutorial lima langkah saat pertama dibuka dan dapat diulang dari Panduan.
 
-Keberhasilan di HP melalui USB menggunakan `adb reverse` membuktikan alur lokal, belum membuktikan ketahanan server HTTPS atau kompatibilitas iOS. Prediksi baru masih membutuhkan layanan fitur; Koleksi dan Riwayat tersimpan lokal. Model v7 tetap memiliki batas dataset dan validasi yang perlu dijelaskan terpisah pada skripsi.
+Keberhasilan di HP melalui USB menggunakan `adb reverse` membuktikan alur lokal, belum membuktikan ketahanan server HTTPS atau kompatibilitas iOS. Input nama di luar katalog juga membutuhkan akses PubChem dari server; bila tidak tersedia, pencarian itu akan gagal dengan pesan jelas. Prediksi baru masih membutuhkan layanan fitur; Koleksi dan Riwayat tersimpan lokal. Rumus molekul tidak menentukan satu struktur secara unik, dan model v7 tetap memiliki batas dataset dan validasi yang perlu dijelaskan terpisah pada skripsi.

@@ -11,7 +11,7 @@ import { FAVORITES_KEY } from '../src/storage/favorites';
 import catalog from '../src/assets/catalog/compounds.json';
 import { v7PredictionService } from '../src/services/v7Prediction';
 jest.mock('../src/services/v7Prediction', () => ({
-  v7PredictionService: { predict: jest.fn() },
+  v7PredictionService: { predict: jest.fn(), resolve: jest.fn() },
 }));
 let tree;
 const scores = Array.from({ length: 109 }, (_, index) => ({
@@ -41,6 +41,7 @@ beforeEach(async () => {
   AsyncStorage.setItem.mockResolvedValue(undefined);
   v7PredictionService.predict.mockImplementation(async ({ smiles, sampleName }) =>
     prediction(smiles, sampleName));
+  v7PredictionService.resolve.mockResolvedValue([]);
   await act(async () => {
     tree = TestRenderer.create(<App />);
   });
@@ -122,6 +123,65 @@ test('catalog search selects a known structure and sends it for prediction', asy
     catalogName: 'Vanillin',
   }));
 });
+
+test('name or formula mode requires a confirmed candidate before prediction', async () => {
+  const candidates = [
+    { name: 'Ethanol', smiles: 'CCO', molecular_formula: 'C2H6O', cid: '702', in_catalog: true, prediction_supported: true },
+    { name: 'Dimethyl ether', smiles: 'COC', molecular_formula: 'C2H6O', cid: '8254', in_catalog: true, prediction_supported: true },
+  ];
+  v7PredictionService.resolve.mockResolvedValue(candidates);
+  await press('Cari nama atau rumus');
+  await act(async () => button('Prediksi aroma').props.onPress());
+  expect(v7PredictionService.predict).not.toHaveBeenCalled();
+  await act(async () => {
+    tree.root.findAllByType(TextInput)
+      .find(node => node.props.accessibilityLabel === 'Nama atau rumus senyawa')
+      .props.onChangeText('C2H6O');
+  });
+  await act(async () => button('Cari struktur').props.onPress());
+  expect(v7PredictionService.resolve).toHaveBeenCalledWith(expect.objectContaining({ query: 'C2H6O' }));
+  expect(JSON.stringify(tree.toJSON())).toContain('Dimethyl ether');
+  expect(v7PredictionService.predict).not.toHaveBeenCalled();
+  await press('Pilih struktur Ethanol, C2H6O');
+  await act(async () => button('Prediksi aroma').props.onPress());
+  expect(v7PredictionService.predict).toHaveBeenCalledWith(expect.objectContaining({
+    smiles: 'CCO', catalogName: 'Ethanol',
+  }));
+});
+
+test('editing a resolved query clears the selection and blocks stale prediction', async () => {
+  v7PredictionService.resolve.mockResolvedValue([
+    { name: 'Ethanol', smiles: 'CCO', molecular_formula: 'C2H6O', cid: '702', in_catalog: true, prediction_supported: true },
+  ]);
+  await press('Cari nama atau rumus');
+  const input = tree.root.findAllByType(TextInput)
+    .find(node => node.props.accessibilityLabel === 'Nama atau rumus senyawa');
+  await act(async () => input.props.onChangeText('Ethanol'));
+  await act(async () => button('Cari struktur').props.onPress());
+  await press('Pilih struktur Ethanol, C2H6O');
+  await act(async () => input.props.onChangeText('Vanillin'));
+  await act(async () => button('Prediksi aroma').props.onPress());
+  expect(v7PredictionService.predict).not.toHaveBeenCalled();
+});
+
+test('common non-aroma input can be identified but cannot be predicted', async () => {
+  v7PredictionService.resolve.mockResolvedValue([
+    { name: 'Karbon dioksida (CO2)', smiles: 'O=C=O', molecular_formula: 'CO2', cid: null,
+      in_catalog: false, prediction_supported: false },
+  ]);
+  await press('Cari nama atau rumus');
+  await act(async () => {
+    tree.root.findAllByType(TextInput)
+      .find(node => node.props.accessibilityLabel === 'Nama atau rumus senyawa')
+      .props.onChangeText('CO2');
+  });
+  await act(async () => button('Cari struktur').props.onPress());
+  await press('Pilih struktur Karbon dioksida (CO2), CO2');
+  expect(button('Simpan senyawa ke Koleksi')).toBeUndefined();
+  await act(async () => button('Prediksi aroma').props.onPress());
+  expect(v7PredictionService.predict).not.toHaveBeenCalled();
+  expect(JSON.stringify(tree.toJSON())).toContain('di luar cakupan prediksi aroma');
+});
 test('saved compound can be edited and analyzed again from Koleksi', async () => {
   await press('Pilih Vanillin');
   await act(async () => button('Simpan senyawa ke Koleksi').props.onPress());
@@ -149,7 +209,7 @@ test('first launch shows tutorial and skipping persists it', async () => {
   await act(async () => jest.advanceTimersByTime(1000));
   expect(JSON.stringify(tree.toJSON())).toContain('PANDUAN SINGKAT');
   await press('Langkah berikutnya');
-  expect(JSON.stringify(tree.toJSON())).toContain('Lihat profil aromanya');
+  expect(JSON.stringify(tree.toJSON())).toContain('Atau ketik nama / rumus');
   await press('Lewati tutorial');
   expect(AsyncStorage.setItem).toHaveBeenCalledWith(TUTORIAL_KEY, 'seen');
 });

@@ -3,10 +3,11 @@ import { Modal, Pressable, StyleSheet, Text, useWindowDimensions, View } from 'r
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { colors, s, sans } from '../ui/theme';
 
-export const TUTORIAL_KEY = '@essenza/b2b-tutorial-seen-v1';
+export const TUTORIAL_KEY = '@essenza/b2b-tutorial-seen-v2';
 const Context = createContext(null);
 const STEPS = [
   { target: 'catalog', title: 'Pilih senyawa', body: 'Ketuk daftar senyawa ini. Cari nama bahan, lalu pilih yang ingin dicek.' },
+  { target: 'translator', title: 'Atau ketik nama / rumus', body: 'Kalau bahan belum ketemu di daftar, ketik nama umum atau rumusnya. Periksa pilihan struktur sebelum diprediksi.' },
   { target: 'predict', title: 'Lihat profil aromanya', body: 'Setelah memilih bahan, tekan Prediksi aroma. Hasilnya menunjukkan beberapa karakter aroma yang mungkin muncul.' },
   { target: 'collection', title: 'Simpan bahan favorit', body: 'Di Koleksi, bahan yang sering dipakai bisa diberi catatan dan dianalisis ulang.' },
   { target: 'guide', title: 'Bantuan selalu ada', body: 'Buka Panduan kapan saja untuk memahami hasil atau mengulang tutorial ini.' },

@@ -92,6 +92,53 @@ async function fetchFeatures(smiles, compoundName, signal) {
   }
 }
 
+async function resolve({ query, signal }) {
+  const baseUrl = await loadFeatureApiUrl();
+  if (!baseUrl) {
+    throw new PredictionError('API_NOT_CONFIGURED', 'Koneksi analisis belum diatur. Buka Panduan atau hubungi pengelola.');
+  }
+  const controller = new AbortController();
+  const abort = () => controller.abort();
+  signal?.addEventListener('abort', abort);
+  const timeout = setTimeout(abort, 20000);
+  try {
+    cancelled(signal);
+    const response = await fetch(`${baseUrl}/resolve`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ query: query.trim() }),
+      signal: controller.signal,
+    });
+    const payload = await response.json();
+    if (!response.ok) {
+      const detail = payload?.detail;
+      throw new PredictionError(detail?.code || 'RESOLVE_ERROR',
+        detail?.message || 'Senyawa belum ditemukan. Coba nama atau rumus lain.');
+    }
+    if (!Array.isArray(payload?.candidates) || !payload.candidates.length ||
+      payload.candidates.some(item => typeof item?.name !== 'string' ||
+        typeof item?.smiles !== 'string' || !item.smiles ||
+        typeof item?.molecular_formula !== 'string' ||
+        typeof item?.in_catalog !== 'boolean' || typeof item?.prediction_supported !== 'boolean')) {
+      throw new PredictionError('RESOLVE_ERROR', 'Respons pencarian senyawa tidak valid.');
+    }
+    return payload.candidates;
+  } catch (error) {
+    if (signal?.aborted) {
+      throw new PredictionError('CANCELLED', 'Pencarian dibatalkan.');
+    }
+    if (error instanceof PredictionError) {
+      throw error;
+    }
+    throw new PredictionError('NETWORK', controller.signal.aborted
+      ? 'Pencarian terlalu lama. Coba lagi.'
+      : 'Layanan pencarian tidak terhubung. Periksa koneksi atau hubungi pengelola.');
+  } finally {
+    clearTimeout(timeout);
+    signal?.removeEventListener('abort', abort);
+  }
+}
+
 async function runModels(features, signal, onProgress) {
   cancelled(signal);
   const native = NativeModules.EssenzaOnnxV7;
@@ -139,6 +186,7 @@ async function predict({ smiles = '', compoundName = '', catalogName = '', sampl
 }
 
 export const v7PredictionService = {
+  resolve,
   predict(args) {
     const next = operation.then(() => predict(args), () => predict(args));
     operation = next.catch(() => undefined);

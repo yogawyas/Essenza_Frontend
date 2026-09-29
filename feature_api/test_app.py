@@ -71,3 +71,45 @@ class TestFeatureApi(unittest.TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.json()["lookup_source"], "pubchem")
         self.assertEqual(response.json()["smiles"], "CCOC(C)=O")
+
+    def test_resolve_common_names_and_ambiguous_formula(self):
+        water = self.client.post("/resolve", json={"query": "Air"})
+        self.assertEqual(water.status_code, 200)
+        self.assertEqual(water.json()["candidates"][0]["smiles"], "O")
+        self.assertFalse(water.json()["candidates"][0]["prediction_supported"])
+        carbon_dioxide = self.client.post("/resolve", json={"query": "CO2"})
+        self.assertEqual(carbon_dioxide.status_code, 200)
+        self.assertEqual(carbon_dioxide.json()["candidates"][0]["smiles"], "O=C=O")
+        self.assertFalse(carbon_dioxide.json()["candidates"][0]["prediction_supported"])
+        formula = self.client.post("/resolve", json={"query": "C2H6O"})
+        self.assertEqual(formula.status_code, 200)
+        structures = {item["smiles"] for item in formula.json()["candidates"]}
+        self.assertEqual(structures, {"CCO", "COC"})
+
+    def test_resolve_catalog_name_without_network(self):
+        with patch("feature_api.app.requests.get") as get:
+            response = self.client.post("/resolve", json={"query": "Vanillin"})
+            local_name = self.client.post("/resolve", json={"query": "vanilin"})
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()["candidates"][0]["source"], "catalog")
+        self.assertTrue(response.json()["candidates"][0]["in_catalog"])
+        self.assertEqual(local_name.json()["candidates"][0]["smiles"],
+                         response.json()["candidates"][0]["smiles"])
+        get.assert_not_called()
+
+    def test_resolve_external_name_requires_confirmable_structure(self):
+        with patch("feature_api.app.requests.get") as get:
+            get.side_effect = [
+                type("Response", (), {"status_code": 200,
+                    "raise_for_status": lambda self: None,
+                    "json": lambda self: {"IdentifierList": {"CID": [123]}}})(),
+                type("Response", (), {"status_code": 200,
+                    "raise_for_status": lambda self: None,
+                    "json": lambda self: {"PropertyTable": {"Properties": [{
+                        "CID": 123, "Title": "Example", "SMILES": "CCO",
+                        "MolecularFormula": "C2H6O"}]}}})(),
+            ]
+            response = self.client.post("/resolve", json={"query": "external example"})
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()["candidates"][0]["cid"], "123")
+        self.assertIn("name/external%20example/cids/JSON", get.call_args_list[0].args[0])

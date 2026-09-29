@@ -64,7 +64,7 @@ export function GuideScreen() {
       <View style={s.card}>
         <Text style={s.heading}>Tiga langkah utama</Text>
         {[
-          ['01', 'Pilih senyawa', 'Buka Analisis, pilih bahan dari katalog. Gunakan SMILES lanjutan hanya jika Anda sudah punya strukturnya.'],
+          ['01', 'Pilih atau cari senyawa', 'Pilih dari katalog atau ketik nama/rumus. Kalau hasilnya lebih dari satu, cek rumus dan struktur sebelum memilih. SMILES ada di input lanjutan.'],
           ['02', 'Lihat aromanya', 'Tekan Prediksi aroma. Beberapa karakter aroma bisa muncul sekaligus.'],
           ['03', 'Simpan yang penting', 'Simpan bahan di Koleksi untuk analisis ulang. Simpan hasil di Riwayat untuk melihat prediksi sebelumnya.'],
         ].map(([number, title, description]) => (
@@ -76,6 +76,15 @@ export function GuideScreen() {
             </View>
           </View>
         ))}
+      </View>
+      <View style={s.card}>
+        <Text style={s.heading}>Tentang nama dan rumus</Text>
+        <Text style={s.body}>
+          Nama umum dicocokkan ke katalog, lalu PubChem jika belum ada. Satu rumus bisa punya beberapa molekul berbeda, jadi aplikasi meminta Anda memilih strukturnya.
+        </Text>
+        <Text style={s.body}>
+          Air dan CO2 bisa ditemukan, tetapi bukan bahan aroma yang cocok untuk prediksi model ini. Senyawa organik di luar katalog dapat dicoba, dengan hasil yang perlu dicek langsung.
+        </Text>
       </View>
       <View style={s.card}>
         <Text style={s.heading}>Cara membaca hasil</Text>

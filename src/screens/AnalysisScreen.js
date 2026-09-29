@@ -25,9 +25,14 @@ export function AnalysisScreen({ service = v7PredictionService }) {
   const { visible: tutorialVisible, step: tutorialStep, registerAnchor } = useTutorial();
   const scrollRef = useRef(null);
   const catalogRef = useRef(null);
+  const translatorRef = useRef(null);
   const predictRef = useRef(null);
   const [inputMode, setInputMode] = useState('catalog');
   const [selectedCompound, setSelectedCompound] = useState(null);
+  const [query, setQuery] = useState('');
+  const [candidates, setCandidates] = useState([]);
+  const [resolvedCompound, setResolvedCompound] = useState(null);
+  const [resolving, setResolving] = useState(false);
   const [smiles, setSmiles] = useState('');
   const [sampleName, setSampleName] = useState('');
   const [busy, setBusy] = useState(false);
@@ -36,12 +41,15 @@ export function AnalysisScreen({ service = v7PredictionService }) {
   const inFlight = useRef(false);
   const requestVersion = useRef(0);
   const controller = useRef(null);
+  const lookupVersion = useRef(0);
+  const lookupController = useRef(null);
   useEffect(() => {
     registerAnchor('catalog', catalogRef);
+    registerAnchor('translator', translatorRef);
     registerAnchor('predict', predictRef);
   }, [registerAnchor]);
   useEffect(() => {
-    if (tutorialVisible && tutorialStep < 2) {
+    if (tutorialVisible && tutorialStep < 3) {
       const timer = setTimeout(() => scrollRef.current?.scrollTo({ y: 300, animated: true }), 160);
       return () => clearTimeout(timer);
     }
@@ -51,20 +59,65 @@ export function AnalysisScreen({ service = v7PredictionService }) {
       return () => {
         controller.current?.abort();
         controller.current = null;
+        lookupController.current?.abort();
+        lookupController.current = null;
+        lookupVersion.current += 1;
         requestVersion.current += 1;
         inFlight.current = false;
         setBusy(false);
+        setResolving(false);
         setProgress(null);
       };
     }, []),
   );
+  const changeQuery = text => {
+    lookupController.current?.abort();
+    lookupVersion.current += 1;
+    setResolving(false);
+    setQuery(text);
+    setCandidates([]);
+    setResolvedCompound(null);
+    setError(null);
+  };
+  const resolveQuery = async () => {
+    const text = query.trim();
+    if (!text) {
+      setError('Masukkan nama atau rumus senyawa dulu.');
+      return;
+    }
+    Keyboard.dismiss();
+    lookupController.current?.abort();
+    const version = ++lookupVersion.current;
+    const active = new AbortController();
+    lookupController.current = active;
+    setResolving(true);
+    setCandidates([]);
+    setResolvedCompound(null);
+    setError(null);
+    try {
+      const matches = await service.resolve({ query: text, signal: active.signal });
+      if (version === lookupVersion.current) { setCandidates(matches); }
+    } catch (cause) {
+      if (version === lookupVersion.current) {
+        setError(cause instanceof Error ? cause.message : 'Pencarian belum berhasil. Coba lagi.');
+      }
+    } finally {
+      if (version === lookupVersion.current) {
+        lookupController.current = null;
+        setResolving(false);
+      }
+    }
+  };
   const analyze = async () => {
     if (inFlight.current) {
       return;
     }
-    const problem = inputMode === 'smiles'
-      ? inputError(smiles)
-      : selectedCompound ? null : 'Pilih senyawa dari katalog dulu.';
+    const activeCompound = inputMode === 'catalog' ? selectedCompound : resolvedCompound;
+    const problem = inputMode === 'smiles' ? inputError(smiles)
+      : inputMode === 'translator'
+        ? !resolvedCompound ? 'Cari lalu pilih satu struktur senyawa dulu.'
+          : !resolvedCompound.prediction_supported ? 'Senyawa ini bukan bahan aroma dalam cakupan model. Coba senyawa organik lain.' : null
+        : selectedCompound ? null : 'Pilih senyawa dari katalog dulu.';
     setError(problem);
     if (problem) {
       return;
@@ -77,9 +130,9 @@ export function AnalysisScreen({ service = v7PredictionService }) {
     setProgress(null);
     try {
       const result = await service.predict({
-        smiles: inputMode === 'smiles' ? smiles : selectedCompound.smiles,
-        catalogName: inputMode === 'catalog' ? selectedCompound.name : '',
-        sampleName: sampleName || (inputMode === 'catalog' ? selectedCompound.name : ''),
+        smiles: inputMode === 'smiles' ? smiles : activeCompound.smiles,
+        catalogName: inputMode === 'smiles' ? '' : activeCompound.name,
+        sampleName: sampleName || (inputMode === 'smiles' ? '' : activeCompound.name),
         signal: controller.current.signal,
         onProgress: () => {
           if (version === requestVersion.current) {
@@ -108,19 +161,21 @@ export function AnalysisScreen({ service = v7PredictionService }) {
     }
   };
   const saveSelected = async () => {
-    if (!selectedCompound) { return; }
+    const activeCompound = inputMode === 'catalog' ? selectedCompound : resolvedCompound;
+    if (!activeCompound) { return; }
     try {
       await favorites.create({
-        smiles: selectedCompound.smiles,
-        name: selectedCompound.name,
+        smiles: activeCompound.smiles,
+        name: activeCompound.name,
       });
       setError(null);
     } catch (cause) {
       setError(cause?.message || 'Senyawa belum tersimpan.');
     }
   };
-  const selectedSaved = selectedCompound && favorites.items.some(item =>
-    item.smiles === selectedCompound.smiles);
+  const activeCompound = inputMode === 'catalog' ? selectedCompound : resolvedCompound;
+  const selectedSaved = activeCompound && favorites.items.some(item =>
+    item.smiles === activeCompound.smiles);
   return (
     <Page scrollRef={scrollRef}>
       <View style={styles.hero}>
@@ -155,13 +210,22 @@ export function AnalysisScreen({ service = v7PredictionService }) {
             </Pressable>
             <Pressable
               accessibilityRole="button"
-              accessibilityLabel="Input SMILES lanjutan"
-              onPress={() => { setInputMode('smiles'); setError(null); }}
-              style={[styles.mode, inputMode === 'smiles' && styles.selected]}
+              accessibilityLabel="Cari nama atau rumus"
+              ref={translatorRef}
+              onPress={() => { setInputMode('translator'); setError(null); }}
+              style={[styles.mode, inputMode === 'translator' && styles.selected]}
             >
-              <Text style={s.label}>SMILES lanjutan</Text>
+              <Text style={s.label}>Nama / rumus</Text>
             </Pressable>
           </View>
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel="Input SMILES lanjutan"
+            onPress={() => { setInputMode('smiles'); setError(null); }}
+            style={styles.advancedLink}
+          >
+            <Text style={styles.advancedText}>Punya kode SMILES? Buka input lanjutan →</Text>
+          </Pressable>
           {inputMode === 'catalog' ? <View style={styles.fieldGroup}>
             <Text style={s.label}>Senyawa yang ingin dianalisis</Text>
             <CompoundPicker
@@ -178,13 +242,51 @@ export function AnalysisScreen({ service = v7PredictionService }) {
               Pilih dari {COMPOUNDS.length.toLocaleString('id-ID')} senyawa yang tersedia.
               Kolom pencarian di dalam daftar hanya menyaring pilihan.
             </Text>
-            {selectedCompound && <Button
-              label={selectedSaved ? 'Tersimpan di Koleksi' : 'Simpan senyawa ke Koleksi'}
-              icon={selectedSaved ? 'check' : 'star'}
-              secondary
-              disabled={!!selectedSaved || !favorites.ready || !!favorites.error || busy}
-              onPress={saveSelected}
-            />}
+          </View> : inputMode === 'translator' ? <View style={styles.fieldGroup}>
+            <Text style={s.label}>Nama umum atau rumus kimia</Text>
+            <TextInput
+              accessibilityLabel="Nama atau rumus senyawa"
+              value={query}
+              onChangeText={changeQuery}
+              editable={!busy}
+              maxLength={200}
+              autoCapitalize="none"
+              autoCorrect={false}
+              placeholder="Contoh: vanillin, ethanol, C2H6O"
+              placeholderTextColor={colors.muted}
+              style={s.field}
+              onSubmitEditing={resolveQuery}
+            />
+            <Text style={s.small}>
+              Nama dicari di katalog dulu, lalu di basis data kimia. Rumus bisa cocok dengan beberapa struktur.
+            </Text>
+            <Button label={resolving ? 'Mencari senyawa…' : 'Cari struktur'}
+              secondary loading={resolving} disabled={busy || resolving} onPress={resolveQuery} />
+            {candidates.length > 0 && <View style={styles.fieldGroup}>
+              <Text style={s.label}>Pilih struktur yang sesuai ({candidates.length})</Text>
+              {candidates.map((item, index) => <Pressable
+                key={`${item.smiles}-${index}`}
+                accessibilityRole="button"
+                accessibilityLabel={`Pilih struktur ${item.name}, ${item.molecular_formula}`}
+                accessibilityState={{ selected: resolvedCompound?.smiles === item.smiles }}
+                disabled={busy}
+                onPress={() => { setResolvedCompound(item); setSampleName(''); setError(null); }}
+                style={[styles.candidate, resolvedCompound?.smiles === item.smiles && styles.selected]}
+              >
+                <View style={s.grow}>
+                  <Text style={s.label}>{item.name}</Text>
+                  <Text style={s.small}>{item.molecular_formula}{item.cid ? ` · CID ${item.cid}` : ''}</Text>
+                  <Text style={styles.structureCode} numberOfLines={2}>{item.smiles}</Text>
+                </View>
+                <Icon name={resolvedCompound?.smiles === item.smiles ? 'check' : 'chevron'} size={18} />
+              </Pressable>)}
+            </View>}
+            {resolvedCompound && !resolvedCompound.prediction_supported && <Notice>
+              Struktur ditemukan, tetapi senyawa ini di luar cakupan prediksi aroma bahan parfum.
+            </Notice>}
+            {resolvedCompound?.prediction_supported && !resolvedCompound.in_catalog && <Notice>
+              Senyawa ini tidak ada di katalog model. Hasilnya perlu dicek langsung karena tingkat kepastiannya belum teruji.
+            </Notice>}
           </View> : <View style={styles.fieldGroup}>
             <View style={s.between}>
               <Text style={s.label}>Struktur molekul</Text>
@@ -212,6 +314,13 @@ export function AnalysisScreen({ service = v7PredictionService }) {
               memeriksa satu molekul sebelum menampilkan profil aromanya.
             </Text>
           </View>}
+          {activeCompound && (inputMode === 'catalog' || activeCompound.prediction_supported) && <Button
+            label={selectedSaved ? 'Tersimpan di Koleksi' : 'Simpan senyawa ke Koleksi'}
+            icon={selectedSaved ? 'check' : 'star'}
+            secondary
+            disabled={!!selectedSaved || !favorites.ready || !!favorites.error || busy || resolving}
+            onPress={saveSelected}
+          />}
           <View style={styles.fieldGroup}>
             <Text style={s.label}>
               Kode/nama sampel <Text style={s.small}>(opsional)</Text>
@@ -345,6 +454,12 @@ const styles = StyleSheet.create({
   fieldGroup: { gap: 9 },
   mode: { flex: 1, alignItems: 'center', paddingVertical: 10, paddingHorizontal: 8,
     borderRadius: 12, borderWidth: 1, borderColor: colors.line },
+  advancedLink: { alignSelf: 'flex-start', paddingVertical: 6 },
+  advancedText: { ...s.small, color: colors.green, fontWeight: '600' },
+  candidate: { flexDirection: 'row', alignItems: 'center', gap: 12, padding: 13,
+    backgroundColor: colors.paper, borderWidth: 1, borderColor: colors.line,
+    borderRadius: 12 },
+  structureCode: { ...s.small, fontFamily: mono, marginTop: 4 },
   smiles: {
     minHeight: 105,
     fontFamily: mono,

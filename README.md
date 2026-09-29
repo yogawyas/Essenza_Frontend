@@ -1,8 +1,8 @@
 # Essenza Lab — analisis aroma senyawa untuk pengguna B2B
 
-Aplikasi React Native B2B untuk memprediksi label aroma **satu molekul**. Pengguna memilih dari katalog **6.686 senyawa bernama** yang diturunkan dari dataset final; pencarian hanya menyaring pilihan, bukan menerima nama bebas. Mode SMILES tetap tersedia untuk struktur lain yang valid. API Python/RDKit menghasilkan **2.048 bit Morgan Fingerprint + 8 deskriptor** sesuai skema eksperimen final v7. **109 model LightGBM D** yang diekspor ke ONNX berjalan di Android. Label muncul jika skor masing-masing mencapai **0,5**. Skor bukan persentase komposisi aroma. Istilah versi dan teknologi model tidak ditampilkan pada alur pengguna.
+Aplikasi React Native B2B untuk memprediksi label aroma **satu molekul**. Layar utama menawarkan dua cara input: pilih dari katalog **6.686 senyawa bernama**, atau ketik nama/rumus kimia. Input bebas dicocokkan ke katalog terlebih dahulu, lalu PubChem bila belum ditemukan; pengguna wajib memilih struktur hasil pencarian sebelum prediksi. SMILES murni ada di input lanjutan. API Python/RDKit menghasilkan **2.048 bit Morgan Fingerprint + 8 deskriptor** sesuai skema eksperimen final v7. **109 model LightGBM D** yang diekspor ke ONNX berjalan di Android. Label muncul jika skor masing-masing mencapai **0,5**. Skor bukan persentase komposisi aroma. Istilah versi dan teknologi model tidak ditampilkan pada alur pengguna.
 
-Saat pertama dibuka, aplikasi menampilkan tutorial empat langkah dengan sorotan dan panah. Tutorial dapat diulang dari tab Panduan. Pengguna dapat menyimpan hingga 200 senyawa ke **Koleksi**, mengubah nama panggilan/catatan, menghapus, serta menjalankan analisis ulang. **Riwayat** menyimpan hasil prediksi terpisah dari Koleksi.
+Saat pertama dibuka, aplikasi menampilkan tutorial lima langkah dengan sorotan dan panah. Tutorial dapat diulang dari tab Panduan. Pengguna dapat menyimpan hingga 200 senyawa ke **Koleksi**, mengubah nama panggilan/catatan, menghapus, serta menjalankan analisis ulang. **Riwayat** menyimpan hasil prediksi terpisah dari Koleksi.
 
 Riset dan training tetap berada di repositori `Perfume-MultiLabel-Classifier`; kode di sini hanya untuk integrasi aplikasi. Backend riset tidak diubah. Versi B2C berada di branch terpisah `codex/essenza-b2c` dan tidak terpengaruh.
 
@@ -41,7 +41,7 @@ Pada tab **Panduan → Pengaturan koneksi** (bagian pengelola), alamat default d
 
 ## Membangun ulang katalog senyawa
 
-Katalog dibekukan dalam `src/assets/catalog/compounds.json` agar pilihan nama tersedia tanpa pencarian eksternal. Generator membaca `records.csv` dan metadata sumber dari repo riset **secara read-only**, memeriksa checksum, lalu menggabungkan nama dengan SMILES kanonis. Angka 6.686 adalah ukuran katalog yang berasal dari dataset final, **bukan** batas semua struktur yang dapat diproses model. Struktur lain dapat dicoba di mode SMILES lanjutan.
+Katalog dibekukan dalam `src/assets/catalog/compounds.json` agar pilihan nama tersedia tanpa pencarian eksternal. Generator membaca `records.csv` dan metadata sumber dari repo riset **secara read-only**, memeriksa checksum, lalu menggabungkan nama dengan SMILES kanonis. Angka 6.686 adalah ukuran katalog yang berasal dari dataset final, **bukan** batas semua struktur yang dapat diproses model. Input nama/rumus memakai `POST /resolve`; rumus seperti `C2H6O` dapat mengembalikan beberapa isomer. Sejumlah nama awam Indonesia dikurasi sebagai alias; nama yang belum dikenal mungkin perlu ejaan kimia/Inggris yang lebih spesifik. `Air` dan `CO2` dikenali tetapi tidak dikirim ke prediksi aroma. Nama di luar katalog membutuhkan akses internet dari server ke PubChem. Struktur lain dapat dicoba di mode SMILES lanjutan.
 
 ```powershell
 python scripts/build-compound-catalog.py --backend-root 'C:\Users\ACER\Documents\Marvel\Skripsi\Project Skripsi\Perfume-MultiLabel-Classifier'
