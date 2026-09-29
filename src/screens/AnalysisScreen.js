@@ -1,0 +1,385 @@
+import React, { useCallback, useEffect, useRef, useState } from 'react';
+import {
+  Keyboard,
+  Pressable,
+  StyleSheet,
+  Text,
+  TextInput,
+  View,
+} from 'react-native';
+import { useFocusEffect, useNavigation } from '@react-navigation/native';
+import { COMPOUNDS, CompoundPicker } from '../components/CompoundPicker';
+import { inputError } from '../domain/analysis';
+import { v7PredictionService } from '../services/v7Prediction';
+import { useFavorites } from '../storage/FavoritesProvider';
+import { useTutorial } from '../tutorial/TutorialProvider';
+import { Button, Notice, Page, SectionTitle } from '../ui/components';
+import { Icon, MoleculeMark } from '../ui/Icon';
+import { colors, mono, s, sans } from '../ui/theme';
+const EXAMPLES = ['Vanillin', 'Linalool', 'Geraniol']
+  .map(name => COMPOUNDS.find(item => item.name === name)).filter(Boolean);
+
+export function AnalysisScreen({ service = v7PredictionService }) {
+  const navigation = useNavigation();
+  const favorites = useFavorites();
+  const { visible: tutorialVisible, step: tutorialStep, registerAnchor } = useTutorial();
+  const scrollRef = useRef(null);
+  const catalogRef = useRef(null);
+  const predictRef = useRef(null);
+  const [inputMode, setInputMode] = useState('catalog');
+  const [selectedCompound, setSelectedCompound] = useState(null);
+  const [smiles, setSmiles] = useState('');
+  const [sampleName, setSampleName] = useState('');
+  const [busy, setBusy] = useState(false);
+  const [progress, setProgress] = useState(null);
+  const [error, setError] = useState(null);
+  const inFlight = useRef(false);
+  const requestVersion = useRef(0);
+  const controller = useRef(null);
+  useEffect(() => {
+    registerAnchor('catalog', catalogRef);
+    registerAnchor('predict', predictRef);
+  }, [registerAnchor]);
+  useEffect(() => {
+    if (tutorialVisible && tutorialStep < 2) {
+      const timer = setTimeout(() => scrollRef.current?.scrollTo({ y: 300, animated: true }), 160);
+      return () => clearTimeout(timer);
+    }
+  }, [tutorialVisible, tutorialStep]);
+  useFocusEffect(
+    useCallback(() => {
+      return () => {
+        controller.current?.abort();
+        controller.current = null;
+        requestVersion.current += 1;
+        inFlight.current = false;
+        setBusy(false);
+        setProgress(null);
+      };
+    }, []),
+  );
+  const analyze = async () => {
+    if (inFlight.current) {
+      return;
+    }
+    const problem = inputMode === 'smiles'
+      ? inputError(smiles)
+      : selectedCompound ? null : 'Pilih senyawa dari katalog dulu.';
+    setError(problem);
+    if (problem) {
+      return;
+    }
+    Keyboard.dismiss();
+    inFlight.current = true;
+    const version = ++requestVersion.current;
+    controller.current = new AbortController();
+    setBusy(true);
+    setProgress(null);
+    try {
+      const result = await service.predict({
+        smiles: inputMode === 'smiles' ? smiles : selectedCompound.smiles,
+        catalogName: inputMode === 'catalog' ? selectedCompound.name : '',
+        sampleName: sampleName || (inputMode === 'catalog' ? selectedCompound.name : ''),
+        signal: controller.current.signal,
+        onProgress: () => {
+          if (version === requestVersion.current) {
+            setProgress('Menganalisis aroma…');
+          }
+        },
+      });
+      if (version === requestVersion.current) {
+        navigation.navigate('Result', { result });
+      }
+    } catch (cause) {
+      if (version === requestVersion.current) {
+        setError(
+          cause instanceof Error
+            ? cause.message
+            : 'Analisis belum dapat diproses. Silakan coba lagi.',
+        );
+      }
+    } finally {
+      if (version === requestVersion.current) {
+        controller.current = null;
+        inFlight.current = false;
+        setBusy(false);
+        setProgress(null);
+      }
+    }
+  };
+  const saveSelected = async () => {
+    if (!selectedCompound) { return; }
+    try {
+      await favorites.create({
+        smiles: selectedCompound.smiles,
+        name: selectedCompound.name,
+      });
+      setError(null);
+    } catch (cause) {
+      setError(cause?.message || 'Senyawa belum tersimpan.');
+    }
+  };
+  const selectedSaved = selectedCompound && favorites.items.some(item =>
+    item.smiles === selectedCompound.smiles);
+  return (
+    <Page scrollRef={scrollRef}>
+      <View style={styles.hero}>
+        <View style={styles.heroEyebrowRow}>
+          <View style={styles.heroAccent} />
+          <Text style={styles.heroEyebrow}>RUANG KERJA LABORATORIUM</Text>
+        </View>
+        <View style={styles.heroContent}>
+          <View style={styles.heroCopy}>
+            <Text style={styles.heroTitle}>
+              Satu molekul.{'\n'}Beragam aroma.
+            </Text>
+            <Text style={styles.heroBody}>
+              Eksplorasi profil aroma molekul dalam satu ruang analisis.
+            </Text>
+          </View>
+          <MoleculeMark size={116} />
+        </View>
+      </View>
+
+      <View style={s.stack}>
+        <SectionTitle number="01" title="Analisis molekul" />
+        <View style={s.card}>
+          <View style={s.row}>
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel="Pilih dari katalog"
+              onPress={() => { setInputMode('catalog'); setError(null); }}
+              style={[styles.mode, inputMode === 'catalog' && styles.selected]}
+            >
+              <Text style={s.label}>Pilih senyawa</Text>
+            </Pressable>
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel="Input SMILES lanjutan"
+              onPress={() => { setInputMode('smiles'); setError(null); }}
+              style={[styles.mode, inputMode === 'smiles' && styles.selected]}
+            >
+              <Text style={s.label}>SMILES lanjutan</Text>
+            </Pressable>
+          </View>
+          {inputMode === 'catalog' ? <View style={styles.fieldGroup}>
+            <Text style={s.label}>Senyawa yang ingin dianalisis</Text>
+            <CompoundPicker
+              targetRef={catalogRef}
+              selected={selectedCompound}
+              onSelect={item => {
+                setSelectedCompound(item);
+                setSampleName('');
+                setError(null);
+              }}
+              disabled={busy}
+            />
+            <Text style={s.small}>
+              Pilih dari {COMPOUNDS.length.toLocaleString('id-ID')} senyawa yang tersedia.
+              Kolom pencarian di dalam daftar hanya menyaring pilihan.
+            </Text>
+            {selectedCompound && <Button
+              label={selectedSaved ? 'Tersimpan di Koleksi' : 'Simpan senyawa ke Koleksi'}
+              icon={selectedSaved ? 'check' : 'star'}
+              secondary
+              disabled={!!selectedSaved || !favorites.ready || !!favorites.error || busy}
+              onPress={saveSelected}
+            />}
+          </View> : <View style={styles.fieldGroup}>
+            <View style={s.between}>
+              <Text style={s.label}>Struktur molekul</Text>
+              <Text style={s.eyebrow}>MODE LANJUTAN</Text>
+            </View>
+            <TextInput
+              accessibilityLabel="SMILES molekul"
+              value={smiles}
+              onChangeText={text => {
+                setSmiles(text);
+                setError(null);
+              }}
+              editable={!busy}
+              maxLength={2000}
+              multiline
+              autoCapitalize="none"
+              autoCorrect={false}
+              spellCheck={false}
+              placeholder="Masukkan SMILES satu molekul…"
+              placeholderTextColor={colors.muted}
+              style={[s.field, styles.smiles]}
+            />
+            <Text style={s.small}>
+              Gunakan ini jika struktur bahan sudah diketahui. Sistem akan
+              memeriksa satu molekul sebelum menampilkan profil aromanya.
+            </Text>
+          </View>}
+          <View style={styles.fieldGroup}>
+            <Text style={s.label}>
+              Kode/nama sampel <Text style={s.small}>(opsional)</Text>
+            </Text>
+            <TextInput
+              accessibilityLabel="Kode atau nama sampel"
+              value={sampleName}
+              onChangeText={setSampleName}
+              editable={!busy}
+              maxLength={80}
+              placeholder="Contoh: Sampel LAB-001"
+              placeholderTextColor={colors.muted}
+              style={s.field}
+            />
+            <Text style={s.small}>Hanya untuk menandai hasil kerja Anda; tidak mengubah senyawa yang dipilih.</Text>
+          </View>
+          {error && <Notice error>{error}</Notice>}
+          <View ref={predictRef} collapsable={false}>
+            <Button
+              label={busy ? (progress || 'Memeriksa senyawa…') : 'Prediksi aroma'}
+              icon="arrow"
+              loading={busy}
+              onPress={analyze}
+            />
+          </View>
+        </View>
+      </View>
+
+      <View style={s.stack}>
+        <SectionTitle number="02" title="Pilihan cepat" detail="3 senyawa" />
+        <Text style={s.body}>
+          Baru mencoba? Mulai dari salah satu senyawa ini. Hasilnya tetap dihitung saat Anda menekan Prediksi aroma.
+        </Text>
+        <View style={styles.examples}>
+          {EXAMPLES.map((example, index) => {
+            const selected = inputMode === 'catalog' && selectedCompound?.id === example.id;
+            return (
+              <Pressable
+                key={example.smiles}
+                accessibilityRole="button"
+                accessibilityLabel={`Pilih ${example.name}`}
+                accessibilityState={{ selected, disabled: busy }}
+                disabled={busy}
+                onPress={() => {
+                  setInputMode('catalog');
+                  setSelectedCompound(example);
+                  setSampleName('');
+                  setError(null);
+                }}
+                style={({ pressed }) => [
+                  styles.example,
+                  selected && styles.selected,
+                  pressed && styles.pressed,
+                ]}
+              >
+                <View style={styles.exampleIcon}>
+                  <Icon name={selected ? 'check' : 'flask'} size={19} />
+                </View>
+                <View style={s.grow}>
+                  <Text style={styles.exampleName}>{example.name}</Text>
+                  <Text style={s.small}>Siap dianalisis</Text>
+                </View>
+                <Text style={styles.exampleIndex}>
+                  {String(index + 1).padStart(2, '0')}
+                </Text>
+              </Pressable>
+            );
+          })}
+        </View>
+      </View>
+      <View style={styles.footer}>
+        <Icon name="info" size={17} color={colors.muted} />
+        <Text style={[s.small, s.grow]}>
+          Analisis berfokus pada satu molekul. Prediksi aroma campuran parfum
+          belum didukung aplikasi.
+        </Text>
+      </View>
+    </Page>
+  );
+}
+const styles = StyleSheet.create({
+  hero: {
+    minHeight: 250,
+    borderRadius: 26,
+    backgroundColor: colors.ink,
+    paddingHorizontal: 24,
+    paddingVertical: 25,
+    gap: 20,
+    overflow: 'hidden',
+  },
+  heroEyebrowRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 9,
+  },
+  heroAccent: {
+    width: 22,
+    height: 2,
+    borderRadius: 1,
+    backgroundColor: colors.gold,
+  },
+  heroEyebrow: {
+    fontFamily: sans,
+    fontSize: 9,
+    letterSpacing: 1.8,
+    fontWeight: '600',
+    color: '#C6D9C7',
+  },
+  heroContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  heroCopy: { flex: 1, zIndex: 1 },
+  heroTitle: {
+    fontFamily: sans,
+    fontSize: 28,
+    lineHeight: 35,
+    letterSpacing: -0.7,
+    fontWeight: '700',
+    color: '#FFFFFF',
+  },
+  heroBody: {
+    fontFamily: sans,
+    fontSize: 12,
+    lineHeight: 19,
+    color: '#C6D9C7',
+    marginTop: 12,
+    maxWidth: 240,
+  },
+  fieldGroup: { gap: 9 },
+  mode: { flex: 1, alignItems: 'center', paddingVertical: 10, paddingHorizontal: 8,
+    borderRadius: 12, borderWidth: 1, borderColor: colors.line },
+  smiles: {
+    minHeight: 105,
+    fontFamily: mono,
+    textAlignVertical: 'top',
+    lineHeight: 22,
+  },
+  examples: { gap: 10 },
+  example: {
+    minHeight: 76,
+    borderRadius: 15,
+    borderWidth: 1,
+    borderColor: colors.line,
+    backgroundColor: colors.paper,
+    padding: 14,
+    flexDirection: 'row',
+    gap: 12,
+    alignItems: 'center',
+  },
+  selected: { borderColor: colors.green, backgroundColor: '#EEF3EB' },
+  exampleIcon: {
+    width: 38,
+    height: 38,
+    borderRadius: 11,
+    backgroundColor: colors.pale,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  exampleName: {
+    fontFamily: sans,
+    fontSize: 15,
+    color: colors.ink,
+    fontWeight: '600',
+    marginBottom: 2,
+  },
+  exampleIndex: { fontFamily: sans, color: colors.muted, fontSize: 11 },
+  pressed: { opacity: 0.7 },
+  footer: { flexDirection: 'row', gap: 10, paddingHorizontal: 3 },
+});

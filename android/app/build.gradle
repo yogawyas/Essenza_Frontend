@@ -50,8 +50,6 @@ react {
     //   The list of flags to pass to the Hermes compiler. By default is "-O", "-output-source-map"
     // hermesFlags = ["-O", "-output-source-map"]
 
-    nodeExecutableAndArgs = ["node", "--max-old-space-size=2048"]
-
     /* Autolinking */
     autolinkLibrariesWithApp()
 }
@@ -81,21 +79,13 @@ android {
 
     namespace "com.essenza.app"
     defaultConfig {
-        applicationId "com.essenza.app"
+        applicationId "com.essenza.lab"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
         versionCode 1
         versionName "1.0"
     }
     signingConfigs {
-        release {
-            if (project.hasProperty('ESSENZA_UPLOAD_STORE_FILE')) {
-                storeFile file(ESSENZA_UPLOAD_STORE_FILE)
-                storePassword ESSENZA_UPLOAD_STORE_PASSWORD
-                keyAlias ESSENZA_UPLOAD_KEY_ALIAS
-                keyPassword ESSENZA_UPLOAD_KEY_PASSWORD
-            }
-        }
         debug {
             storeFile file('debug.keystore')
             storePassword 'android'
@@ -108,7 +98,9 @@ android {
             signingConfig signingConfigs.debug
         }
         release {
-            signingConfig signingConfigs.release
+            // Caution! In production, you need to generate your own keystore file.
+            // see https://reactnative.dev/docs/signed-apk-android.
+            signingConfig signingConfigs.debug
             minifyEnabled enableProguardInReleaseBuilds
             proguardFiles getDefaultProguardFile("proguard-android.txt"), "proguard-rules.pro"
         }
@@ -118,6 +110,7 @@ android {
 dependencies {
     // The version of react-native is set by the React Native Gradle Plugin
     implementation("com.facebook.react:react-android")
+    implementation("com.microsoft.onnxruntime:onnxruntime-android:1.17.0")
 
     if (hermesEnabled.toBoolean()) {
         implementation("com.facebook.react:hermes-android")
@@ -126,13 +119,41 @@ dependencies {
     }
 }
 
-// Never silently sign a release with the public debug key.
-gradle.taskGraph.whenReady { graph ->
-    if (graph.allTasks.any { it.project == project && it.name.toLowerCase().contains('release') }) {
-        ['ESSENZA_UPLOAD_STORE_FILE', 'ESSENZA_UPLOAD_STORE_PASSWORD', 'ESSENZA_UPLOAD_KEY_ALIAS', 'ESSENZA_UPLOAD_KEY_PASSWORD'].each { key ->
-            if (!project.hasProperty(key)) {
-                throw new GradleException("Release signing requires " + key + " in user Gradle properties or CI secrets.")
+tasks.register("verifyV7Models") {
+    def manifestFile = file("../../src/assets/metadata/v7_model_manifest.json")
+    def modelsDir = file("src/main/assets/models/v7")
+    inputs.file(manifestFile)
+    inputs.dir(modelsDir)
+    doLast {
+        if (!manifestFile.isFile()) {
+            throw new GradleException("Missing v7 model manifest; run scripts/export-v7-onnx.py")
+        }
+        def manifest = new groovy.json.JsonSlurper().parse(manifestFile)
+        if (manifest.models.size() != 109) {
+            throw new GradleException("Expected 109 v7 ONNX models")
+        }
+        manifest.models.each { entry ->
+            if (!(entry.filename ==~ /lgbm_\d{3}\.onnx/)) {
+                throw new GradleException("Invalid v7 ONNX filename: ${entry.filename}")
+            }
+            def model = new File(modelsDir, entry.filename)
+            if (!model.isFile()) {
+                throw new GradleException("Missing ${model}; run scripts/export-v7-onnx.py")
+            }
+            def digest = java.security.MessageDigest.getInstance("SHA-256")
+            model.withInputStream { stream ->
+                byte[] buffer = new byte[65536]
+                int length
+                while ((length = stream.read(buffer)) != -1) {
+                    digest.update(buffer, 0, length)
+                }
+            }
+            def actual = digest.digest().encodeHex().toString()
+            if (actual != entry.sha256) {
+                throw new GradleException("Checksum mismatch for ${entry.filename}")
             }
         }
     }
 }
+
+tasks.named("preBuild").configure { dependsOn("verifyV7Models") }

@@ -1,0 +1,1124 @@
+{
+  "version": 1,
+  "model_id": "perfume-five-grouped-v7-m2048-d8/lgbm_D",
+  "source_bundle_sha256": "e29f8216b0b4ed0dcdbd0f28bac28a485ec0ceebbf81619f8609f5ee637898a9",
+  "feature_schema_id": "dd5d2e2455f7fb3a8f127437d2654a1b74a13f88f9404fcf4b644726a2d907f7",
+  "feature_spec": {
+    "n_bits": 2048,
+    "radius": 2,
+    "include_chirality": false,
+    "descriptors": [
+      "MolWt",
+      "MolLogP",
+      "NumHDonors",
+      "NumHAcceptors",
+      "TPSA",
+      "NumRotatableBonds",
+      "HeavyAtomCount",
+      "RingCount"
+    ],
+    "rdkit_version": "2026.03.4",
+    "dtype": "float32",
+    "fragment_policy": "single",
+    "use_descriptors": true,
+    "dimensions": {
+      "input": 2056
+    }
+  },
+  "labels": [
+    "acidic",
+    "aldehydic",
+    "almond",
+    "amber",
+    "animal like",
+    "anisic",
+    "apple",
+    "apricot",
+    "aromatic",
+    "balsamic",
+    "banana",
+    "berry",
+    "brandy",
+    "burnt",
+    "buttery",
+    "camphoraceous",
+    "caramel",
+    "celery",
+    "cheesy",
+    "cherry",
+    "chocolate",
+    "cinnamon",
+    "citrus",
+    "clean",
+    "cocoa",
+    "coconut",
+    "coffee",
+    "cooling",
+    "creamy",
+    "cucumber",
+    "dairy",
+    "dry",
+    "earthy",
+    "ethereal",
+    "fatty",
+    "fermented",
+    "floral",
+    "fresh",
+    "fruity",
+    "garlic",
+    "geranium",
+    "gourmand",
+    "grape",
+    "grapefruit",
+    "grassy",
+    "green",
+    "hay",
+    "herbal",
+    "honey",
+    "hyacinth",
+    "jasmin",
+    "lactonic",
+    "lavender",
+    "leafy",
+    "leathery",
+    "lemon",
+    "lily",
+    "marine",
+    "medicinal",
+    "melon",
+    "metallic",
+    "milky",
+    "minty",
+    "muguet",
+    "mushroom",
+    "musk like",
+    "musty",
+    "narcissus",
+    "neroli",
+    "nutty",
+    "oily",
+    "onion",
+    "orange",
+    "orris",
+    "peach",
+    "pear",
+    "phenolic",
+    "pine",
+    "pineapple",
+    "plum",
+    "popcorn",
+    "potato",
+    "powdery",
+    "pungent",
+    "raspberry",
+    "roasted",
+    "rooty",
+    "rose",
+    "rum",
+    "sandalwood",
+    "savoury",
+    "sharp",
+    "smoky",
+    "soapy",
+    "sour",
+    "spicy",
+    "strawberry",
+    "sulfurous",
+    "sweet",
+    "tea",
+    "terpenic",
+    "tobacco",
+    "tropical fruit",
+    "vanilla",
+    "vegetable",
+    "violet",
+    "warm",
+    "waxy",
+    "woody"
+  ],
+  "primary_threshold": 0.5,
+  "models": [
+    {
+      "label": "acidic",
+      "filename": "lgbm_000.onnx",
+      "sha256": "ce04f5ca2bf6c1abc5721c112a6afaba44cb4e5ccd9a88742436f6757647abd8",
+      "input_name": "features",
+      "probability_output": "probabilities",
+      "positive_index": 1,
+      "threshold": 0.5
+    },
+    {
+      "label": "aldehydic",
+      "filename": "lgbm_001.onnx",
+      "sha256": "7f6a503cf26fe1bffaa0fe22c80c1f1a9ec405f7a7e46a479832da66ba574bbd",
+      "input_name": "features",
+      "probability_output": "probabilities",
+      "positive_index": 1,
+      "threshold": 0.5
+    },
+    {
+      "label": "almond",
+      "filename": "lgbm_002.onnx",
+      "sha256": "ce9d425c435d50f82d8bc5f62f0b72ebfaee47ffdb8aacdcb84c8dc1651b0d58",
+      "input_name": "features",
+      "probability_output": "probabilities",
+      "positive_index": 1,
+      "threshold": 0.5
+    },
+    {
+      "label": "amber",
+      "filename": "lgbm_003.onnx",
+      "sha256": "4378d67994ebc88f55f2ca9824bf75942635f9104ece055dbbdb8189c7393659",
+      "input_name": "features",
+      "probability_output": "probabilities",
+      "positive_index": 1,
+      "threshold": 0.5
+    },
+    {
+      "label": "animal like",
+      "filename": "lgbm_004.onnx",
+      "sha256": "5f109b70b0962d9b35e3e927ea8692007b8973f820aa0239d42238669a518fdb",
+      "input_name": "features",
+      "probability_output": "probabilities",
+      "positive_index": 1,
+      "threshold": 0.5
+    },
+    {
+      "label": "anisic",
+      "filename": "lgbm_005.onnx",
+      "sha256": "b0bbe4e4fd16cb0899e9059439dd7731735390af01f257ba1cd663df201011a5",
+      "input_name": "features",
+      "probability_output": "probabilities",
+      "positive_index": 1,
+      "threshold": 0.5
+    },
+    {
+      "label": "apple",
+      "filename": "lgbm_006.onnx",
+      "sha256": "a4e0a6bca75cb5c9992c069408b9f0c1f0aa7cf70ebf6d156a2e67c6196b216a",
+      "input_name": "features",
+      "probability_output": "probabilities",
+      "positive_index": 1,
+      "threshold": 0.5
+    },
+    {
+      "label": "apricot",
+      "filename": "lgbm_007.onnx",
+      "sha256": "aebe90fef3f60e11a9180a98ac0354dfdc0a8048a14d5bfc019067b6d76ad31f",
+      "input_name": "features",
+      "probability_output": "probabilities",
+      "positive_index": 1,
+      "threshold": 0.5
+    },
+    {
+      "label": "aromatic",
+      "filename": "lgbm_008.onnx",
+      "sha256": "4e27b0c9dd7bdd8c0069f72ea2d2b8cf3329497c611d994f4f1ac62992871f26",
+      "input_name": "features",
+      "probability_output": "probabilities",
+      "positive_index": 1,
+      "threshold": 0.5
+    },
+    {
+      "label": "balsamic",
+      "filename": "lgbm_009.onnx",
+      "sha256": "736574e2db0df69e21ce08b5498a48047e516b0f4ac52e99d6d71e7c86e12ee6",
+      "input_name": "features",
+      "probability_output": "probabilities",
+      "positive_index": 1,
+      "threshold": 0.5
+    },
+    {
+      "label": "banana",
+      "filename": "lgbm_010.onnx",
+      "sha256": "cbe515ae3989878b0f29f99ed5b91f45c14ec7954048241828151ae2aea17599",
+      "input_name": "features",
+      "probability_output": "probabilities",
+      "positive_index": 1,
+      "threshold": 0.5
+    },
+    {
+      "label": "berry",
+      "filename": "lgbm_011.onnx",
+      "sha256": "516d0fdbc8d98eeaa14e419f882e8a812c8fc1477d6d3a3a604fcc9aec155312",
+      "input_name": "features",
+      "probability_output": "probabilities",
+      "positive_index": 1,
+      "threshold": 0.5
+    },
+    {
+      "label": "brandy",
+      "filename": "lgbm_012.onnx",
+      "sha256": "7e255f9b665f226cd155d656b6b8c2a40730aeb12c287e8127385bf036dc829c",
+      "input_name": "features",
+      "probability_output": "probabilities",
+      "positive_index": 1,
+      "threshold": 0.5
+    },
+    {
+      "label": "burnt",
+      "filename": "lgbm_013.onnx",
+      "sha256": "3b928c9019c4498f4409204e56b8f855abd9c865f3f714f9ca1e25a635dbcbc8",
+      "input_name": "features",
+      "probability_output": "probabilities",
+      "positive_index": 1,
+      "threshold": 0.5
+    },
+    {
+      "label": "buttery",
+      "filename": "lgbm_014.onnx",
+      "sha256": "e01a7f3b58b7d115f39027f9e840f6e59544ca604fd20b323f24cf32ae378812",
+      "input_name": "features",
+      "probability_output": "probabilities",
+      "positive_index": 1,
+      "threshold": 0.5
+    },
+    {
+      "label": "camphoraceous",
+      "filename": "lgbm_015.onnx",
+      "sha256": "d39cdec583f80b3192b3c7bdc773570839b8be6e3750ee91bc936d3b87da06aa",
+      "input_name": "features",
+      "probability_output": "probabilities",
+      "positive_index": 1,
+      "threshold": 0.5
+    },
+    {
+      "label": "caramel",
+      "filename": "lgbm_016.onnx",
+      "sha256": "7a6d7f0ddb2ba7e0c8ca804bd19322f4ed8bdd2b197937aa024be936525465f5",
+      "input_name": "features",
+      "probability_output": "probabilities",
+      "positive_index": 1,
+      "threshold": 0.5
+    },
+    {
+      "label": "celery",
+      "filename": "lgbm_017.onnx",
+      "sha256": "94fcbc14f964dddd86b120a9ab420bd952faca6feca7a3432b248974c4011b26",
+      "input_name": "features",
+      "probability_output": "probabilities",
+      "positive_index": 1,
+      "threshold": 0.5
+    },
+    {
+      "label": "cheesy",
+      "filename": "lgbm_018.onnx",
+      "sha256": "41d3e364157dc7e4176f77ecda4e27d63c2422181b784b3e5f0fc6e0d6ddedce",
+      "input_name": "features",
+      "probability_output": "probabilities",
+      "positive_index": 1,
+      "threshold": 0.5
+    },
+    {
+      "label": "cherry",
+      "filename": "lgbm_019.onnx",
+      "sha256": "d11255cbf31ea21c00a6cb010ecac2f18f55e92e092880c0296e934288e8c1e3",
+      "input_name": "features",
+      "probability_output": "probabilities",
+      "positive_index": 1,
+      "threshold": 0.5
+    },
+    {
+      "label": "chocolate",
+      "filename": "lgbm_020.onnx",
+      "sha256": "f41c823e80902e994cd2a6a72c68a158cd7773179b5bb311dadf386a64b57c9c",
+      "input_name": "features",
+      "probability_output": "probabilities",
+      "positive_index": 1,
+      "threshold": 0.5
+    },
+    {
+      "label": "cinnamon",
+      "filename": "lgbm_021.onnx",
+      "sha256": "1f16976e334c1ae604c5368ece5c909a59bdfe27c123ce1942daf602fac40118",
+      "input_name": "features",
+      "probability_output": "probabilities",
+      "positive_index": 1,
+      "threshold": 0.5
+    },
+    {
+      "label": "citrus",
+      "filename": "lgbm_022.onnx",
+      "sha256": "b77f4117665e5cacba78a6ad9a14ba3f38f0ad4ccaeb75e15d2890892edcf7ad",
+      "input_name": "features",
+      "probability_output": "probabilities",
+      "positive_index": 1,
+      "threshold": 0.5
+    },
+    {
+      "label": "clean",
+      "filename": "lgbm_023.onnx",
+      "sha256": "be929a990c0fc0a027a64f160f8b6d35cdb8bd482f51e11a782fba0119d57613",
+      "input_name": "features",
+      "probability_output": "probabilities",
+      "positive_index": 1,
+      "threshold": 0.5
+    },
+    {
+      "label": "cocoa",
+      "filename": "lgbm_024.onnx",
+      "sha256": "dfdcd43940568f2944e7b14300e5eec95704d56c004d102a2813fcab7da99436",
+      "input_name": "features",
+      "probability_output": "probabilities",
+      "positive_index": 1,
+      "threshold": 0.5
+    },
+    {
+      "label": "coconut",
+      "filename": "lgbm_025.onnx",
+      "sha256": "eaa940ee67e8e0b01680d0e4ac01d88599b75afd8572dba6f9d87deb5869c969",
+      "input_name": "features",
+      "probability_output": "probabilities",
+      "positive_index": 1,
+      "threshold": 0.5
+    },
+    {
+      "label": "coffee",
+      "filename": "lgbm_026.onnx",
+      "sha256": "90ed1d8c1393ea942a10422c9ca64a17dd42d50bb8022ef1bbc80e760a9515da",
+      "input_name": "features",
+      "probability_output": "probabilities",
+      "positive_index": 1,
+      "threshold": 0.5
+    },
+    {
+      "label": "cooling",
+      "filename": "lgbm_027.onnx",
+      "sha256": "8e98c3ccddb8aa5d31c810c81a6b0ebd1658a90aeab9a86c4dbd33dac55b14a5",
+      "input_name": "features",
+      "probability_output": "probabilities",
+      "positive_index": 1,
+      "threshold": 0.5
+    },
+    {
+      "label": "creamy",
+      "filename": "lgbm_028.onnx",
+      "sha256": "ae9f1594a154e45efac3f8b63d180f6bcdbc21649831008fda67c911a1a02c78",
+      "input_name": "features",
+      "probability_output": "probabilities",
+      "positive_index": 1,
+      "threshold": 0.5
+    },
+    {
+      "label": "cucumber",
+      "filename": "lgbm_029.onnx",
+      "sha256": "989c60c463815c5a8f588196af8b933969f39395f06afcbb182d7bc28aa89cb7",
+      "input_name": "features",
+      "probability_output": "probabilities",
+      "positive_index": 1,
+      "threshold": 0.5
+    },
+    {
+      "label": "dairy",
+      "filename": "lgbm_030.onnx",
+      "sha256": "edfc5915f7e30c8fa161b01378d881cfddaa0a01c44029103f0b6a0e8826dc29",
+      "input_name": "features",
+      "probability_output": "probabilities",
+      "positive_index": 1,
+      "threshold": 0.5
+    },
+    {
+      "label": "dry",
+      "filename": "lgbm_031.onnx",
+      "sha256": "6b2df315faa6489cc506eaefd77bc05a6e266a9550d6ab3f3987741b63ecdab6",
+      "input_name": "features",
+      "probability_output": "probabilities",
+      "positive_index": 1,
+      "threshold": 0.5
+    },
+    {
+      "label": "earthy",
+      "filename": "lgbm_032.onnx",
+      "sha256": "858f411333369fb23b89e10ef5b1a6d89a2f3f1b730fcc6e0de1c86cceb9e5c0",
+      "input_name": "features",
+      "probability_output": "probabilities",
+      "positive_index": 1,
+      "threshold": 0.5
+    },
+    {
+      "label": "ethereal",
+      "filename": "lgbm_033.onnx",
+      "sha256": "ec51546c39afd4523016ddb68ab25e0e0a88b7312c117f143509aa22913cf7b7",
+      "input_name": "features",
+      "probability_output": "probabilities",
+      "positive_index": 1,
+      "threshold": 0.5
+    },
+    {
+      "label": "fatty",
+      "filename": "lgbm_034.onnx",
+      "sha256": "fa981c2c47dc84aebd8abdd232d241313c940f28f52015089f04ea0f119804fd",
+      "input_name": "features",
+      "probability_output": "probabilities",
+      "positive_index": 1,
+      "threshold": 0.5
+    },
+    {
+      "label": "fermented",
+      "filename": "lgbm_035.onnx",
+      "sha256": "c2bac50c9ff1a2b0325d56ba7d59b82d27448ab69973289def31f661d37a98e6",
+      "input_name": "features",
+      "probability_output": "probabilities",
+      "positive_index": 1,
+      "threshold": 0.5
+    },
+    {
+      "label": "floral",
+      "filename": "lgbm_036.onnx",
+      "sha256": "2c23976d23dc276acb99907d95978b2b00f7dec81707b9efe74e1a6d416855e4",
+      "input_name": "features",
+      "probability_output": "probabilities",
+      "positive_index": 1,
+      "threshold": 0.5
+    },
+    {
+      "label": "fresh",
+      "filename": "lgbm_037.onnx",
+      "sha256": "717eb55611a12c600043b76af7a886959bc50f7fe2bfac48f8b3c3454e563e16",
+      "input_name": "features",
+      "probability_output": "probabilities",
+      "positive_index": 1,
+      "threshold": 0.5
+    },
+    {
+      "label": "fruity",
+      "filename": "lgbm_038.onnx",
+      "sha256": "56291a23c6f3ed5eac8b9794505d7a73dcc33f24c076220369406701ada8264d",
+      "input_name": "features",
+      "probability_output": "probabilities",
+      "positive_index": 1,
+      "threshold": 0.5
+    },
+    {
+      "label": "garlic",
+      "filename": "lgbm_039.onnx",
+      "sha256": "1db382ff3ca412affd188dc13edfab783ce5385d2347105d295de8b26e879f72",
+      "input_name": "features",
+      "probability_output": "probabilities",
+      "positive_index": 1,
+      "threshold": 0.5
+    },
+    {
+      "label": "geranium",
+      "filename": "lgbm_040.onnx",
+      "sha256": "e0b5e2bee81c26bf8e712436567c9a3ce0d53557e7d83573d7ce32cea519b348",
+      "input_name": "features",
+      "probability_output": "probabilities",
+      "positive_index": 1,
+      "threshold": 0.5
+    },
+    {
+      "label": "gourmand",
+      "filename": "lgbm_041.onnx",
+      "sha256": "9949fe4853363e6f419e0fd5f6317cc87f92103f9248f7f469314ce6a7efb107",
+      "input_name": "features",
+      "probability_output": "probabilities",
+      "positive_index": 1,
+      "threshold": 0.5
+    },
+    {
+      "label": "grape",
+      "filename": "lgbm_042.onnx",
+      "sha256": "a98d9e5f6255e2a39ee124e47cdb8ff92437ad9ab2dc5815ff00125b5c39c5b9",
+      "input_name": "features",
+      "probability_output": "probabilities",
+      "positive_index": 1,
+      "threshold": 0.5
+    },
+    {
+      "label": "grapefruit",
+      "filename": "lgbm_043.onnx",
+      "sha256": "05d34d491434075fda011e387b6a9103b75cc518f0292451a65932f3d5bbdaf6",
+      "input_name": "features",
+      "probability_output": "probabilities",
+      "positive_index": 1,
+      "threshold": 0.5
+    },
+    {
+      "label": "grassy",
+      "filename": "lgbm_044.onnx",
+      "sha256": "ba1631f8281bb619a2ae9f7b547d0f9eb0c229b35c2c583b0ef63965c5a01e2a",
+      "input_name": "features",
+      "probability_output": "probabilities",
+      "positive_index": 1,
+      "threshold": 0.5
+    },
+    {
+      "label": "green",
+      "filename": "lgbm_045.onnx",
+      "sha256": "fe3788a9835cc2d7b2a9aeb13c81cbb6988dae4d797d03fb6d71d7c999e07a47",
+      "input_name": "features",
+      "probability_output": "probabilities",
+      "positive_index": 1,
+      "threshold": 0.5
+    },
+    {
+      "label": "hay",
+      "filename": "lgbm_046.onnx",
+      "sha256": "0741dd21692482f9bf4105b95027544f7247b1c35b57188840a8dbe37d58db4b",
+      "input_name": "features",
+      "probability_output": "probabilities",
+      "positive_index": 1,
+      "threshold": 0.5
+    },
+    {
+      "label": "herbal",
+      "filename": "lgbm_047.onnx",
+      "sha256": "4808c1d2e51c9b1f7e4c3fcd76f1e19267277bc47a518d18fbc1db2f1eef4e1e",
+      "input_name": "features",
+      "probability_output": "probabilities",
+      "positive_index": 1,
+      "threshold": 0.5
+    },
+    {
+      "label": "honey",
+      "filename": "lgbm_048.onnx",
+      "sha256": "79798f1a3473f32ef957abac7e365654c895e8fa6b368c97ee07a80c2e128206",
+      "input_name": "features",
+      "probability_output": "probabilities",
+      "positive_index": 1,
+      "threshold": 0.5
+    },
+    {
+      "label": "hyacinth",
+      "filename": "lgbm_049.onnx",
+      "sha256": "bf294652cf020ca13a45e0ae6bcf39569bb456a9c1030040eb14cd26c9fa65d1",
+      "input_name": "features",
+      "probability_output": "probabilities",
+      "positive_index": 1,
+      "threshold": 0.5
+    },
+    {
+      "label": "jasmin",
+      "filename": "lgbm_050.onnx",
+      "sha256": "3e00157806d0e72c858fbb7faf0b31f037edcd63bcb9170aa2adb6fd2f33a28c",
+      "input_name": "features",
+      "probability_output": "probabilities",
+      "positive_index": 1,
+      "threshold": 0.5
+    },
+    {
+      "label": "lactonic",
+      "filename": "lgbm_051.onnx",
+      "sha256": "deacc39f86a66ec3760a3f0963c63192bff26133538dfde1ca38996c0eb9a817",
+      "input_name": "features",
+      "probability_output": "probabilities",
+      "positive_index": 1,
+      "threshold": 0.5
+    },
+    {
+      "label": "lavender",
+      "filename": "lgbm_052.onnx",
+      "sha256": "b933df02b1b06026aff9ba5085f66d1e551d6452bf1111a94feaaa9766ed9e8d",
+      "input_name": "features",
+      "probability_output": "probabilities",
+      "positive_index": 1,
+      "threshold": 0.5
+    },
+    {
+      "label": "leafy",
+      "filename": "lgbm_053.onnx",
+      "sha256": "0d93840afb205624d62c8ad8ec0b8efd77869d5b0c56a914e8d2371887e4bde1",
+      "input_name": "features",
+      "probability_output": "probabilities",
+      "positive_index": 1,
+      "threshold": 0.5
+    },
+    {
+      "label": "leathery",
+      "filename": "lgbm_054.onnx",
+      "sha256": "b634b6bdd056ac52eae32d48823ecbf1838506cfb420cd529f5b72ee5aaada4a",
+      "input_name": "features",
+      "probability_output": "probabilities",
+      "positive_index": 1,
+      "threshold": 0.5
+    },
+    {
+      "label": "lemon",
+      "filename": "lgbm_055.onnx",
+      "sha256": "85dd08c3d959b9485ecb016017f40f63a25246f60fbb2dce468a199b1b0aea5d",
+      "input_name": "features",
+      "probability_output": "probabilities",
+      "positive_index": 1,
+      "threshold": 0.5
+    },
+    {
+      "label": "lily",
+      "filename": "lgbm_056.onnx",
+      "sha256": "1184f5077d41fe5bc840efb51741a7e6399d8e7dc0e96e68579953eac356f6f9",
+      "input_name": "features",
+      "probability_output": "probabilities",
+      "positive_index": 1,
+      "threshold": 0.5
+    },
+    {
+      "label": "marine",
+      "filename": "lgbm_057.onnx",
+      "sha256": "f65030644635a8e09edcb587306676e03fe5e5791157b997879d3473db4a9f2c",
+      "input_name": "features",
+      "probability_output": "probabilities",
+      "positive_index": 1,
+      "threshold": 0.5
+    },
+    {
+      "label": "medicinal",
+      "filename": "lgbm_058.onnx",
+      "sha256": "27a84cc59e8face1f30954f43c4b95a60f00b70e656160fcaceb4b49a13676cc",
+      "input_name": "features",
+      "probability_output": "probabilities",
+      "positive_index": 1,
+      "threshold": 0.5
+    },
+    {
+      "label": "melon",
+      "filename": "lgbm_059.onnx",
+      "sha256": "056084f7869485af13587bc80d571d86e68826b59aba91c26503b85456a1cbc4",
+      "input_name": "features",
+      "probability_output": "probabilities",
+      "positive_index": 1,
+      "threshold": 0.5
+    },
+    {
+      "label": "metallic",
+      "filename": "lgbm_060.onnx",
+      "sha256": "96dde111e561671b58b59ac48e3e9bf3920cea2d0001379af72341ecaa551ff8",
+      "input_name": "features",
+      "probability_output": "probabilities",
+      "positive_index": 1,
+      "threshold": 0.5
+    },
+    {
+      "label": "milky",
+      "filename": "lgbm_061.onnx",
+      "sha256": "0f4946adf599ded0ba5c64c0925d840f7c32ba0c9afbccdf1092c233c7dab192",
+      "input_name": "features",
+      "probability_output": "probabilities",
+      "positive_index": 1,
+      "threshold": 0.5
+    },
+    {
+      "label": "minty",
+      "filename": "lgbm_062.onnx",
+      "sha256": "ce8f6b00931f25d70f383f405de334cb7496d19bdbe19a4399c899d69d97d5e1",
+      "input_name": "features",
+      "probability_output": "probabilities",
+      "positive_index": 1,
+      "threshold": 0.5
+    },
+    {
+      "label": "muguet",
+      "filename": "lgbm_063.onnx",
+      "sha256": "1e4125ee079144607bc659305897847dfd8e8c658c7b88211d0e93bc70df41b7",
+      "input_name": "features",
+      "probability_output": "probabilities",
+      "positive_index": 1,
+      "threshold": 0.5
+    },
+    {
+      "label": "mushroom",
+      "filename": "lgbm_064.onnx",
+      "sha256": "765a6f5b28c066517e805e806ce5c28024047be6dab5d5ab5a5dcd94507af24c",
+      "input_name": "features",
+      "probability_output": "probabilities",
+      "positive_index": 1,
+      "threshold": 0.5
+    },
+    {
+      "label": "musk like",
+      "filename": "lgbm_065.onnx",
+      "sha256": "a95f6d81b57a574accb462af543fee877a1562ed50b0418a7436f08570cccbcb",
+      "input_name": "features",
+      "probability_output": "probabilities",
+      "positive_index": 1,
+      "threshold": 0.5
+    },
+    {
+      "label": "musty",
+      "filename": "lgbm_066.onnx",
+      "sha256": "ad4fdb0ce7608e5f18539e8c89f778edf536a0e9ee79c406b45a08f2b5cc73c5",
+      "input_name": "features",
+      "probability_output": "probabilities",
+      "positive_index": 1,
+      "threshold": 0.5
+    },
+    {
+      "label": "narcissus",
+      "filename": "lgbm_067.onnx",
+      "sha256": "0a4b1e0ed157a7581fb9a57b3cb8cce27c099f8a23df5ee4da9974ad600fcf4c",
+      "input_name": "features",
+      "probability_output": "probabilities",
+      "positive_index": 1,
+      "threshold": 0.5
+    },
+    {
+      "label": "neroli",
+      "filename": "lgbm_068.onnx",
+      "sha256": "f7fcb10238f2377890f4d7a72fdded43ac0833ddccebab4e9bf21c9553d6ad7b",
+      "input_name": "features",
+      "probability_output": "probabilities",
+      "positive_index": 1,
+      "threshold": 0.5
+    },
+    {
+      "label": "nutty",
+      "filename": "lgbm_069.onnx",
+      "sha256": "b7d828534674cd6e2d7fc92e6035b23af61c673aae028c1e5aeb445c236d79bf",
+      "input_name": "features",
+      "probability_output": "probabilities",
+      "positive_index": 1,
+      "threshold": 0.5
+    },
+    {
+      "label": "oily",
+      "filename": "lgbm_070.onnx",
+      "sha256": "c9d0cb1e6a4b29ceaf6cbde960ccaf1a86bd76a696025deeb7422fe388c9394b",
+      "input_name": "features",
+      "probability_output": "probabilities",
+      "positive_index": 1,
+      "threshold": 0.5
+    },
+    {
+      "label": "onion",
+      "filename": "lgbm_071.onnx",
+      "sha256": "c61adfc568e1fed05474314db1a6d642c4f292db5369c41b0a0189622a7ab5bd",
+      "input_name": "features",
+      "probability_output": "probabilities",
+      "positive_index": 1,
+      "threshold": 0.5
+    },
+    {
+      "label": "orange",
+      "filename": "lgbm_072.onnx",
+      "sha256": "ef2d8b1a49f351ca0b6a2a4b9526deea687653661c220324c33c4a4da09b719a",
+      "input_name": "features",
+      "probability_output": "probabilities",
+      "positive_index": 1,
+      "threshold": 0.5
+    },
+    {
+      "label": "orris",
+      "filename": "lgbm_073.onnx",
+      "sha256": "1f6bda3a12f1dd71c6fa103e8964e206311bae071628d70900c17d7cf74bbb39",
+      "input_name": "features",
+      "probability_output": "probabilities",
+      "positive_index": 1,
+      "threshold": 0.5
+    },
+    {
+      "label": "peach",
+      "filename": "lgbm_074.onnx",
+      "sha256": "95b5c4b7d38a9d6bd148ad6545085d66adf08e03f95de4ffc0008247c624abed",
+      "input_name": "features",
+      "probability_output": "probabilities",
+      "positive_index": 1,
+      "threshold": 0.5
+    },
+    {
+      "label": "pear",
+      "filename": "lgbm_075.onnx",
+      "sha256": "9aa48972cb71aeb70520400caad169f3b889dd1dc8c665ea9fb7762e6b84e079",
+      "input_name": "features",
+      "probability_output": "probabilities",
+      "positive_index": 1,
+      "threshold": 0.5
+    },
+    {
+      "label": "phenolic",
+      "filename": "lgbm_076.onnx",
+      "sha256": "1273668338357e503a93e3f11bb0abe4f8cf5af1efa8b55ec5949d56c0620ed3",
+      "input_name": "features",
+      "probability_output": "probabilities",
+      "positive_index": 1,
+      "threshold": 0.5
+    },
+    {
+      "label": "pine",
+      "filename": "lgbm_077.onnx",
+      "sha256": "93bbe7445a8c994297c82cca49d62048d7bed7237f5300138eafe1712cf9c591",
+      "input_name": "features",
+      "probability_output": "probabilities",
+      "positive_index": 1,
+      "threshold": 0.5
+    },
+    {
+      "label": "pineapple",
+      "filename": "lgbm_078.onnx",
+      "sha256": "455d8c2174f1e81c4741137b942c7d62814bbf4c230d00115cf6cd202ee0e9c1",
+      "input_name": "features",
+      "probability_output": "probabilities",
+      "positive_index": 1,
+      "threshold": 0.5
+    },
+    {
+      "label": "plum",
+      "filename": "lgbm_079.onnx",
+      "sha256": "99d2724d2f1ed38b66e490287fbfa8afc8c2dbecdaa9ae0e618d9ee156f8c5b3",
+      "input_name": "features",
+      "probability_output": "probabilities",
+      "positive_index": 1,
+      "threshold": 0.5
+    },
+    {
+      "label": "popcorn",
+      "filename": "lgbm_080.onnx",
+      "sha256": "7c4d92e6712cd4f6cb8f877ec47b8658ff9df7bea91d5584105a7cc3ee434dd5",
+      "input_name": "features",
+      "probability_output": "probabilities",
+      "positive_index": 1,
+      "threshold": 0.5
+    },
+    {
+      "label": "potato",
+      "filename": "lgbm_081.onnx",
+      "sha256": "b66a1e14dba864b9103995d4f77a9509bd2819b050dfba49e095d0105734b7ab",
+      "input_name": "features",
+      "probability_output": "probabilities",
+      "positive_index": 1,
+      "threshold": 0.5
+    },
+    {
+      "label": "powdery",
+      "filename": "lgbm_082.onnx",
+      "sha256": "c74c840ca219d180492a396ab94742941fa2e7d5175413c46e854ff490de7f80",
+      "input_name": "features",
+      "probability_output": "probabilities",
+      "positive_index": 1,
+      "threshold": 0.5
+    },
+    {
+      "label": "pungent",
+      "filename": "lgbm_083.onnx",
+      "sha256": "9e0f8a3ff7be87d1f79beabcc7886dadd5d6f9115f41da89ec50c8e2c43e6cbb",
+      "input_name": "features",
+      "probability_output": "probabilities",
+      "positive_index": 1,
+      "threshold": 0.5
+    },
+    {
+      "label": "raspberry",
+      "filename": "lgbm_084.onnx",
+      "sha256": "df4c89b2c8ace9eab753a3026f64d228396d71e5d746732817944a2fc1c8d1b2",
+      "input_name": "features",
+      "probability_output": "probabilities",
+      "positive_index": 1,
+      "threshold": 0.5
+    },
+    {
+      "label": "roasted",
+      "filename": "lgbm_085.onnx",
+      "sha256": "af65ee2e77cf2496d78d125983ccb5c7e3dcf4f0061908f3f355e3aaf93bf54e",
+      "input_name": "features",
+      "probability_output": "probabilities",
+      "positive_index": 1,
+      "threshold": 0.5
+    },
+    {
+      "label": "rooty",
+      "filename": "lgbm_086.onnx",
+      "sha256": "6fad5d5d07436f54ed907bfd9a8f9372e4bcb58e2beda85e52292297fe3351b7",
+      "input_name": "features",
+      "probability_output": "probabilities",
+      "positive_index": 1,
+      "threshold": 0.5
+    },
+    {
+      "label": "rose",
+      "filename": "lgbm_087.onnx",
+      "sha256": "aede972aef8528ab9307b735287327646974e147a03a64da9d6f893418b093f0",
+      "input_name": "features",
+      "probability_output": "probabilities",
+      "positive_index": 1,
+      "threshold": 0.5
+    },
+    {
+      "label": "rum",
+      "filename": "lgbm_088.onnx",
+      "sha256": "a7cc85c4016b1c61c71a1572cc359fb53b72add89836a20b2e5a4cc3c6d0346b",
+      "input_name": "features",
+      "probability_output": "probabilities",
+      "positive_index": 1,
+      "threshold": 0.5
+    },
+    {
+      "label": "sandalwood",
+      "filename": "lgbm_089.onnx",
+      "sha256": "ad5e73647e4c18c1bdece8e7fe0139ba13066eb2d32c25c16b2a8494869c955b",
+      "input_name": "features",
+      "probability_output": "probabilities",
+      "positive_index": 1,
+      "threshold": 0.5
+    },
+    {
+      "label": "savoury",
+      "filename": "lgbm_090.onnx",
+      "sha256": "3961d739f9768f567bc59273e27ff5c5f49cd2f4325da04c3532b968c8b086ed",
+      "input_name": "features",
+      "probability_output": "probabilities",
+      "positive_index": 1,
+      "threshold": 0.5
+    },
+    {
+      "label": "sharp",
+      "filename": "lgbm_091.onnx",
+      "sha256": "ab1bbb3f13747c7c47a85c27ba9a558470e64177203f1e7cd940458186a90d8d",
+      "input_name": "features",
+      "probability_output": "probabilities",
+      "positive_index": 1,
+      "threshold": 0.5
+    },
+    {
+      "label": "smoky",
+      "filename": "lgbm_092.onnx",
+      "sha256": "588ad9f7015a99649d7a1a674e99c8234b2f1b95e64e6790d7dc9987f7351750",
+      "input_name": "features",
+      "probability_output": "probabilities",
+      "positive_index": 1,
+      "threshold": 0.5
+    },
+    {
+      "label": "soapy",
+      "filename": "lgbm_093.onnx",
+      "sha256": "c1d8fa9c5e21ac26b29d81575a1420d4d6d7e0b546f711a264a8f22431901f96",
+      "input_name": "features",
+      "probability_output": "probabilities",
+      "positive_index": 1,
+      "threshold": 0.5
+    },
+    {
+      "label": "sour",
+      "filename": "lgbm_094.onnx",
+      "sha256": "dfbd69e5074ecf11713a05dc17ffdd1f9b6b7cd5433ea81fe5adcf364cc68f44",
+      "input_name": "features",
+      "probability_output": "probabilities",
+      "positive_index": 1,
+      "threshold": 0.5
+    },
+    {
+      "label": "spicy",
+      "filename": "lgbm_095.onnx",
+      "sha256": "384d121317aa54bc5969d52e2bdfd908a9434ffca046d37e7777df45f32b29fa",
+      "input_name": "features",
+      "probability_output": "probabilities",
+      "positive_index": 1,
+      "threshold": 0.5
+    },
+    {
+      "label": "strawberry",
+      "filename": "lgbm_096.onnx",
+      "sha256": "c2cdd36224c1ed3664c8d3fd745e664ce914145030a2a1703932f2332a6d1169",
+      "input_name": "features",
+      "probability_output": "probabilities",
+      "positive_index": 1,
+      "threshold": 0.5
+    },
+    {
+      "label": "sulfurous",
+      "filename": "lgbm_097.onnx",
+      "sha256": "9738369862d6671b43ce5ac8355edb34e14a25c70a9ba7dcfc42ee002015e804",
+      "input_name": "features",
+      "probability_output": "probabilities",
+      "positive_index": 1,
+      "threshold": 0.5
+    },
+    {
+      "label": "sweet",
+      "filename": "lgbm_098.onnx",
+      "sha256": "ecf5aadfe97a6cd72922da7b7708e29b2c88fecb429f51967507314f7e5eec4e",
+      "input_name": "features",
+      "probability_output": "probabilities",
+      "positive_index": 1,
+      "threshold": 0.5
+    },
+    {
+      "label": "tea",
+      "filename": "lgbm_099.onnx",
+      "sha256": "81277bcff2245eea7bd618498c775995b0bb409ddec4cc25c880e66dba7dd47e",
+      "input_name": "features",
+      "probability_output": "probabilities",
+      "positive_index": 1,
+      "threshold": 0.5
+    },
+    {
+      "label": "terpenic",
+      "filename": "lgbm_100.onnx",
+      "sha256": "85cfcff634f44ad367c2276bd7b9d2e78da4fcdc83f4a11510640233db3bab8d",
+      "input_name": "features",
+      "probability_output": "probabilities",
+      "positive_index": 1,
+      "threshold": 0.5
+    },
+    {
+      "label": "tobacco",
+      "filename": "lgbm_101.onnx",
+      "sha256": "091cd8d9f772fbe24b2a15efc1589aad4a0750f0ff896f4188eb817997ed7696",
+      "input_name": "features",
+      "probability_output": "probabilities",
+      "positive_index": 1,
+      "threshold": 0.5
+    },
+    {
+      "label": "tropical fruit",
+      "filename": "lgbm_102.onnx",
+      "sha256": "01a1912bce42c92ad41eed7d7761563c37f5c9ea07e0da70b85b62c472ca6c67",
+      "input_name": "features",
+      "probability_output": "probabilities",
+      "positive_index": 1,
+      "threshold": 0.5
+    },
+    {
+      "label": "vanilla",
+      "filename": "lgbm_103.onnx",
+      "sha256": "e70bcabd87d4a0a9c4dc6a256d664d448cf3f36a5ad3f316b3368a1fd212a38c",
+      "input_name": "features",
+      "probability_output": "probabilities",
+      "positive_index": 1,
+      "threshold": 0.5
+    },
+    {
+      "label": "vegetable",
+      "filename": "lgbm_104.onnx",
+      "sha256": "7aff144f20ff8d52dc9e476dac03ce1b2f7718699204eb36b70a107931bee57d",
+      "input_name": "features",
+      "probability_output": "probabilities",
+      "positive_index": 1,
+      "threshold": 0.5
+    },
+    {
+      "label": "violet",
+      "filename": "lgbm_105.onnx",
+      "sha256": "d0cb0a27982eb8f08164f08e35f729564b98416134ac6ca73580ee9a8fbb946b",
+      "input_name": "features",
+      "probability_output": "probabilities",
+      "positive_index": 1,
+      "threshold": 0.5
+    },
+    {
+      "label": "warm",
+      "filename": "lgbm_106.onnx",
+      "sha256": "f912287b058173ba8ff36452c80e7bf25e72b0b84246b48888bb32689429a611",
+      "input_name": "features",
+      "probability_output": "probabilities",
+      "positive_index": 1,
+      "threshold": 0.5
+    },
+    {
+      "label": "waxy",
+      "filename": "lgbm_107.onnx",
+      "sha256": "2fbce7a3eea4cb57f5b5823986fe2eda6cac332109f158905b017f733c48c925",
+      "input_name": "features",
+      "probability_output": "probabilities",
+      "positive_index": 1,
+      "threshold": 0.5
+    },
+    {
+      "label": "woody",
+      "filename": "lgbm_108.onnx",
+      "sha256": "50f581f95f063a3c42e38c1d31a6865bd4bfcd5fb7a9793d7d3d63921c1b11af",
+      "input_name": "features",
+      "probability_output": "probabilities",
+      "positive_index": 1,
+      "threshold": 0.5
+    }
+  ],
+  "bundle_id": "2c02604ac7cf1b3d51048f74c8dd980cec1faf5814e50865dc5381c66e0394ca"
+}

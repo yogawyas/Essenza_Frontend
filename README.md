@@ -1,73 +1,73 @@
-# Essenza Frontend
+# Essenza Lab — analisis aroma senyawa untuk pengguna B2B
 
-React Native app pada branch codex/project-reliability, berdasarkan origin/marvel (775b123). Checkout utama tidak diubah.
+Aplikasi React Native B2B untuk memprediksi label aroma **satu molekul**. Pengguna memilih dari katalog **6.686 senyawa bernama** yang diturunkan dari dataset final; pencarian hanya menyaring pilihan, bukan menerima nama bebas. Mode SMILES tetap tersedia untuk struktur lain yang valid. API Python/RDKit menghasilkan **2.048 bit Morgan Fingerprint + 8 deskriptor** sesuai skema eksperimen final v7. **109 model LightGBM D** yang diekspor ke ONNX berjalan di Android. Label muncul jika skor masing-masing mencapai **0,5**. Skor bukan persentase komposisi aroma. Istilah versi dan teknologi model tidak ditampilkan pada alur pengguna.
 
-- **Molecule Analyzer:** satu SMILES â†’ API RDKit online â†’ fitur versioned â†’ seluruh model ONNX di perangkat. Hasil adalah skor model yang belum dikalibrasi, bukan kepastian persepsi manusia.
-- **Explorer:** 2.029 parfum dalam katalog JSON; parfum pengguna disimpan di AsyncStorage. Ranking adalah rata-rata kekuatan accord yang dipilih, dengan tie-break rating dan pid. Taxonomy katalog berbeda dari label ML.
-- Manifest aktif mencakup 25 model XGBoost historis. Model belum diganti oleh hasil tuning baru.
-- Kumpulan contoh molekul berasal dari respons PubChem dengan CID, formula, SMILES, dan URL sumber. UI hanya memilih satu molekul; prediksi campuran tidak didukung.
+Saat pertama dibuka, aplikasi menampilkan tutorial empat langkah dengan sorotan dan panah. Tutorial dapat diulang dari tab Panduan. Pengguna dapat menyimpan hingga 200 senyawa ke **Koleksi**, mengubah nama panggilan/catatan, menghapus, serta menjalankan analisis ulang. **Riwayat** menyimpan hasil prediksi terpisah dari Koleksi.
 
-## Setup dan verifikasi
+Riset dan training tetap berada di repositori `Perfume-MultiLabel-Classifier`; kode di sini hanya untuk integrasi aplikasi. Backend riset tidak diubah. Versi B2C berada di branch terpisah `codex/essenza-b2c` dan tidak terpengaruh.
 
-Node >=22.13.0 sesuai dependency React Native 0.86 yang terpasang. Gunakan npm ci untuk package-lock.json. Jangan menginstal native dependency global untuk aplikasi ini.
+## Menjalankan di HP Android
+
+Persyaratan: Node.js >=22.11, JDK 17+, Android SDK/ADB, Python 3.12 dengan paket pada `feature_api/requirements.txt`, serta aset ONNX v7 di `android/app/src/main/assets/models/v7/`. Aset ONNX berukuran sekitar 152 MB, diabaikan Git, dan harus diekspor dari frozen run v7 sebelum build pada checkout baru. Manifest JSON yang cocok ada di `src/assets/metadata/v7_model_manifest.json`. Build akan gagal bila aset hilang atau checksum tidak cocok.
 
 ```powershell
 npm ci
-npm run typecheck
-npm test
-npm run verify:assets
-npm run preflight
+python -m pip install -r feature_api/requirements.txt
+python -m uvicorn feature_api.app:app --host 127.0.0.1 --port 8000
 ```
 
-Pada mesin migrasi ini, wrapper npx mengarah ke instalasi npm global yang hilang. Fallback yang sudah diuji tanpa mengubah sistem:
+Jika shim `npm` pada PC ini menunjuk ke lokasi yang rusak, jalankan npm lewat `C:\Program Files\nodejs\node.exe` dengan argumen `C:\Program Files\nodejs\node_modules\npm\bin\npm-cli.js`. Untuk error panjang path Gradle di Windows, petakan root frontend ke drive pendek dengan `subst X: (Resolve-Path .).Path` lalu jalankan Gradle dari `X:\android`.
+
+Di terminal lain:
 
 ```powershell
-node "C:\Program Files\nodejs\node_modules\npm\bin\npm-cli.js" ci
-node node_modules/typescript/bin/tsc --noEmit
-node node_modules/jest/bin/jest.js --runInBand
-node scripts/verify-assets.cjs
-node scripts/preflight.cjs
+adb reverse tcp:8000 tcp:8000
+adb reverse tcp:8099 tcp:8099
+npm start -- --host 127.0.0.1 --port 8099
 ```
 
-@react-native/jest-preset 0.86.0 kini menjadi dependency eksplisit. Tests memakai mock native/network, termasuk respons terlambat, error model, checksum rusak, dan operasi storage bersamaan.
-
-## Kontrak API/model
-
-Gradio 5.49.1 memakai /gradio_api/call/predict. src/services/InferenceService.ts menolak schema fitur berbeda, dimensi salah, NaN/Infinity, bit pecahan, atau file model dengan checksum salah. Cache disimpan per bundle ID. Setiap hasil membutuhkan seluruh model berhasil. Perubahan input dan unmount membatalkan permintaan serta mencegah hasil lama tampil; release session menunggu inferensi selesai.
-
-Layanan publik belum diperbarui pada tahap ini. API di repo ML dan app harus dideploy/dibuild sebagai pasangan yang sesuai. Default kontrak model historis memakai RDKit 2026.03.4 dan chirality=false; fitur pada 5.091 baris molekul tunggal training historis sudah diperiksa sama persis. Eksperimen baru memakai chirality=true dan membutuhkan bundle baru.
-
-Untuk mengimpor hasil ekspor ML yang sudah lolos parity:
+Build dan pasang melalui terminal ketiga. Pada PC ini setel JDK Android Studio dan Android SDK dahulu:
 
 ```powershell
-node scripts/import-models.cjs PATH_TO_VALIDATED_BUNDLE
-node scripts/verify-assets.cjs
-```
-
-Importer menyalin ke folder bundle baru dan memperbarui metadata terakhir. Deploy feature_spec.json dari bundle ke API. Versi lama sengaja tetap tersimpan; sebelum packaging final, rapikan asset bundle yang tidak digunakan setelah memastikan jalur rollback. Jangan menjalankan importer pada model yang belum memiliki bukti parity seluruh label.
-
-## Explorer dan data pengguna
-
-src/assets/metadata/catalog_manifest.json mencatat jumlah, taxonomy, hash, dan keterbatasan sumber. Raw export serta log transformasi katalog historis belum ditemukan; jangan menyebut provenance katalog sudah sepenuhnya direproduksi. Exporter di repo ML menerima CSV dengan schema eksplisit dan membuat JSON+manifest baru tanpa mengarang bobot aroma.
-
-Data pengguna lama berbentuk array masih dapat dibaca. Penyimpanan diperbarui ke envelope version=1 hanya saat perubahan pengguna berhasil. Operasi baca/ubah berurutan, ID unik dalam koleksi, dan data rusak ditampilkan sebagai error tanpa menimpa isi lama. Accord custom lama yang sudah tersimpan dipertahankan.
-
-## Android
-
-Preflight menemukan Java, Android SDK 36 dan adb; **NDK 27.1.12297006 belum tersedia**. Build APK dan uji perangkat belum dijalankan. Kompatibilitas ONNX Runtime React Native 1.19.0 dengan React Native 0.86 belum dinyatakan lulus.
-
-Gradle maksimal dua worker, tidak parallel, heap JVM 2 GiB. Metro maksimal dua worker dan heap Node bundling 2 GiB. Hindari menjalankan build bersamaan dengan training ML. Untuk perangkat uji tertentu, pilih ABI secara eksplisit agar tidak membangun semua arsitektur sekaligus:
-
-```powershell
-$env:ANDROID_HOME = "$env:LOCALAPPDATA\Android\Sdk"
+$env:JAVA_HOME = 'C:\Program Files\Android\Android Studio\jbr'
+$env:ANDROID_HOME = 'C:\Users\ACER\AppData\Local\Android\Sdk'
+$env:Path = "$env:JAVA_HOME\bin;$env:ANDROID_HOME\platform-tools;$env:Path"
 cd android
-.\gradlew.bat assembleDebug -PreactNativeArchitectures=arm64-v8a --no-daemon --max-workers=2
+.\gradlew.bat :app:installDebug -PreactNativeDevServerPort=8099 -PreactNativeDevServerIp=localhost
+adb shell am start -n com.essenza.lab/com.essenza.app.MainActivity
 ```
 
-Perintah tersebut belum dijalankan; pastikan ABI perangkat sesuai dan NDK tersedia. Build release kini meminta signing release, bukan memakai debug key. Simpan ESSENZA_UPLOAD_STORE_FILE, ESSENZA_UPLOAD_STORE_PASSWORD, ESSENZA_UPLOAD_KEY_ALIAS, ESSENZA_UPLOAD_KEY_PASSWORD di user Gradle properties/CI secrets. Tidak ada key baru yang dibuat.
+Pada tab **Panduan → Pengaturan koneksi** (bagian pengelola), alamat default debug ialah `http://127.0.0.1:8000`. Tekan **Simpan & tes koneksi**. Untuk pemakaian tanpa USB, host API di server HTTPS lalu isi alamat dasarnya di sana. Build release tidak memiliki alamat default: operator perlu mengisinya. Layanan API harus tetap tersedia untuk prediksi baru; ONNX dijalankan lokal setelah fitur diterima. Hosting API merupakan pekerjaan berikutnya dan belum dilakukan.
 
-Sebelum rilis: fresh install, upgrade cache, single-molecule correctness, request cancellation, API downtime, offline Explorer, CRUD persistence, native/ONNX parity di perangkat, waktu dan RAM keseluruhan alur. Belum ada APK baru, signing, maupun deployment aplikasi/API pada perubahan ini. Publikasi source ke branch marvel di yogawyas/Essenza_Frontend dilakukan terpisah dari tahap tersebut.
+## Membangun ulang katalog senyawa
 
-Daftar 12 poin dan referensi penelitian/rekayasa: [status implementasi di repository ML](https://github.com/marvelkn/Perfume-MultiLabel-Classifier/blob/main/IMPLEMENTATION_STATUS.md). Laporan skripsi menunggu hasil eksperimen yang sah.
+Katalog dibekukan dalam `src/assets/catalog/compounds.json` agar pilihan nama tersedia tanpa pencarian eksternal. Generator membaca `records.csv` dan metadata sumber dari repo riset **secara read-only**, memeriksa checksum, lalu menggabungkan nama dengan SMILES kanonis. Angka 6.686 adalah ukuran katalog yang berasal dari dataset final, **bukan** batas semua struktur yang dapat diproses model. Struktur lain dapat dicoba di mode SMILES lanjutan.
 
-Bundle JavaScript hasil build lama telah dikeluarkan dari source assets pada worktree ini. React Native Gradle Plugin menghasilkan bundle release dari source saat build; debug menggunakan Metro. Aset ONNX historis tetap tersedia.
+```powershell
+python scripts/build-compound-catalog.py --backend-root 'C:\Users\ACER\Documents\Marvel\Skripsi\Project Skripsi\Perfume-MultiLabel-Classifier'
+```
+
+## Mengekspor ONNX dari run final
+
+Exporter membaca `inference_bundle.json`, SHA-256 model asli, `features.npz`, dan `splits.json` dari run v7. Ia **tidak melatih ulang** model. Setiap model ONNX dibandingkan dengan prediksi model asli pada 32 vektor beku, termasuk keputusan ambang 0,5. Paket ekspor dipin pada `scripts/requirements-export.txt`.
+
+```powershell
+$v7 = 'C:\Users\ACER\Documents\Marvel\Skripsi\Project Skripsi\Perfume-MultiLabel-Classifier\.local-tools\campus-transfer-full-20260909\perfume-campus-grouped-v7-m2048-d8\perfume-campus-grouped-v7-m2048-d8'
+python -m pip install -r scripts/requirements-export.txt
+python scripts/export-v7-onnx.py `
+  --run "$v7\runs\perfume-five-grouped-v7-m2048-d8" `
+  --features "$v7\data\builds\perfume-m2048-d8-v7\features.npz" `
+  --splits "$v7\data\builds\perfume-five-grouped-v2\splits.json"
+```
+
+Exporter menolak menimpa aset yang sudah ada. Bila melakukan ekspor ulang, simpan atau hapus hasil lama secara sengaja dahulu dan pastikan manifest baru ikut dibawa ke aplikasi serta API.
+
+## Pemeriksaan
+
+```powershell
+npm run lint
+npm run test:ci
+python -m unittest feature_api.test_app -v
+```
+
+Lihat [alur dan batas model](docs/B2B_LAB.md) serta [hasil verifikasi](docs/VERIFICATION.md). `com.essenza.lab` dan namespace riwayat B2B terpisah dari aplikasi B2C. iOS belum diuji dan native bridge ONNX saat ini khusus Android.

@@ -1,17 +1,13 @@
-# Petunjuk Kerja Repository Essenza Frontend
+# Essenza Lab — React Native B2B
 
-Sebelum menganalisis, merencanakan, atau mengubah repository ini, baca seluruh `PRODUCT_ROADMAP.md` dan bagian relevan dari `README.md`.
+Scope: alat bantu klasifikasi label aroma **satu molekul**. Branch kerja `Yoga`; jangan mengubah atau push branch B2C `codex/essenza-b2c` tanpa instruksi Yoga.
 
-`PRODUCT_ROADMAP.md` adalah sumber keputusan produk untuk Essenza. Jika dokumen lain, percakapan lama, atau referensi partner berbeda dengannya, jangan mengubah arah proyek secara diam-diam. Catat konflik dan gunakan keputusan yang sudah dikonfirmasi pemilik proyek.
-
-Setiap implementasi harus memilih ID pekerjaan dari roadmap. Setelah pekerjaan selesai atau statusnya berubah, perbarui pada turn yang sama:
-
-- status dan bukti pada tabel roadmap;
-- berkas utama yang berubah;
-- validasi atau pengujian yang dijalankan;
-- keputusan atau batas baru; dan
-- changelog dengan tanggal.
-
-Jangan menandai pekerjaan `SELESAI` hanya karena kode sudah ditulis. Status tersebut memerlukan kriteria penerimaan dan bukti pengujian yang tercantum pada roadmap.
-
-Jaga batas ilmiah berikut: model aktif memprediksi label aroma molekul tunggal. Formula dengan beberapa bahan bukan molekul baru, tidak mempunyai satu SMILES baru, dan estimasi profil campuran tidak boleh disebut hasil model campuran yang tervalidasi sebelum tersedia evaluasi yang sesuai.
+- Periksa branch, file, aset, dan status proyek sebelum mengubah desain atau perilaku. Jangan mengarang fakta, hasil tes, atau keputusan pengguna; bila pilihan penting masih ambigu, tanyakan.
+- Gunakan aset yang sudah dipilih Yoga. Jangan menggambar ulang atau mengganti aset tanpa permintaan.
+- Gunakan JavaScript untuk layar, logika, dan tes. Native bridge ONNX Android memakai Kotlin. Jangan mengklaim iOS sudah diuji.
+- Versi aktif: **v7 LightGBM D, 109 label, 2.048 bit Morgan + 8 deskriptor RDKit = 2.056 fitur**. Ambang label 0,5. Jangan mengganti dengan v6, model 25 label, atau RF 143 label.
+- Riset dan training pada `Perfume-MultiLabel-Classifier` merupakan sumber beku. Jangan ubah logika training, data, evaluasi, atau model. Kode API aplikasi ada di `feature_api/` frontend.
+- Jangan membuat prediksi dummy tampak sebagai hasil model. Tandai riwayat demo lama sebagai DEMO. Jangan menafsirkan skor sebagai komposisi, kekuatan, keamanan, atau akurasi terkalibrasi.
+- Pertahankan identitas B2B `com.essenza.lab` dan namespace penyimpanan tersendiri agar B2C `com.essenza.app` tidak terganggu.
+- Perubahan model atau skema fitur harus divalidasi ulang terhadap manifest, API, dan ONNX. Periksa hash serta kesetaraan inferensi sebelum build.
+- Verifikasi dengan lint, tes relevan, dan Android jika tersedia. Laporkan batas yang belum diuji secara jujur.

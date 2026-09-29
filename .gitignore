@@ -81,13 +81,6 @@ yarn-error.log
 .env.test
 .env.production
 
-# APK & Build Binaries
-*.apk
-*.apk.idsig
-.gradle-temp/
-*.log
+# Generated v7 ONNX bundle is recreated from the audited research run.
+/android/app/src/main/assets/models/v7/
 
-
-
-# React Native Gradle Plugin generates the current release bundle.
-/android/app/src/main/assets/index.android.bundle
