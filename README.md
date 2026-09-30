@@ -6,6 +6,12 @@ Saat pertama dibuka, aplikasi menampilkan tutorial lima langkah dengan sorotan d
 
 Riset dan training tetap berada di repositori `Perfume-MultiLabel-Classifier`; kode di sini hanya untuk integrasi aplikasi. Backend riset tidak diubah. Versi B2C berada di branch terpisah `codex/essenza-b2c` dan tidak terpengaruh.
 
+## Uji API lewat Vercel Hobby
+
+Entrypoint root `app.py` mengarah ke `feature_api.app:app`; `requirements.txt` root memakai paket yang sama dengan API lokal. Di Vercel, impor repo ini sebagai proyek **FastAPI** dengan Root Directory kosong dan Python 3.12. Tetapkan branch produksi ke `marvel` pada **Settings → Environments → Production → Branch Tracking**, karena Vercel biasanya memilih `main` secara default. Setelah deploy, pastikan `GET /health` mengembalikan `status: ok` beserta `feature_schema_id` yang cocok dengan manifest aplikasi. Isi alamat HTTPS dasar di **Panduan → Pengaturan koneksi**.
+
+Vercel Hobby hanya untuk demo pribadi/nonkomersial. API tetap memerlukan internet untuk pencarian senyawa di luar katalog dan APK release belum menyimpan URL publik bawaan sampai layanan live terverifikasi.
+
 ## Menjalankan di HP Android
 
 Persyaratan: Node.js >=22.11, JDK 17+, Android SDK/ADB, Python 3.12 dengan paket pada `feature_api/requirements.txt`, serta aset ONNX v7 di `android/app/src/main/assets/models/v7/`. Aset ONNX berukuran sekitar 152 MB, diabaikan Git, dan harus diekspor dari frozen run v7 sebelum build pada checkout baru. Manifest JSON yang cocok ada di `src/assets/metadata/v7_model_manifest.json`. Build akan gagal bila aset hilang atau checksum tidak cocok.

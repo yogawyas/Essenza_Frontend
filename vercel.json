@@ -1,0 +1,10 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "framework": "fastapi",
+  "functions": {
+    "app.py": {
+      "includeFiles": "src/assets/{catalog/compounds.json,metadata/v7_model_manifest.json}",
+      "excludeFiles": "{android/**,ios/**,assets/**,docs/**,scripts/**,__tests__/**,feature_api/test_*.py}"
+    }
+  }
+}
