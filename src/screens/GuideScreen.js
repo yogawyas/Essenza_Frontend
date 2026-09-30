@@ -66,7 +66,7 @@ export function GuideScreen() {
         {[
           ['01', 'Pilih atau cari senyawa', 'Pilih dari katalog atau ketik nama/rumus. Kalau hasilnya lebih dari satu, cek rumus dan struktur sebelum memilih. SMILES ada di input lanjutan.'],
           ['02', 'Lihat aromanya', 'Tekan Prediksi aroma. Beberapa karakter aroma bisa muncul sekaligus.'],
-          ['03', 'Simpan yang penting', 'Simpan bahan di Koleksi untuk analisis ulang. Simpan hasil di Riwayat untuk melihat prediksi sebelumnya.'],
+          ['03', 'Cek lagi kapan saja', 'Hasil prediksi otomatis masuk Riwayat. Koleksi hanya berisi senyawa yang Anda pilih untuk disimpan.'],
         ].map(([number, title, description]) => (
           <View style={styles.step} key={number}>
             <Text style={styles.number}>{number}</Text>

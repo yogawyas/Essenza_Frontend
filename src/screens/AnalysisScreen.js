@@ -12,16 +12,15 @@ import { COMPOUNDS, CompoundPicker } from '../components/CompoundPicker';
 import { inputError } from '../domain/analysis';
 import { v7PredictionService } from '../services/v7Prediction';
 import { useFavorites } from '../storage/FavoritesProvider';
+import { useLab } from '../storage/LabProvider';
 import { useTutorial } from '../tutorial/TutorialProvider';
 import { Button, Notice, Page, SectionTitle } from '../ui/components';
 import { Icon, MoleculeMark } from '../ui/Icon';
 import { colors, mono, s, sans } from '../ui/theme';
-const EXAMPLES = ['Vanillin', 'Linalool', 'Geraniol']
-  .map(name => COMPOUNDS.find(item => item.name === name)).filter(Boolean);
-
 export function AnalysisScreen({ service = v7PredictionService }) {
   const navigation = useNavigation();
   const favorites = useFavorites();
+  const lab = useLab();
   const { visible: tutorialVisible, step: tutorialStep, registerAnchor } = useTutorial();
   const scrollRef = useRef(null);
   const catalogRef = useRef(null);
@@ -141,7 +140,15 @@ export function AnalysisScreen({ service = v7PredictionService }) {
         },
       });
       if (version === requestVersion.current) {
-        navigation.navigate('Result', { result });
+        let saveError = null;
+        try {
+          await lab.save(result);
+        } catch (cause) {
+          saveError = cause?.message || 'Hasil belum tersimpan ke Riwayat.';
+        }
+        if (version === requestVersion.current) {
+          navigation.navigate('Result', { result, saveError });
+        }
       }
     } catch (cause) {
       if (version === requestVersion.current) {
@@ -346,51 +353,10 @@ export function AnalysisScreen({ service = v7PredictionService }) {
               onPress={analyze}
             />
           </View>
+          <Text style={s.small}>Hasil prediksi yang berhasil otomatis masuk Riwayat.</Text>
         </View>
       </View>
 
-      <View style={s.stack}>
-        <SectionTitle number="02" title="Pilihan cepat" detail="3 senyawa" />
-        <Text style={s.body}>
-          Baru mencoba? Mulai dari salah satu senyawa ini. Hasilnya tetap dihitung saat Anda menekan Prediksi aroma.
-        </Text>
-        <View style={styles.examples}>
-          {EXAMPLES.map((example, index) => {
-            const selected = inputMode === 'catalog' && selectedCompound?.id === example.id;
-            return (
-              <Pressable
-                key={example.smiles}
-                accessibilityRole="button"
-                accessibilityLabel={`Pilih ${example.name}`}
-                accessibilityState={{ selected, disabled: busy }}
-                disabled={busy}
-                onPress={() => {
-                  setInputMode('catalog');
-                  setSelectedCompound(example);
-                  setSampleName('');
-                  setError(null);
-                }}
-                style={({ pressed }) => [
-                  styles.example,
-                  selected && styles.selected,
-                  pressed && styles.pressed,
-                ]}
-              >
-                <View style={styles.exampleIcon}>
-                  <Icon name={selected ? 'check' : 'flask'} size={19} />
-                </View>
-                <View style={s.grow}>
-                  <Text style={styles.exampleName}>{example.name}</Text>
-                  <Text style={s.small}>Siap dianalisis</Text>
-                </View>
-                <Text style={styles.exampleIndex}>
-                  {String(index + 1).padStart(2, '0')}
-                </Text>
-              </Pressable>
-            );
-          })}
-        </View>
-      </View>
       <View style={styles.footer}>
         <Icon name="info" size={17} color={colors.muted} />
         <Text style={[s.small, s.grow]}>
@@ -466,35 +432,6 @@ const styles = StyleSheet.create({
     textAlignVertical: 'top',
     lineHeight: 22,
   },
-  examples: { gap: 10 },
-  example: {
-    minHeight: 76,
-    borderRadius: 15,
-    borderWidth: 1,
-    borderColor: colors.line,
-    backgroundColor: colors.paper,
-    padding: 14,
-    flexDirection: 'row',
-    gap: 12,
-    alignItems: 'center',
-  },
   selected: { borderColor: colors.green, backgroundColor: '#EEF3EB' },
-  exampleIcon: {
-    width: 38,
-    height: 38,
-    borderRadius: 11,
-    backgroundColor: colors.pale,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  exampleName: {
-    fontFamily: sans,
-    fontSize: 15,
-    color: colors.ink,
-    fontWeight: '600',
-    marginBottom: 2,
-  },
-  exampleIndex: { fontFamily: sans, color: colors.muted, fontSize: 11 },
-  pressed: { opacity: 0.7 },
   footer: { flexDirection: 'row', gap: 10, paddingHorizontal: 3 },
 });

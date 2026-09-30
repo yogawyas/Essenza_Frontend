@@ -66,6 +66,7 @@ async function press(label) {
   });
 }
 async function showResult() {
+  await press('Pilih senyawa dari katalog');
   await press('Pilih Linalool');
   await act(async () => {
     await button('Prediksi aroma').props.onPress();
@@ -92,8 +93,9 @@ test('splash is shown for 1.5 seconds before the workspace', async () => {
     jest.advanceTimersByTime(1);
   });
   expect(JSON.stringify(tree.toJSON())).toContain('Analisis molekul');
+  expect(JSON.stringify(tree.toJSON())).not.toContain('Pilihan cepat');
 });
-test('no catalog selection reports an actionable error; real result can be saved', async () => {
+test('successful prediction enters history automatically without adding to Koleksi', async () => {
   await act(async () => {
     button('Prediksi aroma').props.onPress();
   });
@@ -101,13 +103,27 @@ test('no catalog selection reports an actionable error; real result can be saved
   expect(v7PredictionService.predict).not.toHaveBeenCalled();
   await showResult();
   expect(JSON.stringify(tree.toJSON())).toContain('HASIL PREDIKSI');
-  await act(async () => {
-    await button('Simpan ke riwayat').props.onPress();
-  });
-  expect(button('Tersimpan di riwayat').props.disabled).toBe(true);
-  const saved = JSON.parse(AsyncStorage.setItem.mock.calls[0][1]);
+  expect(JSON.stringify(tree.toJSON())).toContain('Tercatat di Riwayat');
+  expect(button('Coba simpan ke Riwayat')).toBeUndefined();
+  const saved = JSON.parse(AsyncStorage.setItem.mock.calls
+    .find(([key]) => key === HISTORY_KEY)[1]);
   expect(saved.records).toHaveLength(1);
   expect(saved.records[0].demo).toBe(false);
+  expect(AsyncStorage.setItem).not.toHaveBeenCalledWith(FAVORITES_KEY, expect.any(String));
+});
+
+test('running ML twice records two separate history entries', async () => {
+  let run = 0;
+  v7PredictionService.predict.mockImplementation(async ({ smiles, sampleName }) => ({
+    ...prediction(smiles, sampleName), id: `run-${++run}`,
+  }));
+  await showResult();
+  await press('Kembali');
+  await act(async () => button('Prediksi aroma').props.onPress());
+  const writes = AsyncStorage.setItem.mock.calls.filter(([key]) => key === HISTORY_KEY);
+  const saved = JSON.parse(writes[writes.length - 1][1]);
+  expect(saved.records.map(item => item.id)).toEqual(['run-2', 'run-1']);
+  expect(v7PredictionService.predict).toHaveBeenCalledTimes(2);
 });
 test('catalog search selects a known structure and sends it for prediction', async () => {
   await press('Pilih senyawa dari katalog');
@@ -147,6 +163,7 @@ test('name or formula mode requires a confirmed candidate before prediction', as
   expect(v7PredictionService.predict).toHaveBeenCalledWith(expect.objectContaining({
     smiles: 'CCO', catalogName: 'Ethanol',
   }));
+  expect(AsyncStorage.setItem).toHaveBeenCalledWith(HISTORY_KEY, expect.any(String));
 });
 
 test('editing a resolved query clears the selection and blocks stale prediction', async () => {
@@ -183,6 +200,7 @@ test('common non-aroma input can be identified but cannot be predicted', async (
   expect(JSON.stringify(tree.toJSON())).toContain('di luar cakupan prediksi aroma');
 });
 test('saved compound can be edited and analyzed again from Koleksi', async () => {
+  await press('Pilih senyawa dari katalog');
   await press('Pilih Vanillin');
   await act(async () => button('Simpan senyawa ke Koleksi').props.onPress());
   expect(AsyncStorage.setItem).toHaveBeenCalledWith(FAVORITES_KEY, expect.any(String));
@@ -200,6 +218,10 @@ test('saved compound can be edited and analyzed again from Koleksi', async () =>
     smiles: catalog.compounds.find(item => item.name === 'Vanillin').smiles,
     sampleName: 'Vanillin stok A',
   }));
+  const stored = JSON.parse(AsyncStorage.setItem.mock.calls
+    .find(([key]) => key === HISTORY_KEY)[1]);
+  expect(stored.records).toHaveLength(1);
+  expect(JSON.stringify(tree.toJSON())).toContain('Tercatat di Riwayat');
 });
 test('first launch shows tutorial and skipping persists it', async () => {
   await act(async () => tree.unmount());
@@ -213,25 +235,20 @@ test('first launch shows tutorial and skipping persists it', async () => {
   await press('Lewati tutorial');
   expect(AsyncStorage.setItem).toHaveBeenCalledWith(TUTORIAL_KEY, 'seen');
 });
-test('write failure stays visible and the result can be saved on retry', async () => {
-  await showResult();
+test('automatic history write failure is visible and can be retried without rerunning ML', async () => {
   AsyncStorage.setItem.mockRejectedValueOnce(new Error('Penyimpanan penuh'));
-  await act(async () => {
-    await button('Simpan ke riwayat').props.onPress();
-  });
+  await showResult();
   expect(JSON.stringify(tree.toJSON())).toContain('Penyimpanan penuh');
-  expect(button('Simpan ke riwayat')).toBeDefined();
+  expect(button('Coba simpan ke Riwayat')).toBeDefined();
   await act(async () => {
-    await button('Simpan ke riwayat').props.onPress();
+    await button('Coba simpan ke Riwayat').props.onPress();
   });
-  expect(button('Tersimpan di riwayat')).toBeDefined();
+  expect(JSON.stringify(tree.toJSON())).toContain('Tercatat di Riwayat');
+  expect(v7PredictionService.predict).toHaveBeenCalledTimes(1);
 });
 test('stored results reload, duplicate saves are idempotent, and failed removal preserves history', async () => {
   await showResult();
-  await act(async () => {
-    await button('Simpan ke riwayat').props.onPress();
-  });
-  const raw = AsyncStorage.setItem.mock.calls[0][1];
+  const raw = AsyncStorage.setItem.mock.calls.find(([key]) => key === HISTORY_KEY)[1];
   const result = JSON.parse(raw).records[0];
   let state;
   function Probe() {
@@ -278,14 +295,14 @@ test('unreadable history blocks writes until a successful reload', async () => {
   });
   await finishSplash();
   await showResult();
-  expect(button('Simpan ke riwayat').props.disabled).toBe(true);
+  expect(button('Coba simpan ke Riwayat').props.disabled).toBe(true);
   expect(AsyncStorage.setItem).not.toHaveBeenCalled();
   AsyncStorage.getItem.mockImplementation(async key =>
     key === TUTORIAL_KEY ? 'seen' : null);
   await act(async () => {
     await button('Muat ulang riwayat').props.onPress();
   });
-  expect(button('Simpan ke riwayat').props.disabled).toBe(false);
+  expect(button('Coba simpan ke Riwayat').props.disabled).toBe(false);
 });
 test('API failure does not navigate to a fabricated result', async () => {
   v7PredictionService.predict.mockRejectedValueOnce(new Error('Struktur SMILES tidak valid.'));
@@ -307,6 +324,7 @@ test('API failure does not navigate to a fabricated result', async () => {
   expect(
     tree.root
       .findAllByType(Button)
-      .some(node => node.props.label === 'Simpan ke riwayat'),
+      .some(node => node.props.label === 'Coba simpan ke Riwayat'),
   ).toBe(false);
+  expect(AsyncStorage.setItem).not.toHaveBeenCalledWith(HISTORY_KEY, expect.any(String));
 });

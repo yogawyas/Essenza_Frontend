@@ -5,6 +5,7 @@ import {
 } from 'react-native';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import { useFavorites } from '../storage/FavoritesProvider';
+import { useLab } from '../storage/LabProvider';
 import { v7PredictionService } from '../services/v7Prediction';
 import { Button, Notice, Page } from '../ui/components';
 import { Icon } from '../ui/Icon';
@@ -13,6 +14,7 @@ import { colors, s, sans } from '../ui/theme';
 export function CollectionScreen({ service = v7PredictionService }) {
   const navigation = useNavigation();
   const favorites = useFavorites();
+  const lab = useLab();
   const [search, setSearch] = useState('');
   const [editing, setEditing] = useState(null);
   const [draftName, setDraftName] = useState('');
@@ -44,7 +46,15 @@ export function CollectionScreen({ service = v7PredictionService }) {
         catalogName: item.name, signal: controller.current.signal,
       });
       if (version.current === currentVersion) {
-        navigation.navigate('Result', { result });
+        let saveError = null;
+        try {
+          await lab.save(result);
+        } catch (cause) {
+          saveError = cause?.message || 'Hasil belum tersimpan ke Riwayat.';
+        }
+        if (version.current === currentVersion) {
+          navigation.navigate('Result', { result, saveError });
+        }
       }
     } catch (cause) {
       if (version.current === currentVersion) {

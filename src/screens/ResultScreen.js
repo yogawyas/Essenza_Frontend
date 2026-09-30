@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Alert, Pressable, StyleSheet, Text, View } from 'react-native';
 import { useLab } from '../storage/LabProvider';
 import { useFavorites } from '../storage/FavoritesProvider';
@@ -18,6 +18,10 @@ export function ResultScreen({ route, navigation }) {
   const [busy, setBusy] = useState(false);
   const [showAll, setShowAll] = useState(false);
   const [error, setError] = useState(null);
+  const [saveError, setSaveError] = useState(route.params.saveError || null);
+  useEffect(() => {
+    setSaveError(route.params.saveError || null);
+  }, [result.id, route.params.saveError]);
   const demo = result.demo === true;
   const saved = lab.records.some(record => record.id === result.id);
   const inCollection = !demo && favorites.items.some(item =>
@@ -28,11 +32,11 @@ export function ResultScreen({ route, navigation }) {
     : labels;
   const save = async () => {
     setBusy(true);
-    setError(null);
+    setSaveError(null);
     try {
       await lab.save(result);
     } catch (cause) {
-      setError(
+      setSaveError(
         cause instanceof Error ? cause.message : 'Gagal menyimpan. Coba lagi.',
       );
     } finally {
@@ -88,6 +92,8 @@ export function ResultScreen({ route, navigation }) {
         ? 'Halaman ini adalah data contoh lama, bukan hasil prediksi sungguhan.'
         : 'Ini perkiraan profil aroma satu senyawa. Skor menunjukkan kecenderungan tiap aroma, bukan kekuatannya.'}
       </Notice>
+      {!demo && saved && <Text style={styles.savedStatus}>✓ Tercatat di Riwayat</Text>}
+      {!saved && saveError && <Notice error>Hasil belum masuk Riwayat: {saveError}</Notice>}
       <View style={s.card}>
         <SectionTitle
           number="01"
@@ -199,13 +205,13 @@ export function ResultScreen({ route, navigation }) {
       {favorites.error && <Notice error>{favorites.error}</Notice>}
       {error && <Notice error>{error}</Notice>}
       <View style={s.stack}>
-        <Button
-          label={saved ? 'Tersimpan di riwayat' : 'Simpan ke riwayat'}
-          icon={saved ? 'check' : 'save'}
+        {!saved && <Button
+          label={demo ? 'Simpan ke Riwayat' : 'Coba simpan ke Riwayat'}
+          icon="save"
           loading={busy}
-          disabled={saved || !lab.ready || !!lab.error}
+          disabled={!lab.ready || !!lab.error}
           onPress={save}
-        />
+        />}
         {!demo && <Button
           label={inCollection ? 'Tersimpan di Koleksi' : 'Simpan senyawa ke Koleksi'}
           icon={inCollection ? 'check' : 'star'}
@@ -237,6 +243,7 @@ export function ResultScreen({ route, navigation }) {
   );
 }
 const styles = StyleSheet.create({
+  savedStatus: { ...s.label, color: colors.green },
   scoreRow: { gap: 10, paddingVertical: 5 },
   aromaSymbol: {
     width: 36,

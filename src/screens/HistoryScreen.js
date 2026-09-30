@@ -30,7 +30,7 @@ export function HistoryScreen() {
         <Text style={s.eyebrow}>CATATAN LABORATORIUM</Text>
         <Text style={s.title}>Riwayat analisis</Text>
         <Text style={s.body}>
-          Buka kembali profil molekul yang sudah Anda simpan pada perangkat ini.
+          Setiap prediksi yang berhasil otomatis dicatat di perangkat ini. Buka kembali hasilnya kapan saja.
         </Text>
       </View>
       {!ready ? (
@@ -118,7 +118,7 @@ export function HistoryScreen() {
               <Text style={styles.emptyText}>
                 {query
                   ? 'Coba kata kunci lain.'
-                  : 'Pilih molekul di tab Analisis, buka hasilnya, lalu simpan ke riwayat.'}
+                  : 'Pilih molekul di tab Analisis dan jalankan prediksi. Hasilnya akan muncul otomatis di sini.'}
               </Text>
             </View>
           )}
