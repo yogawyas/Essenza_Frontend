@@ -1,14 +1,14 @@
-import React from 'react';
-import { StatusBar, Text, View } from 'react-native';
+import React, { useCallback, useState } from 'react';
+import { StatusBar, StyleSheet, Text, View } from 'react-native';
 import { DefaultTheme, NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import {
   SafeAreaProvider,
+  initialWindowMetrics,
   useSafeAreaInsets,
 } from 'react-native-safe-area-context';
 import { AppProvider, useApp } from './storage/AppProvider';
-import { RootParams, TabParams } from './navigation/types';
 import { TodayScreen } from './screens/TodayScreen';
 import { DiscoverScreen } from './screens/DiscoverScreen';
 import { ShelfScreen } from './screens/ShelfScreen';
@@ -22,13 +22,14 @@ import { ProfileScreen } from './screens/ProfileScreen';
 import { StudioScreen } from './screens/StudioScreen';
 import { StudioEditorScreen } from './screens/StudioEditorScreen';
 import { RecipeScreen } from './screens/RecipeScreen';
-import { Button, Icon, IconName } from './ui/components';
+import { Button, Icon } from './ui/components';
 import { colors } from './ui/theme';
-
-const Root = createNativeStackNavigator<RootParams>();
-const Feature = createNativeStackNavigator<RootParams>();
-const Tabs = createBottomTabNavigator<TabParams, 'EssenzaTabs'>();
-const tabIcons: Record<keyof TabParams, IconName> = {
+import { EntryFlow } from './navigation/EntryFlow';
+import { LaunchSplashScreen } from './screens/LaunchSplashScreen';
+const Root = createNativeStackNavigator();
+const Feature = createNativeStackNavigator();
+const Tabs = createBottomTabNavigator();
+const tabIcons = {
   Today: 'today',
   Discover: 'search',
   Studio: 'studio',
@@ -51,12 +52,13 @@ const homes = {
   StudioHome: StudioScreen,
   ShelfHome: ShelfScreen,
 };
-function FeatureStack({ home }: { home: keyof typeof homes }) {
+function FeatureStack({ home }) {
   return (
     <Feature.Navigator
       initialRouteName={home}
       screenOptions={{
         headerShown: false,
+        animation: 'slide_from_right',
         contentStyle: { backgroundColor: colors.ivory },
       }}
     >
@@ -93,7 +95,6 @@ function StudioStack() {
 function ShelfStack() {
   return <FeatureStack home="ShelfHome" />;
 }
-
 function HomeTabs() {
   const insets = useSafeAreaInsets();
   return (
@@ -102,6 +103,7 @@ function HomeTabs() {
       backBehavior="history"
       screenOptions={({ route }) => ({
         headerShown: false,
+        animation: 'shift',
         tabBarActiveTintColor: colors.green,
         tabBarInactiveTintColor: colors.muted,
         tabBarStyle: {
@@ -139,13 +141,19 @@ function Navigation() {
       <Root.Navigator
         screenOptions={{
           headerShown: false,
+          animation: 'slide_from_right',
           contentStyle: { backgroundColor: colors.ivory },
         }}
       >
         {state.onboarded ? (
           <Root.Group navigationKey="member">
             <Root.Screen name="Home" component={HomeTabs} />
-            <Root.Group screenOptions={{ presentation: 'modal' }}>
+            <Root.Group
+              screenOptions={{
+                presentation: 'modal',
+                animation: 'slide_from_bottom',
+              }}
+            >
               <Root.Screen name="EditList" component={EditListScreen} />
               <Root.Screen name="Wear" component={WearScreen} />
               <Root.Screen name="StudioEditor" component={StudioEditorScreen} />
@@ -163,13 +171,13 @@ function Navigation() {
     </NavigationContainer>
   );
 }
-class ErrorBoundary extends React.Component<
-  { children: React.ReactNode },
-  { failed: boolean }
-> {
+class ErrorBoundary extends React.Component {
   state = { failed: false };
   static getDerivedStateFromError() {
     return { failed: true };
+  }
+  componentDidCatch() {
+    this.props.onError?.();
   }
   render() {
     return this.state.failed ? (
@@ -199,14 +207,31 @@ class ErrorBoundary extends React.Component<
   }
 }
 export default function App() {
+  const [launching, setLaunching] = useState(true);
+  const [entryReady, setEntryReady] = useState(false);
+  const finishLaunch = useCallback(() => setLaunching(false), []);
+  const finishPreparingEntry = useCallback(() => setEntryReady(true), []);
   return (
-    <SafeAreaProvider>
-      <StatusBar barStyle="dark-content" />
-      <ErrorBoundary>
-        <AppProvider>
-          <Navigation />
-        </AppProvider>
-      </ErrorBoundary>
+    <SafeAreaProvider initialMetrics={initialWindowMetrics}>
+      <View style={{ flex: 1 }}>
+        <StatusBar barStyle="dark-content" />
+        <ErrorBoundary onError={finishPreparingEntry}>
+          <AppProvider>
+            <EntryFlow onReady={finishPreparingEntry}>
+              <Navigation />
+            </EntryFlow>
+          </AppProvider>
+        </ErrorBoundary>
+        {launching && (
+          <View style={StyleSheet.absoluteFill}>
+            <StatusBar hidden />
+            <LaunchSplashScreen
+              canFinish={entryReady}
+              onComplete={finishLaunch}
+            />
+          </View>
+        )}
+      </View>
     </SafeAreaProvider>
   );
 }

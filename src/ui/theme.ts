@@ -1,6 +1,9 @@
-import { StyleSheet } from 'react-native';
+import { Platform, StyleSheet } from 'react-native';
+
+export const sans = Platform.select({ ios: 'System', default: 'sans-serif' });
 
 export const colors = {
+  splash: '#192F24',
   green: '#163B2C',
   greenDark: '#102B20',
   sage: '#DDE6D9',
