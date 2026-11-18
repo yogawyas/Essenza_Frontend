@@ -112,7 +112,7 @@ export const CATALOG: Fragrance[] = [
   },
   {
     id: 'gucci-guilty',
-    name: 'Guilty',
+    name: 'Guilty Pour Femme',
     brand: 'Gucci',
     concentration: 'EDP',
     accords: ['floral', 'spicy'],
@@ -122,6 +122,28 @@ export const CATALOG: Fragrance[] = [
     description:
       'Pertemuan karakter floral dan spicy. Simpan jika kamu tertarik mencoba arah aroma ini.',
   },
+  {
+    id: 'acqua-di-gio-parfum',
+    name: 'Acqua di Giò',
+    brand: 'Giorgio Armani',
+    concentration: 'Parfum',
+    accords: ['fresh', 'woody'],
+    occasions: ['Kerja', 'Santai'],
+    color: '#CAD6D3',
+    ink: '#213630',
+    description: 'Profil aromatik dengan karakter laut dan kayu.',
+  },
+  {
+    id: 'dolce-garden',
+    name: 'Dolce Garden',
+    brand: 'Dolce & Gabbana',
+    concentration: 'EDP',
+    accords: ['sweet', 'floral'],
+    occasions: ['Santai'],
+    color: '#F3D3D7',
+    ink: '#633944',
+    description: 'Kesan floral, manis dan lembut.',
+  },
 ];
 
 export const fragranceById = (id: string) =>
@@ -130,12 +152,12 @@ export const CURATORS = [
   {
     id: 'demo-nara',
     name: 'Nara',
-    bio: 'Contoh kurator · suka aroma cerah dan rotasi sederhana.',
+    bio: 'Suka aroma cerah dan rotasi sederhana.',
   },
   {
     id: 'demo-ari',
     name: 'Ari',
-    bio: 'Contoh kurator · menjelajahi woody dan parfum malam.',
+    bio: 'Menjelajahi aroma woody dan parfum malam.',
   },
 ];
 
@@ -145,7 +167,7 @@ export const EDITORIAL_LISTS: Scentlist[] = [
     authorId: 'demo-nara',
     title: 'Campus rotation',
     description:
-      'Referensi untuk hari yang dimulai di kelas dan berakhir di kedai kopi. Konten demo editorial.',
+      'Referensi untuk hari yang dimulai di kelas dan berakhir di kedai kopi.',
     visibility: 'public',
     color: '#354E65',
     updatedAt: '2026-09-01T00:00:00.000Z',
@@ -166,7 +188,7 @@ export const EDITORIAL_LISTS: Scentlist[] = [
     authorId: 'demo-ari',
     title: 'After hours',
     description:
-      'Woody, hangat, dan sedikit misterius. Daftar contoh untuk inspirasi scentlist-mu.',
+      'Woody, hangat, dan sedikit misterius. Inspirasi untuk scentlist-mu.',
     visibility: 'public',
     color: '#805347',
     updatedAt: '2026-09-01T00:00:00.000Z',

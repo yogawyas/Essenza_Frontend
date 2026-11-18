@@ -1,7 +1,6 @@
-import React, { useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import {
   Alert,
-  Image,
   KeyboardAvoidingView,
   Platform,
   Pressable,
@@ -14,6 +13,7 @@ import {
 } from 'react-native';
 import Svg, { Circle, Path, Rect } from 'react-native-svg';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { DesignArt } from '../ui/DesignArt';
 const green = '#163B2C';
 const sage = '#687F6D';
 function FieldIcon({ name, hidden = false }) {
@@ -45,14 +45,28 @@ function FieldIcon({ name, hidden = false }) {
     </Svg>
   );
 }
-export function AuthScreen({ mode, onBack, onSwitchMode, onSubmit }) {
+export function AuthScreen({
+  mode,
+  registrationSuccess,
+  onBack,
+  onSwitchMode,
+  onSubmit,
+}) {
   const { width, height } = useWindowDimensions();
   const insets = useSafeAreaInsets();
   const scale = Math.min(width, 600) / 360;
   const isRegister = mode === 'register';
+  const artwork = isRegister ? 'register' : 'login';
+  const offset = registrationSuccess && !isRegister ? 68 : 0;
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  useEffect(() => {
+    if (registrationSuccess && !isRegister) {
+      setEmail(registrationSuccess);
+      setPassword('');
+    }
+  }, [registrationSuccess, isRegister]);
   const [confirmation, setConfirmation] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmation, setShowConfirmation] = useState(false);
@@ -71,8 +85,8 @@ export function AuthScreen({ mode, onBack, onSwitchMode, onSubmit }) {
       await onSubmit({ name, email, password, confirmation });
     } catch (error) {
       Alert.alert(
-        'Belum bisa masuk',
-        error instanceof Error ? error.message : 'Coba lagi.',
+        'Sign in failed',
+        error instanceof Error ? error.message : 'Please try again.',
       );
     } finally {
       submitting.current = false;
@@ -90,23 +104,23 @@ export function AuthScreen({ mode, onBack, onSwitchMode, onSubmit }) {
       confirmation: setConfirmation,
     };
     const labels = {
-      name: 'Nama pengguna',
+      name: 'Username',
       email: 'Email',
-      password: 'Kata sandi',
-      confirmation: 'Konfirmasi kata sandi',
+      password: 'Password',
+      confirmation: 'Confirm password',
     };
     const placeholders = {
-      name: 'Masukan Nama Pengguna...',
-      email: 'Masukan Email...',
-      password: 'Masukan Kata Sandi...',
-      confirmation: 'Konfirmasi Kata Sandi...',
+      name: 'Enter your username...',
+      email: 'Enter your email...',
+      password: 'Enter your password...',
+      confirmation: 'Confirm your password...',
     };
     return (
       <View
         style={[
           styles.field,
           {
-            top: top * scale,
+            top: (top + offset) * scale,
             left: 38 * scale,
             width: 284 * scale,
             height: 42 * scale,
@@ -161,7 +175,7 @@ export function AuthScreen({ mode, onBack, onSwitchMode, onSubmit }) {
             } else if (type === 'password' && isRegister) {
               confirmationRef.current?.focus();
             } else {
-              void submit();
+              submit();
             }
           }}
           underlineColorAndroid="transparent"
@@ -177,8 +191,8 @@ export function AuthScreen({ mode, onBack, onSwitchMode, onSubmit }) {
         {secret ? (
           <Pressable
             accessibilityRole="button"
-            accessibilityLabel={`${visible ? 'Sembunyikan' : 'Tampilkan'} ${
-              type === 'confirmation' ? 'konfirmasi kata sandi' : 'kata sandi'
+            accessibilityLabel={`${visible ? 'Hide' : 'Show'} ${
+              type === 'confirmation' ? 'confirm password' : 'password'
             }`}
             onPress={() =>
               type === 'password'
@@ -208,24 +222,27 @@ export function AuthScreen({ mode, onBack, onSwitchMode, onSubmit }) {
       <ScrollView
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={[styles.scroll, { paddingBottom: insets.bottom }]}
+        contentContainerStyle={[
+          styles.scroll,
+          { paddingBottom: insets.bottom },
+        ]}
       >
         <View
           style={{
             width: 360 * scale,
-            minHeight: Math.max(height, 800 * scale),
+            minHeight: Math.max(height, (800 + offset) * scale),
             backgroundColor: '#FFFFFF',
           }}
         >
-          <Image
-            source={require('../../assets/auth/header.png')}
-            style={{ width: 360 * scale, height: 224 * scale }}
-            accessible={false}
-            accessibilityIgnoresInvertColors
+          <DesignArt
+            name={artwork}
+            crop="0 0 360 224"
+            width={360 * scale}
+            height={224 * scale}
           />
           <Pressable
             accessibilityRole="button"
-            accessibilityLabel="Kembali"
+            accessibilityLabel="Back"
             onPress={onBack}
             style={{
               position: 'absolute',
@@ -235,19 +252,18 @@ export function AuthScreen({ mode, onBack, onSwitchMode, onSubmit }) {
               height: 44 * scale,
             }}
           />
-          <Image
-            source={require('../../assets/auth/heading.png')}
-            style={{
-              position: 'absolute',
-              left: 38 * scale,
-              top: 250 * scale,
-              width: 284 * scale,
-              height: 72 * scale,
-            }}
+          <View
             accessibilityRole="header"
-            accessibilityLabel="Selamat Datang di Essenza!"
-            accessibilityIgnoresInvertColors
-          />
+            accessibilityLabel="Welcome to Essenza!"
+            style={{ position: 'absolute', left: 38 * scale, top: 250 * scale }}
+          >
+            <DesignArt
+              name={artwork}
+              crop="38 250 284 72"
+              width={284 * scale}
+              height={72 * scale}
+            />
+          </View>
           {!isRegister && (
             <Text
               style={[
@@ -260,8 +276,25 @@ export function AuthScreen({ mode, onBack, onSwitchMode, onSubmit }) {
                 },
               ]}
             >
-              Sign in untuk masuk ke akun mu!
+              Sign in to access your account!
             </Text>
+          )}
+          {offset > 0 && (
+            <View
+              accessibilityLabel="Registration successful"
+              style={{
+                position: 'absolute',
+                left: 37 * scale,
+                top: 355 * scale,
+              }}
+            >
+              <DesignArt
+                name="loginSuccess"
+                crop="37 355 286 67"
+                width={286 * scale}
+                height={67 * scale}
+              />
+            </View>
           )}
           {isRegister && field('name', 364)}
           {field('email', isRegister ? 422 : 362)}
@@ -270,36 +303,36 @@ export function AuthScreen({ mode, onBack, onSwitchMode, onSubmit }) {
           {!isRegister && (
             <Pressable
               accessibilityRole="button"
-              accessibilityLabel="Lupa kata sandi?"
+              accessibilityLabel="Forgot password?"
               onPress={() =>
                 Alert.alert(
-                  'Lupa kata sandi?',
-                  'Pemulihan kata sandi belum tersedia selama tahap development.',
+                  'Forgot password?',
+                  'Password recovery is not available yet.',
                 )
               }
               style={{
                 position: 'absolute',
-                top: 465 * scale,
+                top: (465 + offset) * scale,
                 right: 38 * scale,
                 minHeight: 40 * scale,
                 justifyContent: 'center',
               }}
             >
               <Text style={{ color: green, fontSize: 14 * scale }}>
-                Lupa kata sandi?
+                Forgot password?
               </Text>
             </Pressable>
           )}
           <Pressable
             accessibilityRole="button"
-            accessibilityLabel="Masuk"
+            accessibilityLabel="Sign in"
             accessibilityState={{ disabled: busy, busy }}
             disabled={busy}
-            onPress={() => void submit()}
+            onPress={submit}
             style={({ pressed }) => [
               styles.primaryButton,
               {
-                top: (isRegister ? 609 : 519) * scale,
+                top: ((isRegister ? 609 : 519) + offset) * scale,
                 left: 38 * scale,
                 width: 285 * scale,
                 height: 38 * scale,
@@ -309,14 +342,14 @@ export function AuthScreen({ mode, onBack, onSwitchMode, onSubmit }) {
             ]}
           >
             <Text style={{ color: '#FFFFFF', fontSize: 16 * scale }}>
-              Masuk
+              Sign In
             </Text>
           </Pressable>
           <View
             style={[
               styles.divider,
               {
-                top: (isRegister ? 672 : 582) * scale,
+                top: ((isRegister ? 672 : 582) + offset) * scale,
                 left: 38 * scale,
                 width: 284 * scale,
                 gap: 5 * scale,
@@ -325,7 +358,7 @@ export function AuthScreen({ mode, onBack, onSwitchMode, onSubmit }) {
           >
             <View style={styles.dividerLine} />
             <Text style={{ color: sage, fontSize: 14 * scale }}>
-              Atau masuk dengan
+              Or sign in with
             </Text>
             <View style={styles.dividerLine} />
           </View>
@@ -333,15 +366,12 @@ export function AuthScreen({ mode, onBack, onSwitchMode, onSubmit }) {
             accessibilityRole="button"
             accessibilityLabel="Google"
             onPress={() =>
-              Alert.alert(
-                'Google',
-                'Login Google belum tersedia selama tahap development.',
-              )
+              Alert.alert('Google', 'Google login is not available yet.')
             }
             style={({ pressed }) => [
               styles.googleButton,
               {
-                top: (isRegister ? 710 : 620) * scale,
+                top: ((isRegister ? 710 : 620) + offset) * scale,
                 left: 37 * scale,
                 width: 285 * scale,
                 height: 40 * scale,
@@ -350,18 +380,18 @@ export function AuthScreen({ mode, onBack, onSwitchMode, onSubmit }) {
               },
             ]}
           >
-            <Image
-              source={require('../../assets/auth/google-label.png')}
-              style={{ width: 93 * scale, height: 23 * scale }}
-              accessible={false}
-              accessibilityIgnoresInvertColors
+            <DesignArt
+              name={artwork}
+              crop={isRegister ? '134 720 93 23' : '134 628 93 23'}
+              width={93 * scale}
+              height={23 * scale}
             />
           </Pressable>
           <View
             style={[
               styles.switchRow,
               {
-                top: (isRegister ? 765 : 675) * scale,
+                top: ((isRegister ? 765 : 675) + offset) * scale,
                 left: 20 * scale,
                 right: 20 * scale,
                 minHeight: 32 * scale,
@@ -369,7 +399,7 @@ export function AuthScreen({ mode, onBack, onSwitchMode, onSubmit }) {
             ]}
           >
             <Text style={{ color: sage, fontSize: 14 * scale }}>
-              {isRegister ? 'Sudah Daftar Essenza? ' : 'Belum punya akun? '}
+              {isRegister ? 'Already have an Essenza account? ' : "Don't have an account? "}
             </Text>
             <Pressable
               accessibilityRole="button"
@@ -383,7 +413,7 @@ export function AuthScreen({ mode, onBack, onSwitchMode, onSubmit }) {
                   fontWeight: '700',
                 }}
               >
-                {isRegister ? 'Masuk di sini' : 'Daftar di sini'}
+                {isRegister ? 'Sign in here' : 'Sign up here'}
               </Text>
             </Pressable>
           </View>

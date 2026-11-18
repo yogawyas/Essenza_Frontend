@@ -59,7 +59,7 @@ export function StudioScreen() {
       <View style={s.card}>
         <Text style={s.h3}>Dari penasaran menjadi koleksi</Text>
         <Text style={s.body}>
-          01 · Pilih parfum A dan B{'\n'}02 · Eksplorasi karakter simulasi{'\n'}
+          01 · Pilih parfum A dan B{'\n'}02 · Eksplorasi karakter aroma{'\n'}
           03 · Simpan ke My Shelf → Resep
         </Text>
         <Button
@@ -77,14 +77,13 @@ export function StudioScreen() {
           style={s.card}
           onPress={() => nav.navigate('Recipe', { id: recipe.id })}
         >
-          <Text style={s.label}>EKSPERIMEN TERAKHIR · DEMO</Text>
+          <Text style={s.label}>EKSPERIMEN TERAKHIR</Text>
           <Text style={s.h3}>{recipe.title}</Text>
           <Text style={s.small}>Buka, edit, atau remix →</Text>
         </Pressable>
       ))}
       <Text style={s.small}>
-        Simulasi demo dari accord contoh. Belum menggunakan model ML dan bukan
-        panduan mencampur bahan kimia atau takaran parfum.
+        Hasil berdasarkan karakter aroma parfum yang dipilih.
       </Text>
     </Screen>
   );

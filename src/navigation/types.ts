@@ -11,6 +11,8 @@ export type ShelfTarget = {
 };
 export type FeatureParams = {
   TodayHome: undefined;
+  TodayPlanner: undefined;
+  ProfileHome: undefined;
   DiscoverHome: undefined;
   StudioHome: undefined;
   ShelfHome: ShelfTarget | undefined;
@@ -26,6 +28,7 @@ export type TabParams = {
   Today: NavigatorScreenParams<FeatureParams> | undefined;
   Discover: NavigatorScreenParams<FeatureParams> | undefined;
   Studio: NavigatorScreenParams<FeatureParams> | undefined;
+  ProfileTab: NavigatorScreenParams<FeatureParams> | undefined;
   Shelf: NavigatorScreenParams<FeatureParams> | undefined;
 };
 export type RootParams = FeatureParams & {
@@ -41,6 +44,9 @@ export type RootParams = FeatureParams & {
     quick?: boolean;
   };
   Profile: undefined;
+  EditProfile: undefined;
+  Preferences: undefined;
+  Settings: undefined;
 };
 export type AppNavigation = NativeStackNavigationProp<RootParams>;
 export const useAppNavigation = () => useNavigation<AppNavigation>();

@@ -34,7 +34,7 @@ test('onboarding persists a local profile and explicit preferences', async () =>
   await act(async () => {
     await renderer!.root
       .findAllByType(Button)
-      .find(button => button.props.label === 'Mulai demo')!
+      .find(button => button.props.label === 'Mulai')!
       .props.onPress();
   });
   const calls = (AsyncStorage.setItem as jest.Mock).mock.calls;

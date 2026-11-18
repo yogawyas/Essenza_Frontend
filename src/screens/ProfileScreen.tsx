@@ -86,7 +86,7 @@ export function ProfileScreen({
         {onboarding ? 'Mulai dengan seleramu.' : 'Made of little details.'}
       </Text>
       <View style={[s.card, { backgroundColor: colors.lightGold }]}>
-        <Text style={s.label}>MODE DEMO LOKAL</Text>
+        <Text style={s.label}>PENYIMPANAN LOKAL</Text>
         <Text style={s.body}>
           Profil dan aktivitas tersimpan di HP ini. Belum ada login cloud,
           sinkronisasi, atau publikasi ke pengguna lain.
@@ -133,7 +133,7 @@ export function ProfileScreen({
         ))}
       </View>
       <Button
-        label={onboarding ? 'Mulai demo' : 'Simpan profil'}
+        label={onboarding ? 'Mulai' : 'Simpan profil'}
         disabled={!name.trim()}
         loading={busy}
         onPress={() => save()}
@@ -149,13 +149,12 @@ export function ProfileScreen({
       {!onboarding && (
         <>
           <View style={s.card}>
-            <Text style={s.h3}>Privasi dan kontrol demo</Text>
+            <Text style={s.h3}>Privasi dan kontrol</Text>
             <Text style={s.body}>
-              Wear log selalu pribadi. Public pada scentlist hanya
-              mensimulasikan Explore di perangkat ini.
+              Wear log bersifat pribadi. Scentlist tersimpan di perangkat ini.
             </Text>
             <Text style={s.small}>
-              {state.reports.length} laporan demo tercatat lokal.
+              {state.reports.length} laporan tercatat di perangkat ini.
             </Text>
             {state.blocked.map(id => (
               <Button
@@ -175,8 +174,8 @@ export function ProfileScreen({
             variant="danger"
             onPress={() =>
               Alert.alert(
-                'Hapus semua data demo?',
-                'Profil, shelf, favorit, scentlists, journal, dan pengaturan demo pada HP ini akan dihapus. Tindakan ini tidak bisa dibatalkan.',
+                'Hapus semua data lokal?',
+                'Profil, shelf, favorit, scentlists, journal, dan pengaturan pada HP ini akan dihapus. Tindakan ini tidak bisa dibatalkan.',
                 [
                   { text: 'Batal', style: 'cancel' },
                   {
@@ -193,8 +192,7 @@ export function ProfileScreen({
         </>
       )}
       <Text style={s.small}>
-        Essenza / B2C preview · profil preferensi, bukan diagnosis atau prediksi
-        kimia.
+        Preferensi aromamu tersimpan di perangkat ini.
       </Text>
     </Screen>
   );

@@ -72,6 +72,9 @@ export class AuthRepository {
       email: email.trim().toLowerCase(),
     };
   }
+  async clearSession() {
+    await this.storage.removeItem(AUTH_SESSION_KEY);
+  }
   async saveSession(session) {
     await this.finishIntro();
     await this.storage.setItem(AUTH_SESSION_KEY, JSON.stringify(session));

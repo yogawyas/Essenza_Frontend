@@ -1,4 +1,4 @@
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { StatusBar, StyleSheet, Text, View } from 'react-native';
 import { DefaultTheme, NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
@@ -10,10 +10,15 @@ import {
 } from 'react-native-safe-area-context';
 import { AppProvider, useApp } from './storage/AppProvider';
 import { TodayScreen } from './screens/TodayScreen';
-import { DiscoverScreen } from './screens/DiscoverScreen';
+import { CatalogSearchScreen } from './screens/CatalogSearchScreen';
+import { HomeScreen } from './screens/HomeScreen';
+import { MemberProfileScreen } from './screens/MemberProfileScreen';
+import { MyShelfCollections } from './screens/MyShelfCollectionsScreen';
+import { PreferencesScreen } from './screens/PreferencesScreen';
+import { SettingsScreen } from './screens/SettingsScreen';
 import { ShelfScreen } from './screens/ShelfScreen';
 import { ScentlistsScreen } from './screens/ScentlistsScreen';
-import { FragranceScreen } from './screens/FragranceScreen';
+import { FragranceDetailScreen } from './screens/FragranceDetailScreen';
 import { ListScreen } from './screens/ListScreen';
 import { EditListScreen } from './screens/EditListScreen';
 import { WearScreen } from './screens/WearScreen';
@@ -30,10 +35,11 @@ const Root = createNativeStackNavigator();
 const Feature = createNativeStackNavigator();
 const Tabs = createBottomTabNavigator();
 const tabIcons = {
-  Today: 'today',
+  Today: 'home',
   Discover: 'search',
   Studio: 'studio',
-  Shelf: 'shelf',
+  Shelf: 'layers',
+  ProfileTab: 'user',
 };
 const theme = {
   ...DefaultTheme,
@@ -46,11 +52,27 @@ const theme = {
     border: colors.line,
   },
 };
+function ShelfHub(props) {
+  const section = props.route.params?.section;
+  const [showCollections, setShowCollections] = useState(
+    !section || section === 'lists',
+  );
+  useEffect(() => {
+    if (section) setShowCollections(section === 'lists');
+  }, [section]);
+  return showCollections ? (
+    <MyShelfCollections {...props} />
+  ) : (
+    <ShelfScreen {...props} />
+  );
+}
+
 const homes = {
-  TodayHome: TodayScreen,
-  DiscoverHome: DiscoverScreen,
+  TodayHome: HomeScreen,
+  DiscoverHome: CatalogSearchScreen,
   StudioHome: StudioScreen,
-  ShelfHome: ShelfScreen,
+  ShelfHome: ShelfHub,
+  ProfileHome: MemberProfileScreen,
 };
 function FeatureStack({ home }) {
   return (
@@ -65,7 +87,7 @@ function FeatureStack({ home }) {
       <Feature.Screen name={home} component={homes[home]} />
       <Feature.Screen
         name="Fragrance"
-        component={FragranceScreen}
+        component={FragranceDetailScreen}
         getId={({ params }) => params.id}
       />
       <Feature.Screen
@@ -80,6 +102,7 @@ function FeatureStack({ home }) {
         getId={({ params }) => params.id}
       />
       <Feature.Screen name="Journal" component={JournalScreen} />
+      <Feature.Screen name="TodayPlanner" component={TodayScreen} />
     </Feature.Navigator>
   );
 }
@@ -94,6 +117,9 @@ function StudioStack() {
 }
 function ShelfStack() {
   return <FeatureStack home="ShelfHome" />;
+}
+function ProfileStack() {
+  return <FeatureStack home="ProfileHome" />;
 }
 function HomeTabs() {
   const insets = useSafeAreaInsets();
@@ -120,21 +146,35 @@ function HomeTabs() {
         tabBarHideOnKeyboard: true,
       })}
     >
-      <Tabs.Screen name="Today" component={TodayStack} />
-      <Tabs.Screen name="Discover" component={DiscoverStack} />
-      <Tabs.Screen name="Studio" component={StudioStack} />
+      <Tabs.Screen
+        name="Today"
+        component={TodayStack}
+        options={{ title: 'Beranda' }}
+      />
+      <Tabs.Screen
+        name="Discover"
+        component={DiscoverStack}
+        options={{ title: 'Telusuri' }}
+      />
+      <Tabs.Screen
+        name="Studio"
+        component={StudioStack}
+        options={{ tabBarItemStyle: { display: 'none' } }}
+      />
       <Tabs.Screen
         name="Shelf"
         component={ShelfStack}
-        options={{ title: 'My Shelf' }}
+        options={{ title: 'MyShelf' }}
+      />
+      <Tabs.Screen
+        name="ProfileTab"
+        component={ProfileStack}
+        options={{ title: 'Profile' }}
       />
     </Tabs.Navigator>
   );
 }
-function Welcome() {
-  return <ProfileScreen onboarding />;
-}
-function Navigation() {
+function Navigation({ session, signOut }) {
   const { state } = useApp();
   return (
     <NavigationContainer theme={theme}>
@@ -148,6 +188,9 @@ function Navigation() {
         {state.onboarded ? (
           <Root.Group navigationKey="member">
             <Root.Screen name="Home" component={HomeTabs} />
+            <Root.Screen name="Profile" component={MemberProfileScreen} />
+            <Root.Screen name="List" component={ListScreen} />
+            <Root.Screen name="Fragrance" component={FragranceDetailScreen} />
             <Root.Group
               screenOptions={{
                 presentation: 'modal',
@@ -157,15 +200,30 @@ function Navigation() {
               <Root.Screen name="EditList" component={EditListScreen} />
               <Root.Screen name="Wear" component={WearScreen} />
               <Root.Screen name="StudioEditor" component={StudioEditorScreen} />
-              <Root.Screen name="Profile" component={ProfileScreen} />
+              <Root.Screen name="EditProfile" component={ProfileScreen} />
+              <Root.Screen name="Preferences" component={PreferencesScreen} />
+              <Root.Screen name="Settings">
+                {props => (
+                  <SettingsScreen
+                    {...props}
+                    email={session?.email}
+                    onSignOut={() => signOut()}
+                    onReset={() => signOut(true)}
+                  />
+                )}
+              </Root.Screen>
             </Root.Group>
           </Root.Group>
         ) : (
-          <Root.Screen
-            name="Home"
-            component={Welcome}
-            navigationKey="welcome"
-          />
+          <Root.Screen name="Home" navigationKey="welcome">
+            {props => (
+              <PreferencesScreen
+                {...props}
+                onboarding
+                onBack={() => signOut()}
+              />
+            )}
+          </Root.Screen>
         )}
       </Root.Navigator>
     </NavigationContainer>
@@ -218,7 +276,7 @@ export default function App() {
         <ErrorBoundary onError={finishPreparingEntry}>
           <AppProvider>
             <EntryFlow onReady={finishPreparingEntry}>
-              <Navigation />
+              {entry => <Navigation {...entry} />}
             </EntryFlow>
           </AppProvider>
         </ErrorBoundary>

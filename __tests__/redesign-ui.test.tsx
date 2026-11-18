@@ -9,6 +9,16 @@ import { WearScreen } from '../src/screens/WearScreen';
 import { TodayScreen } from '../src/screens/TodayScreen';
 import { Button, Chip } from '../src/ui/components';
 
+jest.mock('../src/domain/fragranceMedia', () => ({
+  bottlePhotos: {},
+  accordPhotos: {},
+  notePhotos: {},
+  noteCredits: {},
+  offlineNotes: () => [],
+  offlinePyramid: () => null,
+  loadNotePyramid: async () => null,
+}));
+
 const mockNav = {
   navigate: jest.fn(),
   goBack: jest.fn(),
@@ -62,7 +72,7 @@ afterEach(async () => {
 
 test('saving from Discover requires a status and links to the exact shelf category', async () => {
   await mount(<FragranceScreen />);
-  await press('Tambah ke My Shelf');
+  await press('+ Tambah ke MyShelf');
   expect(button('Simpan ke My Shelf').props.disabled).toBe(true);
   await select('Wishlist');
   await select('Sample');
@@ -71,7 +81,7 @@ test('saving from Discover requires a status and links to the exact shelf catego
   expect(JSON.parse(calls[calls.length - 1][1]).shelf).toEqual([
     { fragranceId: 'ck-one', status: 'want', format: 'Sample' },
   ]);
-  await press('Lihat My Shelf');
+  await press('Lihat MyShelf');
   expect(mockNav.navigate).toHaveBeenCalledWith(
     'Home',
     expect.objectContaining({
@@ -92,17 +102,17 @@ test('failed shelf save keeps choices and never announces success; retry works',
     new Error('disk full'),
   );
   await mount(<FragranceScreen />);
-  await press('Tambah ke My Shelf');
+  await press('+ Tambah ke MyShelf');
   await select('Punya');
   await press('Simpan ke My Shelf');
-  expect(button('Lihat My Shelf')).toBeUndefined();
+  expect(button('Lihat MyShelf')).toBeUndefined();
   expect(
     renderer.root
       .findAllByType(Chip)
       .find(item => item.props.label === 'Punya')!.props.selected,
   ).toBe(true);
   await press('Simpan ke My Shelf');
-  expect(button('Lihat My Shelf')).toBeDefined();
+  expect(button('Lihat MyShelf')).toBeDefined();
 });
 test('quick wear confirms the chosen occasion and prevents duplicate rapid taps', async () => {
   mockParams = { fragranceId: 'ck-one', quick: true, occasion: 'Kerja' };

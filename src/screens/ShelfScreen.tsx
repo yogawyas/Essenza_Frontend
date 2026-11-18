@@ -231,10 +231,7 @@ export function ShelfScreen() {
       )}
       {section === 'recipes' && (
         <>
-          <Text style={s.body}>
-            Eksperimen pribadi dari Scent Studio. Semua hasil masih simulasi
-            demo.
-          </Text>
+          <Text style={s.body}>Eksperimen pribadi dari Scent Studio.</Text>
           <Button
             label="Buka Studio"
             icon="studio"
@@ -267,7 +264,7 @@ export function ShelfScreen() {
                   <View style={s.flex}>
                     <Text style={s.h3}>{recipe.title}</Text>
                     <Text style={s.small}>
-                      {DOMINANCE_LABELS[recipe.dominance]} · Demo
+                      {DOMINANCE_LABELS[recipe.dominance]}
                     </Text>
                   </View>
                 </View>

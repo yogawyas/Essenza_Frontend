@@ -65,8 +65,7 @@ export function ScentlistsScreen() {
         ))}
       </View>
       <Text style={s.small}>
-        Komunitas demo · daftar publik, simpan, dan follow hanya disimulasikan
-        di perangkat ini.
+        Daftar dan aktivitas tersimpan di perangkat ini.
       </Text>
       {lists.length ? (
         lists.map(list => (
@@ -84,13 +83,12 @@ export function ScentlistsScreen() {
                 {list.authorId === state.profile.id
                   ? state.profile.name
                   : CURATORS.find(c => c.id === list.authorId)?.name}{' '}
-                ·{' '}
-                {list.authorId === state.profile.id
-                  ? 'Milikmu'
-                  : 'Kurator demo'}
+                · {list.authorId === state.profile.id ? 'Milikmu' : 'Kurator'}
               </Text>
               <Text style={s.small}>
-                {list.visibility === 'private' ? 'Private' : 'Public · demo'}
+                {list.visibility === 'private'
+                  ? 'Private'
+                  : 'Public · tersimpan lokal'}
               </Text>
             </View>
           </View>

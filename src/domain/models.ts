@@ -7,7 +7,7 @@ export type Accord =
   | 'musky'
   | 'spicy'
   | 'green';
-export type Occasion = 'Kuliah' | 'Kerja' | 'Santai' | 'Malam';
+export type Occasion = 'College' | 'Work' | 'Casual' | 'Evening';
 export type ShelfStatus = 'have' | 'want' | 'had';
 export type BottleFormat = 'Full bottle' | 'Decant' | 'Sample';
 export type Visibility = 'private' | 'public';
@@ -110,7 +110,7 @@ export const ACCORDS: Accord[] = [
   'spicy',
   'green',
 ];
-export const OCCASIONS: Occasion[] = ['Kuliah', 'Kerja', 'Santai', 'Malam'];
+export const OCCASIONS: Occasion[] = ['College', 'Work', 'Casual', 'Evening'];
 export const COVER_COLORS = [
   '#163B2C',
   '#354E65',

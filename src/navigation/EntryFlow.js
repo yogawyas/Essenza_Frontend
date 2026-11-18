@@ -28,6 +28,9 @@ export function EntryFlow({ children, onReady }) {
   const [screen, setScreen] = useState('loading');
   const [transitioning, setTransitioning] = useState(false);
   const [homeReady, setHomeReady] = useState(false);
+  const [session, setSession] = useState(null);
+  const [registeredEmail, setRegisteredEmail] = useState('');
+  const pendingRegistration = useRef(null);
   const introAvailable = useRef(false);
   const returningToIntro = useRef(false);
   const locked = useRef(false);
@@ -71,20 +74,21 @@ export function EntryFlow({ children, onReady }) {
     let active = true;
     repository
       .load()
-      .then(({ session }) => {
+      .then(({ session: restoredSession }) => {
         if (!active) {
           return;
         }
-        introAvailable.current = !session;
-        introProgress.setValue(session ? 1 : 0);
+        introAvailable.current = !restoredSession;
+        introProgress.setValue(restoredSession ? 1 : 0);
         pageProgress.setValue(0);
         authOpacity.setValue(1);
         locked.current = false;
         setTransitioning(false);
-        setHomeReady(Boolean(session));
+        setSession(restoredSession);
+        setHomeReady(Boolean(restoredSession));
         // Swiping the design once is not a completed login. Keep both splash
         // screens on startup until there is an actual saved session.
-        setScreen(session ? 'home' : 'splash');
+        setScreen(restoredSession ? 'home' : 'splash');
       })
       .catch(() => {
         if (active) {
@@ -240,9 +244,23 @@ export function EntryFlow({ children, onReady }) {
     if (locked.current) {
       return;
     }
-    const session =
-      mode === 'register'
-        ? repository.register(name, email, password, confirmation)
+    if (mode === 'register') {
+      const registered = repository.register(
+        name,
+        email,
+        password,
+        confirmation,
+      );
+      pendingRegistration.current = { session: registered, password };
+      setRegisteredEmail(registered.email);
+      changePage('login');
+      return;
+    }
+    const registration = pendingRegistration.current;
+    const signedIn =
+      registration?.session.email === email.trim().toLowerCase() &&
+      registration.password === password
+        ? registration.session
         : repository.signIn(email, password);
     locked.current = true;
     setTransitioning(true);
@@ -253,25 +271,50 @@ export function EntryFlow({ children, onReady }) {
         profile: {
           ...state.profile,
           name:
-            mode === 'register'
-              ? session.name
-              : state.profile.name || session.name,
+            signedIn === registration?.session
+              ? signedIn.name
+              : state.profile.name || signedIn.name,
         },
-        onboard: true,
+        onboard: Boolean(state.onboarded),
       });
       if (!saved) {
         unlock();
         return;
       }
-      await repository.saveSession(session);
+      await repository.saveSession(signedIn);
       if (mounted.current) {
         lastAuthMode.current = mode;
+        pendingRegistration.current = null;
+        setSession(signedIn);
         setHomeReady(true);
         setScreen('home-transition');
       }
     } catch (error) {
       unlock();
       throw error;
+    }
+  };
+
+  const signOut = async (reset = false) => {
+    if (locked.current) return;
+    locked.current = true;
+    try {
+      if (reset && !(await dispatch({ type: 'reset' }))) return;
+      await repository.clearSession();
+      pendingRegistration.current = null;
+      setRegisteredEmail('');
+      setSession(null);
+      introAvailable.current = false;
+      introProgress.setValue(1);
+      pageProgress.setValue(0);
+      authOpacity.setValue(1);
+      lastAuthMode.current = 'login';
+      setHomeReady(false);
+      setScreen('login');
+    } catch {
+      Alert.alert('Belum bisa keluar', 'Coba lagi.');
+    } finally {
+      unlock();
     }
   };
 
@@ -294,7 +337,9 @@ export function EntryFlow({ children, onReady }) {
           pointerEvents={screen === 'home' ? 'auto' : 'none'}
           onLayout={reportReady}
         >
-          {children}
+          {typeof children === 'function'
+            ? children({ session, signOut })
+            : children}
         </View>
       )}
       {screen !== 'home' && screen !== 'loading' && (
@@ -336,6 +381,7 @@ export function EntryFlow({ children, onReady }) {
             >
               <AuthScreen
                 mode="login"
+                registrationSuccess={registeredEmail}
                 onBack={back}
                 onSwitchMode={() => changePage('register')}
                 onSubmit={fields => submit('login', fields)}

@@ -10,9 +10,9 @@ import { fragranceById } from './catalog';
 
 export const ENGINE_VERSION = 'mock-accord-v1' as const;
 export const DOMINANCE_LABELS: Record<Dominance, string> = {
-  a: 'A dominan',
-  balanced: 'Seimbang',
-  b: 'B dominan',
+  a: 'A dominant',
+  balanced: 'Balanced',
+  b: 'B dominant',
 };
 const weights: Record<Dominance, number> = { a: 0.7, balanced: 0.5, b: 0.3 };
 export interface StudioPrediction {
@@ -38,15 +38,15 @@ export function validateDraft(draft: StudioDraft) {
     (draft.recipeId !== undefined &&
       (typeof draft.recipeId !== 'string' || !draft.recipeId.trim()))
   ) {
-    throw new Error('Draft Studio tidak valid.');
+    throw new Error('Invalid Studio draft.');
   }
   for (const id of [draft.fragranceA, draft.fragranceB]) {
     if (id !== null && (typeof id !== 'string' || !fragranceById(id))) {
-      throw new Error('Parfum Studio tidak ditemukan.');
+      throw new Error('Studio fragrance not found.');
     }
   }
   if (draft.fragranceA && draft.fragranceA === draft.fragranceB) {
-    throw new Error('Pilih dua parfum yang berbeda.');
+    throw new Error('Select two different fragrances.');
   }
 }
 export function validateRecipe(recipe: LayeringRecipe) {
@@ -58,7 +58,7 @@ export function validateRecipe(recipe: LayeringRecipe) {
     recipe.engineVersion !== ENGINE_VERSION ||
     !Number.isFinite(Date.parse(recipe.updatedAt))
   ) {
-    throw new Error('Lengkapi dua parfum, nama, dan versi simulasi resep.');
+    throw new Error('Complete two fragrances and a recipe name.');
   }
 }
 
@@ -68,7 +68,7 @@ export function simulate(input: StudioInput): StudioPrediction {
   const a = fragranceById(input.fragranceA);
   const b = fragranceById(input.fragranceB);
   if (!a || !b) {
-    throw new Error('Pilih parfum A dan B terlebih dahulu.');
+    throw new Error('Select fragrance A and B first.');
   }
   const vector = (accords: Accord[], accord: Accord) => {
     const index = accords.indexOf(accord);
@@ -98,10 +98,10 @@ export function simulate(input: StudioInput): StudioPrediction {
     summary:
       top.length > 1
         ? top[0] +
-          ' dominan, dengan sentuhan ' +
-          top.slice(1).join(' dan ') +
+          ' dominant, with hints of ' +
+          top.slice(1).join(' and ') +
           '.'
-        : top[0] + ' dominan.',
+        : top[0] + ' dominant.',
   };
 }
 export const mockPredictor: PredictionService = {

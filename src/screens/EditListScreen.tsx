@@ -170,7 +170,7 @@ export function EditListScreen() {
           onPress={() => setVisibility('private')}
         />
         <Chip
-          label="Public · demo"
+          label="Public · lokal"
           selected={visibility === 'public'}
           onPress={() => setVisibility('public')}
         />

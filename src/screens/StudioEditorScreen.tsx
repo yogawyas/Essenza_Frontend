@@ -242,12 +242,12 @@ export function StudioEditorScreen() {
         title={prediction ? 'HASIL SIMULASI' : 'LAYERING STUDIO'}
         onBack={() => (prediction ? setPrediction(null) : nav.goBack())}
       />
-      <Text style={s.label}>SIMULASI DEMO · BUKAN HASIL ML</Text>
+      <Text style={s.label}>KARAKTER AROMA</Text>
       {!prediction ? (
         <>
           <Text style={s.h1}>Mulai dengan{'\n'}dua wangi.</Text>
           <Text style={s.body}>
-            Koleksimu tampil lebih dulu. Atau gunakan parfum contoh dari
+            Koleksimu tampil lebih dulu. Kamu juga bisa memilih parfum dari
             katalog.
           </Text>
           <View style={[s.row, { alignItems: 'stretch' }]}>
@@ -324,7 +324,7 @@ export function StudioEditorScreen() {
           <Text style={s.small}>
             A membawa {a?.accords.slice(0, 2).join(' & ')}. B membawa{' '}
             {b?.accords.slice(0, 2).join(' & ')}. Ini penjelasan berbasis
-            metadata contoh.
+            karakter aroma.
           </Text>
           <Button
             label="Ubah kombinasi"
@@ -385,7 +385,7 @@ export function StudioEditorScreen() {
                     entry.fragranceId === item.id && entry.status === 'have',
                 )
                   ? ' · Punya'
-                  : ' · Katalog demo')
+                  : ' · Katalog')
               }
               variant="secondary"
               onPress={() => {

@@ -40,9 +40,7 @@ export function ListScreen() {
       <ListCover list={list} large />
       <View style={{ gap: 9 }}>
         <Text style={s.label}>
-          {mine
-            ? 'OLEHMU'
-            : `OLEH ${curator?.name.toUpperCase()} · KURATOR DEMO`}
+          {mine ? 'OLEHMU' : `OLEH ${curator?.name.toUpperCase()} · KURATOR`}
         </Text>
         <Text style={s.body}>
           {list.description || 'Sebuah kumpulan aroma, dipilih dengan caramu.'}
@@ -50,7 +48,7 @@ export function ListScreen() {
         <Text style={s.small}>
           {list.visibility === 'private'
             ? 'Private · hanya untuk profilmu'
-            : 'Public dalam demo lokal · belum dibagikan ke internet'}
+            : 'Public · tersimpan di perangkat ini'}
         </Text>
       </View>
       {mine ? (
@@ -151,15 +149,14 @@ export function ListScreen() {
       {!mine && (
         <View style={s.card}>
           <Text style={s.small}>
-            Kontrol komunitas demo. Laporan tersimpan lokal dan belum dikirim ke
-            moderator.
+            Laporan tersimpan di perangkat ini dan belum dikirim ke moderator.
           </Text>
           <Button
-            label="Laporkan daftar contoh"
+            label="Laporkan scentlist"
             variant="ghost"
             onPress={() =>
               Alert.alert(
-                'Alasan laporan demo',
+                'Alasan laporan',
                 'Pilih alasan untuk mencatat laporan lokal.',
                 [
                   { text: 'Batal', style: 'cancel' },
@@ -178,7 +175,7 @@ export function ListScreen() {
                         })
                       ) {
                         Alert.alert(
-                          'Laporan demo dicatat',
+                          'Laporan dicatat',
                           'Tersimpan di perangkat ini; belum dikirim ke moderator.',
                         );
                       }

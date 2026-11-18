@@ -1,4 +1,5 @@
 import React from 'react';
+import { BottlePhoto } from './BottlePhoto';
 import {
   ActivityIndicator,
   Pressable,
@@ -29,6 +30,13 @@ import { fragranceById } from '../domain/catalog';
 import { colors, s } from './theme';
 
 const paths = {
+  home: 'M3 10 12 3l9 7v10h-6v-6H9v6H3z',
+  layers: 'm12 3 9 5-9 5-9-5 9-5Zm-9 9 9 5 9-5m-18 4 9 5 9-5',
+  bell: 'M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9Zm-8 12a2 2 0 0 0 4 0',
+  settings:
+    'M9 3h6l1 3 3 1 2 4-2 2v4l-3 1-1 3H9l-1-3-3-1v-4l-2-2 2-4 3-1Zm6 9a3 3 0 1 0-6 0 3 3 0 1 0 6 0',
+  filter: 'M3 4h18l-7 8v6l-4 2v-8z',
+  menu: 'M4 5h16M4 12h16M4 19h16',
   studio:
     'M9 3h6M10 3v6L4 19q-1 2 2 2h12q3 0 2-2L14 9V3M8 14h8M9 17h.01M14 18h.01',
   today:
@@ -83,14 +91,18 @@ export function Screen({
   children,
   scroll = true,
   scrollRef,
+  style,
+  contentStyle,
 }: {
   children: React.ReactNode;
   scroll?: boolean;
   scrollRef?: React.RefObject<ScrollView | null>;
+  style?: StyleProp<ViewStyle>;
+  contentStyle?: StyleProp<ViewStyle>;
 }) {
   const insets = useSafeAreaInsets();
   return (
-    <SafeAreaView style={s.page} edges={['top', 'left', 'right']}>
+    <SafeAreaView style={[s.page, style]} edges={['top', 'left', 'right']}>
       {scroll ? (
         <ScrollView
           ref={scrollRef}
@@ -98,6 +110,7 @@ export function Screen({
           contentContainerStyle={[
             s.content,
             { paddingBottom: 32 + insets.bottom },
+            contentStyle,
           ]}
           showsVerticalScrollIndicator={false}
         >
@@ -241,9 +254,19 @@ export function Chip({
       accessibilityRole={onPress ? 'button' : undefined}
       accessibilityState={onPress ? { selected } : undefined}
       onPress={onPress}
-      style={[styles.chip, compact && styles.compactChip, selected && styles.chipSelected]}
+      style={[
+        styles.chip,
+        compact && styles.compactChip,
+        selected && styles.chipSelected,
+      ]}
     >
-      <Text style={[styles.chipText, compact && styles.compactChipText, selected && styles.chipTextSelected]}>
+      <Text
+        style={[
+          styles.chipText,
+          compact && styles.compactChipText,
+          selected && styles.chipTextSelected,
+        ]}
+      >
         {label}
       </Text>
     </Pressable>
@@ -292,6 +315,20 @@ export function Empty({
 
 // Original vector illustration; not an official product photograph.
 export function Bottle({
+  fragrance,
+  size = 130,
+}: {
+  fragrance: Fragrance;
+  size?: number;
+}) {
+  return (
+    <BottlePhoto fragrance={fragrance} size={size}>
+      <BottleIllustration fragrance={fragrance} size={size} />
+    </BottlePhoto>
+  );
+}
+
+function BottleIllustration({
   fragrance,
   size = 130,
 }: {

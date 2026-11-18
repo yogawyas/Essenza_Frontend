@@ -2,13 +2,13 @@ import React, { useCallback, useEffect, useMemo, useRef } from 'react';
 import {
   Animated,
   Easing,
-  Image,
   PanResponder,
   StyleSheet,
   useWindowDimensions,
   View,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { DesignArt } from '../ui/DesignArt';
 export function SplashScreen({
   onContinue,
   progress: sharedProgress,
@@ -132,19 +132,12 @@ export function SplashScreen({
           },
         ]}
       >
-        <Image
-          source={require('../../assets/Design/SplashScreen.png')}
-          resizeMode="contain"
-          style={styles.artwork}
-          accessible={false}
-          accessibilityIgnoresInvertColors
-        />
+        <DesignArt name="splash" width="100%" height="100%" />
       </Animated.View>
     </View>
   );
 }
 const styles = StyleSheet.create({
   screen: { flex: 1, overflow: 'hidden' },
-  artworkContainer: { flex: 1, backgroundColor: '#FAF3E0' },
-  artwork: { width: '100%', height: '100%' },
+  artworkContainer: { flex: 1, backgroundColor: '#FAF3E1' },
 });

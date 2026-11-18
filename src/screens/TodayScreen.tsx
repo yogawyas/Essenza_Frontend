@@ -35,7 +35,9 @@ export function TodayScreen() {
   useEffect(() => {
     if (previousLog.current !== current?.id) {
       previousLog.current = current?.id;
-      const frame = requestAnimationFrame(() => scroll.current?.scrollTo({ y: 0, animated: false }));
+      const frame = requestAnimationFrame(() =>
+        scroll.current?.scrollTo({ y: 0, animated: false }),
+      );
       return () => cancelAnimationFrame(frame);
     }
   }, [current?.id]);
@@ -273,14 +275,11 @@ export function TodayScreen() {
           />
         ))}
         {!discovery.length && (
-          <Text style={s.body}>
-            Belum ada kandidat baru dari katalog demo ini.
-          </Text>
+          <Text style={s.body}>Belum ada pilihan baru dari katalog.</Text>
         )}
       </View>
       <Text style={s.small}>
-        Demo lokal · rekomendasi berbasis aturan dari koleksi dan catatanmu,
-        bukan model ML atau data cuaca.
+        Rekomendasi berdasarkan koleksi dan catatanmu.
       </Text>
     </Screen>
   );

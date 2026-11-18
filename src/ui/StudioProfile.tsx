@@ -11,7 +11,7 @@ export function StudioProfile({
   const max = prediction.profile[0]?.intensity || 1;
   return (
     <View style={s.card}>
-      <Text style={styles.badge}>SIMULASI DEMO · BUKAN HASIL ML</Text>
+      <Text style={styles.badge}>KARAKTER AROMA</Text>
       <Text style={s.h2}>{prediction.summary}</Text>
       {prediction.profile
         .filter(item => item.intensity > 0)
@@ -41,8 +41,7 @@ export function StudioProfile({
           );
         })}
       <Text style={s.small}>
-        Intensitas relatif dari metadata contoh, bukan komposisi kimia, tingkat
-        akurasi, atau takaran pemakaian.
+        Intensitas menunjukkan perbandingan karakter aroma.
       </Text>
     </View>
   );

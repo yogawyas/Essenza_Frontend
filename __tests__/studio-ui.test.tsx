@@ -93,10 +93,10 @@ test('Studio selects distinct perfumes, predicts, saves and links to the recipe 
   await mount(<StudioEditorScreen />);
   expect(button('Simulasikan kombinasi').props.disabled).toBe(true);
   await tap('Pilih parfum A');
-  await press('CK One · Katalog demo');
+  await press('CK One · Katalog');
   await tap('Pilih parfum B');
-  expect(button('CK One · Katalog demo')).toBeUndefined();
-  await press('Light Blue · Katalog demo');
+  expect(button('CK One · Katalog')).toBeUndefined();
+  await press('Light Blue · Katalog');
   await press('Simulasikan kombinasi');
   await input('Nama resep', 'QA Citrus duet');
   await press('Simpan resep');
@@ -125,7 +125,7 @@ test('Studio selects distinct perfumes, predicts, saves and links to the recipe 
 test('a partial draft persists and resumes with the original selection', async () => {
   await mount(<StudioEditorScreen />);
   await tap('Pilih parfum A');
-  await press('CK One · Katalog demo');
+  await press('CK One · Katalog');
   await press('Simpan draft & keluar');
   const state = persisted();
   expect(state.studioDraft.fragranceA).toBe('ck-one');
@@ -137,7 +137,7 @@ test('a partial draft persists and resumes with the original selection', async (
   await mount(<StudioEditorScreen />);
   expect(JSON.stringify(renderer.toJSON())).toContain('CK One');
   await tap('Pilih parfum B');
-  await press('Light Blue · Katalog demo');
+  await press('Light Blue · Katalog');
   await press('Simulasikan kombinasi');
   expect(button('Simpan resep')).toBeDefined();
 });
@@ -186,13 +186,13 @@ test('prediction failures retain inputs and allow retry without saving fake resu
   await press('Simulasikan kombinasi');
   expect(button('Simpan perubahan resep')).toBeDefined();
 });
-test('a saved recipe opens after reload with demo labeling and edit/remix actions', async () => {
+test('a saved recipe opens after reload with aroma labeling and edit/remix actions', async () => {
   mockParams = { id: 'existing' };
   (AsyncStorage.getItem as jest.Mock).mockResolvedValue(
     JSON.stringify({ ...createInitialState(), recipes: [recipe] }),
   );
   await mount(<RecipeScreen />);
-  expect(JSON.stringify(renderer.toJSON())).toContain('SIMULASI DEMO');
+  expect(JSON.stringify(renderer.toJSON())).toContain('KARAKTER AROMA');
   expect(button('Edit resep')).toBeDefined();
   expect(button('Remix sebagai resep baru')).toBeDefined();
 });
