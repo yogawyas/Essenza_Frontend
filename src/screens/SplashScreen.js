@@ -2,20 +2,28 @@ import React, { useCallback, useEffect, useMemo, useRef } from 'react';
 import {
   Animated,
   Easing,
+  Image,
   PanResponder,
   StyleSheet,
+  Text,
   useWindowDimensions,
   View,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { DesignArt } from '../ui/DesignArt';
+import { DesignIcon } from '../ui/design';
+import { figma } from '../ui/figmaAssets';
+import { colors, sans, serif } from '../ui/theme';
 export function SplashScreen({
   onContinue,
   progress: sharedProgress,
   disabled = false,
 }) {
-  const { height } = useWindowDimensions();
+  const { width, height } = useWindowDimensions();
   const insets = useSafeAreaInsets();
+  const scale = Math.min(
+    width / 360,
+    (height - insets.top - insets.bottom) / 800,
+  );
   const ownProgress = useRef(new Animated.Value(0)).current;
   const progress = sharedProgress ?? ownProgress;
   const dragStart = useRef(0);
@@ -120,8 +128,10 @@ export function SplashScreen({
       <Animated.View
         testID="intro-swipe"
         accessible
-        accessibilityLabel="Essenza. Your Scent. Your Story. Geser dari bawah ke atas untuk masuk."
-        accessibilityActions={[{ name: 'increment', label: 'Lanjut ke login' }]}
+        accessibilityLabel="Essenza. Your Scent. Your Story. Swipe up to sign in."
+        accessibilityActions={[
+          { name: 'increment', label: 'Continue to sign in' },
+        ]}
         onAccessibilityAction={continueToLogin}
         style={[
           styles.artworkContainer,
@@ -132,12 +142,69 @@ export function SplashScreen({
           },
         ]}
       >
-        <DesignArt name="splash" width="100%" height="100%" />
+        <View
+          style={[styles.canvas, { width: 360 * scale, height: 800 * scale }]}
+        >
+          <Image
+            source={figma.splashArtwork}
+            resizeMode="contain"
+            style={[
+              styles.artwork,
+              {
+                width: 627 * scale,
+                height: 499 * scale,
+                left: -128 * scale,
+                top: 62 * scale,
+              },
+            ]}
+          />
+          <View style={[styles.logo, { top: 28 * scale }]}>
+            <DesignIcon name="splashLogoTop" />
+            <DesignIcon name="splashLogoBottom" />
+            <Text style={styles.brand}>Essenza</Text>
+          </View>
+          <View
+            style={[
+              styles.copy,
+              { top: 544 * scale, paddingHorizontal: 18 * scale },
+            ]}
+          >
+            <Text
+              style={[
+                styles.title,
+                { fontSize: 48 * scale, lineHeight: 50 * scale },
+              ]}
+            >
+              Your Scent.{'\n'}Your Story.
+            </Text>
+            <Text style={[styles.subtitle, { fontSize: 14 * scale }]}>
+              Collect your favorite scents. Tell your story in a scentlist. Find
+              a fragrance for every day.
+            </Text>
+          </View>
+          <DesignIcon
+            name="splashArrow"
+            style={[styles.arrow, { bottom: 23 * scale }]}
+          />
+        </View>
       </Animated.View>
     </View>
   );
 }
 const styles = StyleSheet.create({
   screen: { flex: 1, overflow: 'hidden' },
-  artworkContainer: { flex: 1, backgroundColor: '#FAF3E1' },
+  artworkContainer: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: colors.ivory,
+  },
+  canvas: { overflow: 'hidden' },
+  artwork: { position: 'absolute' },
+  logo: { position: 'absolute', alignSelf: 'center', alignItems: 'center' },
+  brand: { fontFamily: sans, color: colors.green, fontSize: 20 },
+  copy: { position: 'absolute', width: '100%', gap: 6 },
+  title: { fontFamily: serif, color: colors.green },
+  subtitle: { fontFamily: sans, color: colors.green },
+  arrow: { position: 'absolute', alignSelf: 'center' },
 });

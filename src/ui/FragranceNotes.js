@@ -1,88 +1,67 @@
-import React, { useEffect, useState } from 'react';
-import { Linking, Text, View } from 'react-native';
-import {
-  loadNotePyramid,
-  offlineNotes,
-  offlinePyramid,
-} from '../domain/fragranceMedia';
+import React from 'react';
+import { Image, StyleSheet, Text, View } from 'react-native';
 import { getNoteArtwork } from '../domain/noteArtwork';
-import { NoteGrid } from './NoteTiles';
-import { s } from './theme';
+import { notePhotos } from '../domain/scrapedCatalog';
+import { colors, s } from './theme';
 
-const tiers = { top: 'Top Notes', heart: 'Heart Notes', base: 'Base Notes' };
+const sections = [
+  ['top', 'Top notes'],
+  ['heart', 'Heart notes'],
+  ['base', 'Base notes'],
+  ['general', 'Other notes'],
+];
 
-export function FragranceNotes({ fragrance }) {
-  const [pyramid, setPyramid] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const fallback = offlineNotes(fragrance.id);
-  const visiblePyramid = pyramid ?? offlinePyramid(fragrance.id);
-  const visibleNotes = visiblePyramid
-    ? Object.values(visiblePyramid).flat()
-    : fallback;
-  const credits = [
-    ...new Set(
-      visibleNotes.map(note => getNoteArtwork(note).credit).filter(Boolean),
-    ),
-  ];
-
-  useEffect(() => {
-    let active = true;
-    loadNotePyramid(fragrance).then(result => {
-      if (active) {
-        setPyramid(result);
-        setLoading(false);
-      }
-    });
-    return () => {
-      active = false;
-    };
-  }, [fragrance]);
+export function FragranceNotes({ notes }) {
+  const available = sections.filter(([stage]) => notes?.[stage]?.length);
+  if (!available.length) {
+    return null;
+  }
 
   return (
-    <View style={{ gap: 10 }}>
+    <View style={styles.section}>
       <Text style={s.h2}>Notes</Text>
-      {visiblePyramid ? (
-        <>
-          {Object.entries(tiers).map(
-            ([key, label]) =>
-              visiblePyramid[key].length > 0 && (
-                <View key={key} style={{ gap: 6 }}>
-                  <Text style={s.h3}>{label}</Text>
-                  <NoteGrid labels={visiblePyramid[key]} />
+      {available.map(([stage, label]) => (
+        <View key={stage} style={styles.group}>
+          {(stage !== 'general' || available.length > 1) && (
+            <Text style={s.label}>{label}</Text>
+          )}
+          <View style={s.wrap}>
+            {notes[stage].map(note => {
+              const photo = getNoteArtwork(note.name).source || notePhotos[note.id];
+              return (
+                <View key={note.id} style={styles.note}>
+                  {photo ? (
+                    <Image
+                      source={photo}
+                      resizeMode="cover"
+                      style={styles.photo}
+                    />
+                  ) : null}
+                  <Text style={[s.small, styles.label]}>{note.name}</Text>
                 </View>
-              ),
-          )}
-          {pyramid && (
-            <Text
-              accessibilityRole="link"
-              style={s.small}
-              onPress={() =>
-                Linking.openURL(
-                  'https://www.scento.com/developers/perfume-api',
-                ).catch(() => {})
-              }
-            >
-              Data notes: Scento Perfume API
-            </Text>
-          )}
-        </>
-      ) : fallback.length > 0 ? (
-        <NoteGrid labels={fallback} />
-      ) : (
-        <Text style={s.small}>
-          {loading ? 'Memuat notes…' : 'Notes belum tersedia untuk varian ini.'}
-        </Text>
-      )}
-      {credits.map(credit => (
-        <Text
-          key={credit.source}
-          accessibilityRole="link"
-          style={s.small}
-          onPress={() => Linking.openURL(credit.source).catch(() => {})}
-        >
-          Foto: {credit.author} · {credit.license}
-        </Text>
+              );
+            })}
+          </View>
+        </View>
       ))}
     </View>
   );
 }
+
+const styles = StyleSheet.create({
+  section: { gap: 12 },
+  group: { gap: 8 },
+  note: {
+    width: 76,
+    minHeight: 48,
+    alignItems: 'center',
+    justifyContent: 'center',
+    overflow: 'hidden',
+    backgroundColor: colors.white,
+    borderRadius: 8,
+    borderColor: colors.line,
+    borderWidth: StyleSheet.hairlineWidth,
+  },
+  photo: { width: '100%', height: 56 },
+  label: { textAlign: 'center', paddingHorizontal: 4, paddingVertical: 6 },
+});

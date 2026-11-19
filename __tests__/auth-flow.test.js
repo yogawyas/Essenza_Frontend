@@ -73,14 +73,6 @@ async function openApp(props = {}) {
   });
 }
 
-function authButton(label) {
-  return renderer.root.findAll(
-    node =>
-      node.props.accessibilityLabel === label &&
-      typeof node.props.onPress === 'function',
-  )[0];
-}
-
 function activeAuthScreen() {
   const page = ['login', 'register']
     .map(mode => renderer.root.findByProps({ testID: `auth-${mode}-page` }))
@@ -126,7 +118,7 @@ test('dummy login persists a session without a password and restores home on res
   });
   expect(stored.get(AUTH_SESSION_KEY)).not.toContain(DUMMY_ACCOUNT.password);
   expect(mockDispatch).toHaveBeenCalledWith(
-    expect.objectContaining({ type: 'profile', onboard: false }),
+    expect.objectContaining({ type: 'profile', onboard: true }),
   );
   await act(async () => renderer.unmount());
   await openApp();
@@ -138,7 +130,7 @@ test('dummy login persists a session without a password and restores home on res
 test('wrong login and mismatched registration passwords do not create sessions', async () => {
   const repository = new AuthRepository();
   expect(() => repository.signIn(DUMMY_ACCOUNT.email, 'wrong')).toThrow(
-    'Email atau kata sandi salah.',
+    'Incorrect email or password.',
   );
   expect(() =>
     repository.register(
@@ -147,11 +139,11 @@ test('wrong login and mismatched registration passwords do not create sessions',
       'Password123!',
       'different',
     ),
-  ).toThrow('Konfirmasi kata sandi belum sama.');
+  ).toThrow('Passwords do not match.');
   expect(stored.has(AUTH_SESSION_KEY)).toBe(false);
 });
 
-test('registration and its back button connect to login; valid dummy registration shows success and then signs in', async () => {
+test('registration and its back button connect to login; valid dummy registration opens home', async () => {
   stored.set(INTRO_SEEN_KEY, 'true');
   await openLogin();
   await act(async () => activeAuthScreen().props.onSwitchMode());
@@ -165,16 +157,6 @@ test('registration and its back button connect to login; valid dummy registratio
       email: 'marvel@example.com',
       password: 'Password123!',
       confirmation: 'Password123!',
-    }),
-  );
-  expect(activeAuthScreen().props.registrationSuccess).toBe(
-    'marvel@example.com',
-  );
-  expect(stored.has(AUTH_SESSION_KEY)).toBe(false);
-  await act(async () =>
-    activeAuthScreen().props.onSubmit({
-      email: 'marvel@example.com',
-      password: 'Password123!',
     }),
   );
   expect(JSON.parse(stored.get(AUTH_SESSION_KEY)).name).toBe('Marvel');
@@ -197,14 +179,20 @@ test('form inputs submit entered credentials and the eye toggles password visibi
     renderer.root
       .findAllByType(TextInput)
       .find(node => node.props.accessibilityLabel === label);
+  const button = label =>
+    renderer.root.findAll(
+      node =>
+        node.props.accessibilityLabel === label &&
+        typeof node.props.onPress === 'function',
+    )[0];
   await act(async () => {
     input('Email').props.onChangeText(DUMMY_ACCOUNT.email);
-    input('Kata sandi').props.onChangeText(DUMMY_ACCOUNT.password);
+    input('Password').props.onChangeText(DUMMY_ACCOUNT.password);
   });
-  expect(input('Kata sandi').props.secureTextEntry).toBe(true);
-  await act(async () => authButton('Tampilkan kata sandi').props.onPress());
-  expect(input('Kata sandi').props.secureTextEntry).toBe(false);
-  await act(async () => authButton('Masuk').props.onPress());
+  expect(input('Password').props.secureTextEntry).toBe(true);
+  await act(async () => button('Show password').props.onPress());
+  expect(input('Password').props.secureTextEntry).toBe(false);
+  await act(async () => button('Sign In').props.onPress());
   expect(onSubmit).toHaveBeenCalledWith({
     name: '',
     email: DUMMY_ACCOUNT.email,
@@ -217,10 +205,18 @@ test('Google remains a placeholder and cannot authenticate a session', async () 
   const alert = jest.spyOn(Alert, 'alert').mockImplementation(() => {});
   stored.set(INTRO_SEEN_KEY, 'true');
   await openLogin();
-  await act(async () => authButton('Google').props.onPress());
+  await act(async () =>
+    renderer.root
+      .findAll(
+        node =>
+          node.props.accessibilityLabel === 'Google' &&
+          typeof node.props.onPress === 'function',
+      )[0]
+      .props.onPress(),
+  );
   expect(alert).toHaveBeenCalledWith(
     'Google',
-    expect.stringContaining('belum tersedia'),
+    expect.stringContaining('not available yet'),
   );
   expect(stored.has(AUTH_SESSION_KEY)).toBe(false);
 });

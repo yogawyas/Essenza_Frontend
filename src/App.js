@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useState } from 'react';
 import { StatusBar, StyleSheet, Text, View } from 'react-native';
 import { DefaultTheme, NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
@@ -9,26 +9,37 @@ import {
   useSafeAreaInsets,
 } from 'react-native-safe-area-context';
 import { AppProvider, useApp } from './storage/AppProvider';
-import { TodayScreen } from './screens/TodayScreen';
-import { CatalogSearchScreen } from './screens/CatalogSearchScreen';
 import { HomeScreen } from './screens/HomeScreen';
-import { MemberProfileScreen } from './screens/MemberProfileScreen';
-import { MyShelfCollections } from './screens/MyShelfCollectionsScreen';
-import { PreferencesScreen } from './screens/PreferencesScreen';
-import { SettingsScreen } from './screens/SettingsScreen';
-import { ShelfScreen } from './screens/ShelfScreen';
+import { SearchScreen } from './screens/SearchScreen';
+import { MyShelfScreen } from './screens/MyShelfScreen';
 import { ScentlistsScreen } from './screens/ScentlistsScreen';
-import { FragranceDetailScreen } from './screens/FragranceDetailScreen';
-import { ListScreen } from './screens/ListScreen';
+import { PerfumeScreen } from './screens/PerfumeScreen';
+import { CollectionScreen } from './screens/CollectionScreen';
 import { EditListScreen } from './screens/EditListScreen';
 import { WearScreen } from './screens/WearScreen';
-import { JournalScreen } from './screens/JournalScreen';
+import {
+  HistoryScreen,
+  JournalDetailScreen,
+  JournalScreen,
+  StatsScreen,
+} from './screens/JournalFlow';
 import { ProfileScreen } from './screens/ProfileScreen';
+import {
+  EditProfileScreen,
+  HelpScreen,
+  NotificationsScreen,
+  OtherProfileScreen,
+  PreferenceScreen,
+  PrivacyScreen,
+  SettingsScreen,
+  UserProfileScreen,
+} from './screens/ProfileFlow';
 import { StudioScreen } from './screens/StudioScreen';
 import { StudioEditorScreen } from './screens/StudioEditorScreen';
 import { RecipeScreen } from './screens/RecipeScreen';
-import { Button, Icon } from './ui/components';
-import { colors } from './ui/theme';
+import { Button } from './ui/components';
+import { Avatar, DesignIcon } from './ui/design';
+import { colors, sans } from './ui/theme';
 import { EntryFlow } from './navigation/EntryFlow';
 import { LaunchSplashScreen } from './screens/LaunchSplashScreen';
 const Root = createNativeStackNavigator();
@@ -36,10 +47,8 @@ const Feature = createNativeStackNavigator();
 const Tabs = createBottomTabNavigator();
 const tabIcons = {
   Today: 'home',
-  Discover: 'search',
-  Studio: 'studio',
-  Shelf: 'layers',
-  ProfileTab: 'user',
+  Discover: 'searchTab',
+  Shelf: 'shelf',
 };
 const theme = {
   ...DefaultTheme,
@@ -52,27 +61,11 @@ const theme = {
     border: colors.line,
   },
 };
-function ShelfHub(props) {
-  const section = props.route.params?.section;
-  const [showCollections, setShowCollections] = useState(
-    !section || section === 'lists',
-  );
-  useEffect(() => {
-    if (section) setShowCollections(section === 'lists');
-  }, [section]);
-  return showCollections ? (
-    <MyShelfCollections {...props} />
-  ) : (
-    <ShelfScreen {...props} />
-  );
-}
-
 const homes = {
   TodayHome: HomeScreen,
-  DiscoverHome: CatalogSearchScreen,
-  StudioHome: StudioScreen,
-  ShelfHome: ShelfHub,
-  ProfileHome: MemberProfileScreen,
+  DiscoverHome: SearchScreen,
+  ShelfHome: MyShelfScreen,
+  ProfileHome: UserProfileScreen,
 };
 function FeatureStack({ home }) {
   return (
@@ -87,12 +80,12 @@ function FeatureStack({ home }) {
       <Feature.Screen name={home} component={homes[home]} />
       <Feature.Screen
         name="Fragrance"
-        component={FragranceDetailScreen}
+        component={PerfumeScreen}
         getId={({ params }) => params.id}
       />
       <Feature.Screen
         name="List"
-        component={ListScreen}
+        component={CollectionScreen}
         getId={({ params }) => params.id}
       />
       <Feature.Screen name="Scentlists" component={ScentlistsScreen} />
@@ -101,8 +94,6 @@ function FeatureStack({ home }) {
         component={RecipeScreen}
         getId={({ params }) => params.id}
       />
-      <Feature.Screen name="Journal" component={JournalScreen} />
-      <Feature.Screen name="TodayPlanner" component={TodayScreen} />
     </Feature.Navigator>
   );
 }
@@ -112,14 +103,25 @@ function TodayStack() {
 function DiscoverStack() {
   return <FeatureStack home="DiscoverHome" />;
 }
-function StudioStack() {
-  return <FeatureStack home="StudioHome" />;
+function ProfileStack() {
+  return <FeatureStack home="ProfileHome" />;
 }
 function ShelfStack() {
   return <FeatureStack home="ShelfHome" />;
 }
-function ProfileStack() {
-  return <FeatureStack home="ProfileHome" />;
+function TabIcon({ name, focused }) {
+  return (
+    <View style={[tabStyles.icon, focused && tabStyles.active]}>
+      {name === 'Profile' ? (
+        <Avatar size={32} />
+      ) : (
+        <DesignIcon
+          name={tabIcons[name]}
+          style={!focused && tabStyles.inactive}
+        />
+      )}
+    </View>
+  );
 }
 function HomeTabs() {
   const insets = useSafeAreaInsets();
@@ -129,19 +131,19 @@ function HomeTabs() {
       backBehavior="history"
       screenOptions={({ route }) => ({
         headerShown: false,
+        popToTopOnBlur: true,
         animation: 'shift',
         tabBarActiveTintColor: colors.green,
         tabBarInactiveTintColor: colors.muted,
         tabBarStyle: {
-          backgroundColor: colors.ivory,
+          backgroundColor: colors.white,
           borderTopColor: colors.line,
-          height: 65 + insets.bottom,
-          paddingTop: 7,
+          height: 71 + insets.bottom,
           paddingBottom: Math.max(insets.bottom, 8),
         },
-        tabBarLabelStyle: { fontSize: 11, fontWeight: '600' },
-        tabBarIcon: ({ color }) => (
-          <Icon name={tabIcons[route.name]} color={color} />
+        tabBarLabelStyle: { fontSize: 11, fontFamily: sans },
+        tabBarIcon: ({ focused }) => (
+          <TabIcon name={route.name} focused={focused} />
         ),
         tabBarHideOnKeyboard: true,
       })}
@@ -149,32 +151,38 @@ function HomeTabs() {
       <Tabs.Screen
         name="Today"
         component={TodayStack}
-        options={{ title: 'Beranda' }}
+        options={{ title: 'Home' }}
       />
       <Tabs.Screen
         name="Discover"
         component={DiscoverStack}
-        options={{ title: 'Telusuri' }}
-      />
-      <Tabs.Screen
-        name="Studio"
-        component={StudioStack}
-        options={{ tabBarItemStyle: { display: 'none' } }}
+        options={{ title: 'Search' }}
       />
       <Tabs.Screen
         name="Shelf"
         component={ShelfStack}
         options={{ title: 'MyShelf' }}
       />
-      <Tabs.Screen
-        name="ProfileTab"
-        component={ProfileStack}
-        options={{ title: 'Profile' }}
-      />
+      <Tabs.Screen name="Profile" component={ProfileStack} />
     </Tabs.Navigator>
   );
 }
-function Navigation({ session, signOut }) {
+const tabStyles = StyleSheet.create({
+  icon: {
+    width: 60,
+    alignItems: 'center',
+    justifyContent: 'center',
+    height: 40,
+    borderTopWidth: 2,
+    borderTopColor: 'transparent',
+  },
+  active: { borderTopColor: colors.green },
+  inactive: { opacity: 0.53 },
+});
+function Welcome() {
+  return <ProfileScreen />;
+}
+function Navigation() {
   const { state } = useApp();
   return (
     <NavigationContainer theme={theme}>
@@ -188,9 +196,31 @@ function Navigation({ session, signOut }) {
         {state.onboarded ? (
           <Root.Group navigationKey="member">
             <Root.Screen name="Home" component={HomeTabs} />
-            <Root.Screen name="Profile" component={MemberProfileScreen} />
-            <Root.Screen name="List" component={ListScreen} />
-            <Root.Screen name="Fragrance" component={FragranceDetailScreen} />
+            <Root.Screen name="Journal" component={JournalScreen} />
+            <Root.Screen
+              name="JournalDetail"
+              component={JournalDetailScreen}
+              getId={({ params }) => params.id}
+            />
+            <Root.Screen name="History" component={HistoryScreen} />
+            <Root.Screen name="Stats" component={StatsScreen} />
+            <Root.Screen name="Settings" component={SettingsScreen} />
+            <Root.Screen name="Preference" component={PreferenceScreen} />
+            <Root.Screen name="Privacy" component={PrivacyScreen} />
+            <Root.Screen name="Help" component={HelpScreen} />
+            <Root.Screen name="Notifications" component={NotificationsScreen} />
+            <Root.Screen
+              name="OtherProfile"
+              component={OtherProfileScreen}
+              getId={({ params }) => params.id}
+            />
+            <Root.Screen name="EditProfile" component={EditProfileScreen} />
+            <Root.Screen name="Studio" component={StudioScreen} />
+            <Root.Screen
+              name="Recipe"
+              component={RecipeScreen}
+              getId={({ params }) => params?.id}
+            />
             <Root.Group
               screenOptions={{
                 presentation: 'modal',
@@ -200,30 +230,14 @@ function Navigation({ session, signOut }) {
               <Root.Screen name="EditList" component={EditListScreen} />
               <Root.Screen name="Wear" component={WearScreen} />
               <Root.Screen name="StudioEditor" component={StudioEditorScreen} />
-              <Root.Screen name="EditProfile" component={ProfileScreen} />
-              <Root.Screen name="Preferences" component={PreferencesScreen} />
-              <Root.Screen name="Settings">
-                {props => (
-                  <SettingsScreen
-                    {...props}
-                    email={session?.email}
-                    onSignOut={() => signOut()}
-                    onReset={() => signOut(true)}
-                  />
-                )}
-              </Root.Screen>
             </Root.Group>
           </Root.Group>
         ) : (
-          <Root.Screen name="Home" navigationKey="welcome">
-            {props => (
-              <PreferencesScreen
-                {...props}
-                onboarding
-                onBack={() => signOut()}
-              />
-            )}
-          </Root.Screen>
+          <Root.Screen
+            name="Home"
+            component={Welcome}
+            navigationKey="welcome"
+          />
         )}
       </Root.Navigator>
     </NavigationContainer>
@@ -249,13 +263,13 @@ class ErrorBoundary extends React.Component {
         }}
       >
         <Text style={{ color: colors.ink, fontSize: 20 }}>
-          Ada kendala membuka layar.
+          Could not open this screen.
         </Text>
         <Text style={{ color: colors.muted }}>
-          Data yang sudah tersimpan tetap ada.
+          Your saved data is still on this device.
         </Text>
         <Button
-          label="Coba buka lagi"
+          label="Try Again"
           onPress={() => this.setState({ failed: false })}
         />
       </View>
@@ -275,8 +289,8 @@ export default function App() {
         <StatusBar barStyle="dark-content" />
         <ErrorBoundary onError={finishPreparingEntry}>
           <AppProvider>
-            <EntryFlow onReady={finishPreparingEntry}>
-              {entry => <Navigation {...entry} />}
+            <EntryFlow onReady={finishPreparingEntry} onResume={finishLaunch}>
+              <Navigation />
             </EntryFlow>
           </AppProvider>
         </ErrorBoundary>

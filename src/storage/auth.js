@@ -4,7 +4,7 @@ export const INTRO_SEEN_KEY = '@essenza/intro-seen-v1';
 export const DUMMY_ACCOUNT = {
   email: 'essenza@test.com',
   password: '12345678',
-  name: 'Penjelajah',
+  name: 'Explorer',
 };
 // Development only. No password, OAuth token, or real account is stored here.
 export class AuthRepository {
@@ -44,7 +44,7 @@ export class AuthRepository {
       email.trim().toLowerCase() !== DUMMY_ACCOUNT.email ||
       password !== DUMMY_ACCOUNT.password
     ) {
-      throw new Error('Email atau kata sandi salah.');
+      throw new Error('Incorrect email or password.');
     }
     return {
       mode: 'dummy',
@@ -55,16 +55,16 @@ export class AuthRepository {
   // The registration design can be tried locally; this does not create an account.
   register(name, email, password, confirmation) {
     if (!name.trim() || name.trim().length > 40) {
-      throw new Error('Isi nama pengguna 1–40 karakter.');
+      throw new Error('Enter a username between 1 and 40 characters.');
     }
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) {
-      throw new Error('Masukkan email yang valid.');
+      throw new Error('Enter a valid email address.');
     }
     if (password.length < 8) {
-      throw new Error('Kata sandi minimal 8 karakter.');
+      throw new Error('Use at least 8 characters.');
     }
     if (password !== confirmation) {
-      throw new Error('Konfirmasi kata sandi belum sama.');
+      throw new Error('Passwords do not match.');
     }
     return {
       mode: 'dummy',
@@ -72,11 +72,12 @@ export class AuthRepository {
       email: email.trim().toLowerCase(),
     };
   }
-  async clearSession() {
-    await this.storage.removeItem(AUTH_SESSION_KEY);
-  }
   async saveSession(session) {
     await this.finishIntro();
     await this.storage.setItem(AUTH_SESSION_KEY, JSON.stringify(session));
+  }
+
+  async signOut() {
+    await this.storage.removeItem(AUTH_SESSION_KEY);
   }
 }

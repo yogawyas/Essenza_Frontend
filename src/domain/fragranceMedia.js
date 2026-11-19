@@ -7,9 +7,7 @@ export const bottlePhotos = {
   flowerbomb: {
     uri: 'https://us.viktor-rolf.com/dw/image/v2/AANG_PRD/on/demandware.static/-/Sites-vr-master-catalog/default/dw52a4b375/FB%20EDP%202024/01_vr_frag_fbb_edp_perfect_pdp_premium_packshot_100ml_1x1.webp?q=70&sfrm=jpg&sh=430&sm=cut&sw=430',
   },
-  'la-vie': {
-    uri: 'https://www.lancome-usa.com/dw/image/v2/AANG_PRD/on/demandware.static/-/Sites-lancome-us-master-catalog/default/dw4ddcca7c/pdp/100606/ALT0-3605532612768-PACKSHOT.webp?q=70&sfrm=jpg&sh=430&sm=cut&sw=430',
-  },
+  'la-vie': require('../../assets/fragrance/la-vie.jpg'),
   'oud-wood': {
     uri: 'https://www.tomfordbeauty.com/cdn/shop/files/tf_sku_T1XF01_2000x2000_0.png?v=1792675585&width=480',
   },
@@ -26,6 +24,10 @@ export const bottlePhotos = {
 };
 
 export const bottlePhotoCredits = {
+  'la-vie': {
+    author: 'openfoodfacts-contributors',
+    source: 'https://world.openbeautyfacts.org/product/3605533286555',
+  },
   'ck-one': {
     author: 'Gonna Fly Now',
     source: 'https://commons.wikimedia.org/wiki/File:CK_One.jpg',

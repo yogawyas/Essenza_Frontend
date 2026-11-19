@@ -20,17 +20,16 @@ import { AuthScreen } from '../screens/AuthScreen';
 import { SplashScreen } from '../screens/SplashScreen';
 import { useApp } from '../storage/AppProvider';
 import { AuthRepository } from '../storage/auth';
+import { SessionContext } from '../storage/SessionContext';
 
-export function EntryFlow({ children, onReady }) {
+export function EntryFlow({ children, onReady, onResume }) {
   const { state, dispatch } = useApp();
   const { width, height } = useWindowDimensions();
-  const repository = useRef(new AuthRepository()).current;
+  const [repository] = useState(() => new AuthRepository());
   const [screen, setScreen] = useState('loading');
   const [transitioning, setTransitioning] = useState(false);
   const [homeReady, setHomeReady] = useState(false);
   const [session, setSession] = useState(null);
-  const [registeredEmail, setRegisteredEmail] = useState('');
-  const pendingRegistration = useRef(null);
   const introAvailable = useRef(false);
   const returningToIntro = useRef(false);
   const locked = useRef(false);
@@ -74,21 +73,24 @@ export function EntryFlow({ children, onReady }) {
     let active = true;
     repository
       .load()
-      .then(({ session: restoredSession }) => {
+      .then(({ session }) => {
         if (!active) {
           return;
         }
-        introAvailable.current = !restoredSession;
-        introProgress.setValue(restoredSession ? 1 : 0);
+        introAvailable.current = !session;
+        introProgress.setValue(session ? 1 : 0);
         pageProgress.setValue(0);
         authOpacity.setValue(1);
         locked.current = false;
         setTransitioning(false);
-        setSession(restoredSession);
-        setHomeReady(Boolean(restoredSession));
+        setHomeReady(Boolean(session));
+        setSession(session);
         // Swiping the design once is not a completed login. Keep both splash
         // screens on startup until there is an actual saved session.
-        setScreen(restoredSession ? 'home' : 'splash');
+        setScreen(session ? 'home' : 'splash');
+        if (session) {
+          onResume?.();
+        }
       })
       .catch(() => {
         if (active) {
@@ -104,7 +106,7 @@ export function EntryFlow({ children, onReady }) {
     return () => {
       active = false;
     };
-  }, [authOpacity, introProgress, pageProgress, repository]);
+  }, [authOpacity, introProgress, onResume, pageProgress, repository]);
 
   const reportReady = useCallback(() => {
     if (screen !== 'loading' && !readyReported.current) {
@@ -235,7 +237,7 @@ export function EntryFlow({ children, onReady }) {
       setScreen('login');
       return true;
     } catch {
-      Alert.alert('Belum tersimpan', 'Coba geser lagi untuk membuka login.');
+      Alert.alert('Could Not Save', 'Swipe again to open sign in.');
       return false;
     }
   };
@@ -244,23 +246,9 @@ export function EntryFlow({ children, onReady }) {
     if (locked.current) {
       return;
     }
-    if (mode === 'register') {
-      const registered = repository.register(
-        name,
-        email,
-        password,
-        confirmation,
-      );
-      pendingRegistration.current = { session: registered, password };
-      setRegisteredEmail(registered.email);
-      changePage('login');
-      return;
-    }
-    const registration = pendingRegistration.current;
-    const signedIn =
-      registration?.session.email === email.trim().toLowerCase() &&
-      registration.password === password
-        ? registration.session
+    const session =
+      mode === 'register'
+        ? repository.register(name, email, password, confirmation)
         : repository.signIn(email, password);
     locked.current = true;
     setTransitioning(true);
@@ -271,21 +259,20 @@ export function EntryFlow({ children, onReady }) {
         profile: {
           ...state.profile,
           name:
-            signedIn === registration?.session
-              ? signedIn.name
-              : state.profile.name || signedIn.name,
+            mode === 'register'
+              ? session.name
+              : state.profile.name || session.name,
         },
-        onboard: Boolean(state.onboarded),
+        onboard: true,
       });
       if (!saved) {
         unlock();
         return;
       }
-      await repository.saveSession(signedIn);
+      await repository.saveSession(session);
       if (mounted.current) {
+        setSession(session);
         lastAuthMode.current = mode;
-        pendingRegistration.current = null;
-        setSession(signedIn);
         setHomeReady(true);
         setScreen('home-transition');
       }
@@ -295,26 +282,18 @@ export function EntryFlow({ children, onReady }) {
     }
   };
 
-  const signOut = async (reset = false) => {
-    if (locked.current) return;
-    locked.current = true;
+  const signOut = async () => {
     try {
-      if (reset && !(await dispatch({ type: 'reset' }))) return;
-      await repository.clearSession();
-      pendingRegistration.current = null;
-      setRegisteredEmail('');
+      await repository.signOut();
       setSession(null);
+      setHomeReady(false);
       introAvailable.current = false;
       introProgress.setValue(1);
       pageProgress.setValue(0);
       authOpacity.setValue(1);
-      lastAuthMode.current = 'login';
-      setHomeReady(false);
       setScreen('login');
     } catch {
-      Alert.alert('Belum bisa keluar', 'Coba lagi.');
-    } finally {
-      unlock();
+      Alert.alert('Could not log out', 'Please try again.');
     }
   };
 
@@ -337,9 +316,9 @@ export function EntryFlow({ children, onReady }) {
           pointerEvents={screen === 'home' ? 'auto' : 'none'}
           onLayout={reportReady}
         >
-          {typeof children === 'function'
-            ? children({ session, signOut })
-            : children}
+          <SessionContext.Provider value={{ session, signOut }}>
+            {children}
+          </SessionContext.Provider>
         </View>
       )}
       {screen !== 'home' && screen !== 'loading' && (
@@ -381,7 +360,6 @@ export function EntryFlow({ children, onReady }) {
             >
               <AuthScreen
                 mode="login"
-                registrationSuccess={registeredEmail}
                 onBack={back}
                 onSwitchMode={() => changePage('register')}
                 onSubmit={fields => submit('login', fields)}

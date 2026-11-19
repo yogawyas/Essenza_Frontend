@@ -7,6 +7,9 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		70D50A3F036E4CEE80000001 /* DroidSans.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 70D50A3F036E4CEE80000011; };
+		70D50A3F036E4CEE80000002 /* DroidSans-Bold.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 70D50A3F036E4CEE80000012; };
+		70D50A3F036E4CEE80000003 /* DMSerifDisplay-Regular.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 70D50A3F036E4CEE80000013; };
 		0C80B921A6F3F58F76C31292 /* libPods-Essenza.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 5DCACB8F33CDC322A6C60F78 /* libPods-Essenza.a */; };
 		13B07FBF1A68108700A75B9A /* Images.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 13B07FB51A68108700A75B9A /* Images.xcassets */; };
 		761780ED2CA45674006654EE /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 761780EC2CA45674006654EE /* AppDelegate.swift */; };
@@ -14,6 +17,9 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		70D50A3F036E4CEE80000011 /* DroidSans.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; name = DroidSans.ttf; path = ../android/app/src/main/assets/fonts/DroidSans.ttf; sourceTree = SOURCE_ROOT; };
+		70D50A3F036E4CEE80000012 /* DroidSans-Bold.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; name = "DroidSans-Bold.ttf"; path = "../android/app/src/main/assets/fonts/DroidSans-Bold.ttf"; sourceTree = SOURCE_ROOT; };
+		70D50A3F036E4CEE80000013 /* DMSerifDisplay-Regular.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; name = "DMSerifDisplay-Regular.ttf"; path = "../android/app/src/main/assets/fonts/DMSerifDisplay-Regular.ttf"; sourceTree = SOURCE_ROOT; };
 		13B07F961A680F5B00A75B9A /* Essenza.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Essenza.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		13B07FB51A68108700A75B9A /* Images.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; name = Images.xcassets; path = Essenza/Images.xcassets; sourceTree = "<group>"; };
 		13B07FB61A68108700A75B9A /* Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; name = Info.plist; path = Essenza/Info.plist; sourceTree = "<group>"; };
@@ -41,6 +47,9 @@
 		13B07FAE1A68108700A75B9A /* Essenza */ = {
 			isa = PBXGroup;
 			children = (
+				70D50A3F036E4CEE80000011 /* DroidSans.ttf */,
+				70D50A3F036E4CEE80000012 /* DroidSans-Bold.ttf */,
+				70D50A3F036E4CEE80000013 /* DMSerifDisplay-Regular.ttf */,
 				13B07FB51A68108700A75B9A /* Images.xcassets */,
 				761780EC2CA45674006654EE /* AppDelegate.swift */,
 				13B07FB61A68108700A75B9A /* Info.plist */,
@@ -157,6 +166,9 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				70D50A3F036E4CEE80000001 /* DroidSans.ttf in Resources */,
+				70D50A3F036E4CEE80000002 /* DroidSans-Bold.ttf in Resources */,
+				70D50A3F036E4CEE80000003 /* DMSerifDisplay-Regular.ttf in Resources */,
 				81AB9BB82411601600AC10FF /* LaunchScreen.storyboard in Resources */,
 				13B07FBF1A68108700A75B9A /* Images.xcassets in Resources */,
 			);
