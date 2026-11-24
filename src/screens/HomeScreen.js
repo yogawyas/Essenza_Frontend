@@ -16,6 +16,7 @@ import { OCCASION_LABELS } from '../domain/models';
 import { todayLog } from '../domain/today';
 import { Bottle, Button, FragranceRow } from '../ui/components';
 import { CollectionArtwork } from '../ui/CollectionRow';
+import { ChristmasBanner } from '../ui/ChristmasBanner';
 import {
   BrandBar,
   DesignAction,
@@ -82,6 +83,10 @@ export function HomeScreen() {
 
   return (
     <DesignScreen header={<BrandBar navigation={nav} />} scrollRef={scroll}>
+      <ChristmasBanner
+        date={now}
+        onExplore={() => nav.navigate('Home', { screen: 'Discover' })}
+      />
       <HomeSection
         title="Recently Worn"
         link="See Journal"

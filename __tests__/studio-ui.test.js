@@ -1,6 +1,6 @@
 import React from 'react';
 import ReactTestRenderer, { act } from 'react-test-renderer';
-import { TextInput } from 'react-native';
+import { Switch, TextInput } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { AppProvider } from '../src/storage/AppProvider';
 import { createInitialState } from '../src/domain/models';
@@ -19,6 +19,7 @@ const mockNav = {
 };
 let mockParams;
 jest.mock('@react-navigation/native', () => ({
+  ...jest.requireActual('@react-navigation/native'),
   useNavigation: () => mockNav,
   useRoute: () => ({
     params: mockParams,
@@ -46,7 +47,7 @@ const press = async label => {
 };
 const tap = async label => {
   await act(async () => {
-    renderer.root
+    await renderer.root
       .findAll(
         node =>
           node.props.accessibilityLabel === label &&
@@ -253,10 +254,13 @@ test('Shelf consumes explicit target filters and selects the intended category',
 });
 test('new private scentlists lead to My Shelf instead of public Explore', async () => {
   await mount(<EditListScreen />);
+  const privacy = renderer.root.findByType(Switch);
+  expect(privacy.props.value).toBe(false);
   await input('Scentlist Name', 'QA private list');
-  await press('Save Scentlist');
+  await act(async () => privacy.props.onValueChange(true));
+  await tap('Save Scentlist');
   expect(persisted().lists[0].visibility).toBe('private');
-  expect(mockNav.popTo).toHaveBeenCalledWith(
+  expect(mockNav.navigate).toHaveBeenCalledWith(
     'Home',
     expect.objectContaining({
       screen: 'Shelf',

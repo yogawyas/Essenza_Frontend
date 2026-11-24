@@ -2,14 +2,16 @@ import React, { useRef, useState } from 'react';
 import { Text } from 'react-native';
 import { useApp } from '../storage/AppProvider';
 import { CollectionRow } from './CollectionRow';
-import { Button, IconButton } from './components';
+import { Button } from './components';
 import { Sheet } from './Sheet';
-import { designStyles } from './design';
+import { DesignAction, designStyles } from './design';
 
-export function AddToCollection({ fragrance, onClose, onCreate }) {
+export function AddToCollection({ fragrance, onClose, onCreate, excludeId }) {
   const { state, dispatch } = useApp();
   const [busy, setBusy] = useState(false);
   const pending = useRef(false);
+  const lists = state.lists.filter(list => list.id !== excludeId);
+
   const add = async list => {
     if (
       pending.current ||
@@ -20,12 +22,10 @@ export function AddToCollection({ fragrance, onClose, onCreate }) {
     pending.current = true;
     setBusy(true);
     const saved = await dispatch({
-      type: 'saveList',
-      list: {
-        ...list,
-        updatedAt: new Date().toISOString(),
-        items: [...list.items, { fragranceId: fragrance.id, note: '' }],
-      },
+      type: 'addListPerfume',
+      id: list.id,
+      fragranceId: fragrance.id,
+      updatedAt: new Date().toISOString(),
     });
     pending.current = false;
     setBusy(false);
@@ -33,9 +33,10 @@ export function AddToCollection({ fragrance, onClose, onCreate }) {
       onClose();
     }
   };
+
   return (
     <Sheet title="Add to MyShelf" onClose={onClose} busy={busy} compact>
-      {state.lists.map(list => {
+      {lists.map(list => {
         const added = list.items.some(
           item => item.fragranceId === fragrance.id,
         );
@@ -43,32 +44,40 @@ export function AddToCollection({ fragrance, onClose, onCreate }) {
           <CollectionRow
             key={list.id}
             list={list}
+            compact
+            disabled={added || busy}
             onPress={() => add(list)}
             trailing={
               added ? (
                 <Text style={designStyles.caption}>Added</Text>
               ) : (
-                <IconButton
-                  name="plus"
+                <DesignAction
+                  name="addDestination"
                   label={'Add to ' + list.title}
                   onPress={() => add(list)}
+                  disabled={busy}
+                  style={styles.action}
                 />
               )
             }
           />
         );
       })}
-      {!state.lists.length ? (
-        <Text style={designStyles.caption}>
-          Create a scentlist for this perfume.
-        </Text>
+      {!lists.length ? (
+        <>
+          <Text style={designStyles.caption}>
+            Create a scentlist for this perfume.
+          </Text>
+          <Button
+            label="New Scentlist"
+            variant="secondary"
+            disabled={busy}
+            onPress={onCreate}
+          />
+        </>
       ) : null}
-      <Button
-        label="New Scentlist"
-        variant="secondary"
-        disabled={busy}
-        onPress={onCreate}
-      />
     </Sheet>
   );
 }
+
+const styles = { action: { minHeight: 35 } };

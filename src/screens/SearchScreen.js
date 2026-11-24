@@ -1,10 +1,11 @@
 import React, { useEffect, useState } from 'react';
 import {
-  Alert,
+  Image,
   Pressable,
   ScrollView,
   StyleSheet,
   Text,
+  useWindowDimensions,
   View,
 } from 'react-native';
 import { useRoute } from '@react-navigation/native';
@@ -20,11 +21,13 @@ import {
   Avatar,
   BrandBar,
   DesignAction,
+  DesignIcon,
   DesignScreen,
   SearchField,
   Segmented,
   designStyles,
 } from '../ui/design';
+import { SortSheet } from '../ui/OptionSheet';
 import { colors, s, serif } from '../ui/theme';
 
 const categories = [
@@ -37,6 +40,8 @@ const isCategory = value =>
 
 export function SearchScreen() {
   const nav = useAppNavigation();
+  const { width } = useWindowDimensions();
+  const illustratedBottleSize = Math.min(96, (width - 36) * 0.31);
   const route = useRoute();
   const { state, dispatch } = useApp();
   const requestedCategory = route.params?.category;
@@ -46,6 +51,7 @@ export function SearchScreen() {
   const [query, setQuery] = useState('');
   const [accord, setAccord] = useState(null);
   const [alphabetical, setAlphabetical] = useState(false);
+  const [sorting, setSorting] = useState(false);
   useEffect(() => {
     if (isCategory(requestedCategory)) {
       setCategory(requestedCategory);
@@ -95,15 +101,12 @@ export function SearchScreen() {
     setCategory(value);
     nav.setParams({ category: value });
   };
-  const showFilter = () =>
-    Alert.alert('Sort results', undefined, [
-      { text: 'Cancel', style: 'cancel' },
-      { text: 'Default', onPress: () => setAlphabetical(false) },
-      { text: 'Name A–Z', onPress: () => setAlphabetical(true) },
-    ]);
 
   return (
-    <DesignScreen header={<BrandBar navigation={nav} />}>
+    <DesignScreen
+      header={<BrandBar navigation={nav} />}
+      contentStyle={styles.content}
+    >
       <SearchField
         value={query}
         onChangeText={setQuery}
@@ -113,25 +116,27 @@ export function SearchScreen() {
         options={categories}
         value={category}
         onChange={changeCategory}
+        style={styles.tabs}
       />
-      <View style={s.between}>
+      <View style={styles.toolbar}>
         {category === 'accounts' ? (
           <Text style={designStyles.caption}>User Accounts</Text>
         ) : (
           <ScrollView
             horizontal
+            style={s.flex}
             showsHorizontalScrollIndicator={false}
             contentContainerStyle={styles.chips}
           >
             <Chip
-              compact
+              pill
               label="All"
               selected={!accord}
               onPress={() => setAccord(null)}
             />
             {ACCORDS.map(item => (
               <Chip
-                compact
+                pill
                 key={item}
                 label={item[0].toUpperCase() + item.slice(1)}
                 selected={accord === item}
@@ -140,11 +145,15 @@ export function SearchScreen() {
             ))}
           </ScrollView>
         )}
-        <DesignAction
-          name="filter"
-          label="Filter and sort"
-          onPress={showFilter}
-        />
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel="Filter and sort"
+          style={styles.filter}
+          onPress={() => setSorting(true)}
+        >
+          <Text style={designStyles.caption}>Filter</Text>
+          <DesignIcon name="filter" />
+        </Pressable>
       </View>
       {!items.length ? (
         <Text style={designStyles.caption}>No results found.</Text>
@@ -157,61 +166,73 @@ export function SearchScreen() {
                 accessibilityRole="button"
                 accessibilityLabel={'View ' + fragrance.name}
                 onPress={() => nav.navigate('Fragrance', { id: fragrance.id })}
-                style={styles.photo}
+                style={styles.cardLink}
               >
-                <Bottle fragrance={fragrance} size={101} />
-              </Pressable>
-              <View style={s.between}>
-                <View style={s.flex}>
-                  <Text numberOfLines={1} style={designStyles.caption}>
+                <View style={styles.photo}>
+                  {fragrance.photo ? (
+                    <Image
+                      source={fragrance.photo}
+                      resizeMode="cover"
+                      style={styles.productImage}
+                    />
+                  ) : (
+                    <Bottle
+                      fragrance={fragrance}
+                      size={illustratedBottleSize}
+                    />
+                  )}
+                </View>
+                <View style={styles.cardTitle}>
+                  <Text numberOfLines={1} style={styles.brandName}>
                     {fragrance.brand}
                   </Text>
                   <Text numberOfLines={1} style={styles.name}>
                     {fragrance.name}
                   </Text>
                 </View>
-                <DesignAction
-                  name={
-                    state.favorites.includes(fragrance.id)
-                      ? 'bookmarkFill'
-                      : 'bookmark'
-                  }
-                  label={'Toggle saved perfume ' + fragrance.name}
-                  onPress={() =>
-                    dispatch({ type: 'favorite', fragranceId: fragrance.id })
-                  }
-                />
-              </View>
+              </Pressable>
+              <DesignAction
+                name={
+                  state.favorites.includes(fragrance.id)
+                    ? 'bookmarkFill'
+                    : 'bookmark'
+                }
+                label={'Toggle saved perfume ' + fragrance.name}
+                style={styles.bookmark}
+                onPress={() =>
+                  dispatch({ type: 'favorite', fragranceId: fragrance.id })
+                }
+              />
             </View>
           ))}
         </View>
       ) : null}
-      {category === 'lists'
-        ? items.map(list => {
+      {category === 'lists' ? (
+        <View style={styles.results}>
+          {items.map(list => {
             const author = accounts.find(
               account => account.id === list.authorId,
             );
-            const names = list.items
-              .map(item => fragranceById(item.fragranceId)?.name)
-              .filter(Boolean);
+            const count = list.items.length;
             return (
               <CollectionRow
                 key={list.id}
                 list={list}
                 subtitle={[
-                  list.items.length + ' perfumes',
+                  count + (count === 1 ? ' perfume' : ' perfumes'),
                   author?.name,
-                  names.join(', '),
                 ]
                   .filter(Boolean)
                   .join(' · ')}
                 onPress={() => nav.navigate('List', { id: list.id })}
               />
             );
-          })
-        : null}
-      {category === 'accounts'
-        ? items.map(account => (
+          })}
+        </View>
+      ) : null}
+      {category === 'accounts' ? (
+        <View style={styles.results}>
+          {items.map(account => (
             <Pressable
               key={account.id}
               accessibilityRole="button"
@@ -225,23 +246,63 @@ export function SearchScreen() {
               <Avatar other={account.id !== state.profile.id} />
               <Text style={designStyles.strong}>{account.name}</Text>
             </Pressable>
-          ))
-        : null}
+          ))}
+        </View>
+      ) : null}
+      {sorting ? (
+        <SortSheet
+          alphabetical={alphabetical}
+          onChange={setAlphabetical}
+          onClose={() => setSorting(false)}
+        />
+      ) : null}
     </DesignScreen>
   );
 }
 
 const styles = StyleSheet.create({
-  chips: { alignItems: 'center', gap: 6 },
+  content: { gap: 0, paddingTop: 4 },
+  tabs: { marginHorizontal: -16 },
+  toolbar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginTop: 8,
+    minHeight: 44,
+  },
+  filter: {
+    minHeight: 44,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    marginLeft: 'auto',
+  },
+  chips: { alignItems: 'center', gap: 8 },
+  results: { paddingTop: 12, gap: 14 },
+  cardLink: { gap: 8 },
+  cardTitle: { paddingRight: 28 },
+  brandName: { ...designStyles.caption, fontSize: 10 },
+  bookmark: {
+    position: 'absolute',
+    right: -9,
+    bottom: -9,
+    minWidth: 42,
+    minHeight: 42,
+  },
+  productImage: { width: '100%', height: '100%' },
   grid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     justifyContent: 'space-between',
-    gap: 12,
+    columnGap: 12,
+    rowGap: 18,
+    paddingTop: 4,
+    paddingHorizontal: 2,
   },
-  card: { width: '47%', gap: 5 },
+  card: { width: '44%' },
   photo: {
-    height: 142,
+    aspectRatio: 1,
+    overflow: 'hidden',
     borderRadius: 8,
     borderColor: colors.green,
     borderWidth: 1,

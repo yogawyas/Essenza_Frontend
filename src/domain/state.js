@@ -82,6 +82,38 @@ export function reduceState(state, action) {
         ...state,
         favorites: toggle(state.favorites, action.fragranceId),
       };
+    case 'updateList':
+    case 'addListPerfume':
+    case 'removeListPerfume': {
+      const current = state.lists.find(list => list.id === action.id);
+      if (!current) {
+        throw new Error('This scentlist is no longer available.');
+      }
+      let changes = action.changes;
+      if (action.type === 'addListPerfume') {
+        if (
+          current.items.some(item => item.fragranceId === action.fragranceId)
+        ) {
+          return state;
+        }
+        changes = {
+          items: [
+            ...current.items,
+            { fragranceId: action.fragranceId, note: '' },
+          ],
+        };
+      } else if (action.type === 'removeListPerfume') {
+        changes = {
+          items: current.items.filter(
+            item => item.fragranceId !== action.fragranceId,
+          ),
+        };
+      }
+      return reduceState(state, {
+        type: 'saveList',
+        list: { ...current, ...changes, updatedAt: action.updatedAt },
+      });
+    }
     case 'saveList': {
       const list = action.list;
       if (

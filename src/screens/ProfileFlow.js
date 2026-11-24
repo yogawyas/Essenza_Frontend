@@ -10,6 +10,7 @@ import {
   View,
 } from 'react-native';
 import { useRoute } from '@react-navigation/native';
+import LinearGradient from 'react-native-linear-gradient';
 import { CURATORS, fragranceById } from '../domain/catalog';
 import { ACCORDS } from '../domain/models';
 import { visibleLists } from '../domain/state';
@@ -17,13 +18,9 @@ import { useAppNavigation } from '../navigation/types';
 import { useApp } from '../storage/AppProvider';
 import { useSession } from '../storage/SessionContext';
 import { CollectionRow } from '../ui/CollectionRow';
-import {
-  Button,
-  Chip,
-  Empty,
-  FragranceRow,
-  IconButton,
-} from '../ui/components';
+import { ScentlistMenu } from '../ui/ScentlistMenu';
+import { OptionSheet } from '../ui/OptionSheet';
+import { Button, Chip, Empty, FragranceRow } from '../ui/components';
 import {
   Avatar,
   DesignAction,
@@ -36,7 +33,7 @@ import {
 import { colors, s, sans, sansBold } from '../ui/theme';
 
 const tabs = [
-  { value: 'shelf', label: 'MyShelf', icon: 'shelf' },
+  { value: 'shelf', label: 'MyShelf', icon: 'shelfSelected' },
   { value: 'saved', label: 'Saved', icon: 'bookmarkFill' },
 ];
 
@@ -53,6 +50,7 @@ function ProfileView({ authorId }) {
   const { state, dispatch } = useApp();
   const nav = useAppNavigation();
   const [tab, setTab] = useState('shelf');
+  const [menuId, setMenuId] = useState(null);
   const own = !authorId;
   const profile = own
     ? state.profile
@@ -87,69 +85,45 @@ function ProfileView({ authorId }) {
       Alert.alert('Could not share profile', 'Please try again.');
     }
   };
-  const menu = list => {
-    const belongsToUser = list.authorId === state.profile.id;
-    Alert.alert(
-      list.title,
-      undefined,
-      belongsToUser
-        ? [
-            { text: 'Cancel', style: 'cancel' },
-            {
-              text: 'Edit',
-              onPress: () => nav.navigate('EditList', { id: list.id }),
-            },
-            {
-              text: 'Delete',
-              style: 'destructive',
-              onPress: () =>
-                Alert.alert('Delete this scentlist?', undefined, [
-                  { text: 'Cancel', style: 'cancel' },
-                  {
-                    text: 'Delete',
-                    style: 'destructive',
-                    onPress: () =>
-                      dispatch({ type: 'deleteList', id: list.id }),
-                  },
-                ]),
-            },
-          ]
-        : [
-            { text: 'Cancel', style: 'cancel' },
-            {
-              text: state.savedListIds.includes(list.id)
-                ? 'Unsave Scentlist'
-                : 'Save Scentlist',
-              onPress: () => dispatch({ type: 'bookmark', id: list.id }),
-            },
-          ],
-    );
-  };
+  const selectedList = lists.find(list => list.id === menuId);
+  const closeMenu = () => setMenuId(null);
   return (
     <DesignScreen
       paper
+      contentStyle={styles.profileContent}
       header={
-        <PageHeader
-          title="Profile"
-          onBack={own ? undefined : nav.goBack}
-          bordered={false}
+        own ? undefined : (
+          <PageHeader title="Profile" onBack={nav.goBack} bordered={false} />
+        )
+      }
+      background={
+        <LinearGradient
+          pointerEvents="none"
+          colors={[profile?.color || '#A6E2EF', colors.white]}
+          locations={[0, 0.52]}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 0.14, y: 1 }}
+          style={styles.profileGradient}
         />
       }
     >
       {profile ? (
         <>
           <View style={styles.profileHero}>
-            <DesignIcon
-              name={own ? 'profileWave' : 'otherWave'}
-              style={styles.wave}
-            />
             {own ? (
               <View style={styles.heroActions}>
-                <IconButton
-                  name="stats"
-                  label="Perfume stats"
+                <Pressable
+                  accessibilityRole="button"
+                  accessibilityLabel="Perfume stats"
                   onPress={() => nav.navigate('Stats')}
-                />
+                  style={styles.statsAction}
+                >
+                  <View style={styles.statsIcon} pointerEvents="none">
+                    <View style={[styles.statBar, styles.statLeft]} />
+                    <View style={[styles.statBar, styles.statMiddle]} />
+                    <View style={[styles.statBar, styles.statRight]} />
+                  </View>
+                </Pressable>
                 <DesignAction
                   name="share"
                   label="Share profile"
@@ -159,7 +133,7 @@ function ProfileView({ authorId }) {
             ) : null}
             <View style={styles.identity}>
               <View style={styles.avatarGroup}>
-                <Avatar other={!own} size={86} />
+                <Avatar other={!own} size={84} />
                 {own ? (
                   <Pressable
                     accessibilityRole="button"
@@ -207,7 +181,7 @@ function ProfileView({ authorId }) {
               <Text style={styles.editText}>See Journal</Text>
             </Pressable>
           ) : null}
-          <Segmented options={tabs} value={tab} onChange={setTab} />
+          <Segmented options={tabs} value={tab} onChange={setTab} stacked />
           {!hidden
             ? entries.map(list => (
                 <CollectionRow
@@ -218,7 +192,7 @@ function ProfileView({ authorId }) {
                     <DesignAction
                       name="darkMenu"
                       label={list.title + ' options'}
-                      onPress={() => menu(list)}
+                      onPress={() => setMenuId(list.id)}
                       style={styles.verticalMenu}
                     />
                   }
@@ -232,6 +206,32 @@ function ProfileView({ authorId }) {
               onPress={() => nav.navigate('Fragrance', { id: fragrance.id })}
             />
           ))}
+          {selectedList && selectedList.authorId === state.profile.id ? (
+            <ScentlistMenu
+              list={selectedList}
+              onClose={closeMenu}
+              onEdit={() => nav.navigate('EditList', { id: selectedList.id })}
+            />
+          ) : selectedList ? (
+            <OptionSheet
+              onClose={closeMenu}
+              rows={[
+                {
+                  label: state.savedListIds.includes(selectedList.id)
+                    ? 'Unsave Scentlist'
+                    : 'Save Scentlist',
+                  icon: 'bookmarkFill',
+                  onPress: async () => {
+                    if (
+                      await dispatch({ type: 'bookmark', id: selectedList.id })
+                    ) {
+                      closeMenu();
+                    }
+                  },
+                },
+              ]}
+            />
+          ) : null}
           {hidden ? (
             <Empty
               title="Private"
@@ -554,20 +554,50 @@ export function NotificationsScreen() {
 }
 
 const styles = StyleSheet.create({
+  profileGradient: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    height: 170,
+  },
   profileHero: {
-    minHeight: 190,
-    paddingHorizontal: 10,
-    gap: 8,
+    paddingHorizontal: 4,
+    paddingTop: 12,
+    gap: 4,
     justifyContent: 'center',
   },
   wave: { position: 'absolute', left: -44, top: -8 },
-  heroActions: { flexDirection: 'row', justifyContent: 'flex-end' },
+  heroActions: {
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+    marginRight: -14,
+  },
+  statsAction: {
+    minWidth: 44,
+    minHeight: 44,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  statsIcon: { width: 29, height: 40 },
+  statBar: {
+    position: 'absolute',
+    bottom: '16.67%',
+    borderWidth: 2,
+    borderRadius: 1,
+    borderColor: colors.green,
+    width: '16.67%',
+  },
+  statLeft: { left: '8.33%', top: '37.5%' },
+  statMiddle: { left: '41.67%', top: '54.17%' },
+  statRight: { left: '75%', top: '29.17%' },
   identity: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 20,
     paddingBottom: 6,
   },
+  profileContent: { gap: 14 },
   avatarGroup: { alignItems: 'center', gap: 8 },
   profileName: { fontFamily: sansBold, fontSize: 26, color: colors.green },
   counts: {
@@ -585,7 +615,7 @@ const styles = StyleSheet.create({
   },
   editText: { color: colors.white, fontFamily: sansBold, fontSize: 12 },
   journal: {
-    minHeight: 36,
+    minHeight: 30,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, Text, useWindowDimensions, View } from 'react-native';
 import { useRoute } from '@react-navigation/native';
 import LinearGradient from 'react-native-linear-gradient';
 import { fragranceById } from '../domain/catalog';
@@ -10,12 +10,14 @@ import { AddToCollection } from '../ui/AddToCollection';
 import { Bottle, Button, Empty } from '../ui/components';
 import { DesignAction, DesignScreen, PageHeader } from '../ui/design';
 import { FragranceNotes } from '../ui/FragranceNotes';
-import { Feedback } from '../ui/Feedback';
+import { PerfumeReviews } from '../ui/PerfumeReviews';
 import { FragranceTags } from '../ui/FragranceTags';
 import { colors, s } from '../ui/theme';
 
 export function PerfumeScreen() {
   const { params } = useRoute();
+  const { width } = useWindowDimensions();
+  const bottleSize = Math.min(210, (width - 32) * 0.72);
   const { state, dispatch } = useApp();
   const nav = useAppNavigation();
   const [adding, setAdding] = useState(false);
@@ -32,11 +34,11 @@ export function PerfumeScreen() {
       {fragrance ? (
         <>
           <LinearGradient
-            colors={['#515151', colors.white]}
+            colors={[fragrance.color, colors.ivory]}
             style={styles.hero}
           >
             <View style={styles.photo}>
-              <Bottle fragrance={fragrance} size={210} />
+              <Bottle fragrance={fragrance} size={bottleSize} />
             </View>
           </LinearGradient>
           <View style={s.between}>
@@ -86,7 +88,7 @@ export function PerfumeScreen() {
             variant="secondary"
             onPress={() => nav.navigate('JournalDetail', { id: fragrance.id })}
           />
-          <Feedback kind="perfume" target={fragrance.id} />
+          <PerfumeReviews key={fragrance.id} fragranceId={fragrance.id} />
           {adding ? (
             <AddToCollection
               fragrance={fragrance}
@@ -116,10 +118,11 @@ const styles = StyleSheet.create({
     paddingBottom: 6,
   },
   photo: {
-    padding: 14,
-    minHeight: 315,
+    aspectRatio: 1,
+    minHeight: 240,
     alignItems: 'center',
     justifyContent: 'center',
+    overflow: 'hidden',
     backgroundColor: colors.white,
     borderWidth: 1,
     borderColor: colors.green,

@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Alert, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { useRoute } from '@react-navigation/native';
 import { matchesQuery } from '../domain/search';
 import { useAppNavigation } from '../navigation/types';
@@ -14,6 +14,8 @@ import {
   designStyles,
 } from '../ui/design';
 import { Empty } from '../ui/components';
+import { SortSheet } from '../ui/OptionSheet';
+import { ScentlistMenu } from '../ui/ScentlistMenu';
 import { colors, s } from '../ui/theme';
 import { ShelfScreen as ShelfLibrary } from './ShelfScreen';
 
@@ -35,13 +37,16 @@ export function MyShelfScreen() {
 }
 
 function MyCollections() {
-  const { state, dispatch } = useApp();
+  const { state } = useApp();
   const nav = useAppNavigation();
   const { params } = useRoute();
   const [searching, setSearching] = useState(false);
   const [query, setQuery] = useState('');
   const [grid, setGrid] = useState(false);
   const [alphabetical, setAlphabetical] = useState(false);
+  const [sorting, setSorting] = useState(false);
+  const [menuId, setMenuId] = useState(null);
+  const selectedList = state.lists.find(list => list.id === menuId);
   useEffect(() => {
     if (params?.highlightId) {
       setQuery('');
@@ -56,39 +61,13 @@ function MyCollections() {
     );
   const open = id => nav.navigate('List', { id });
   const create = () => nav.navigate('EditList');
-  const options = list =>
-    Alert.alert(list.title, undefined, [
-      { text: 'Cancel', style: 'cancel' },
-      {
-        text: 'Edit Scentlist',
-        onPress: () => nav.navigate('EditList', { id: list.id }),
-      },
-      {
-        text: 'Delete Scentlist',
-        style: 'destructive',
-        onPress: () =>
-          Alert.alert('Delete this scentlist?', undefined, [
-            { text: 'Cancel', style: 'cancel' },
-            {
-              text: 'Delete',
-              style: 'destructive',
-              onPress: () => dispatch({ type: 'deleteList', id: list.id }),
-            },
-          ]),
-      },
-    ]);
-  const order = () =>
-    Alert.alert('Sort MyShelf', undefined, [
-      { text: 'Cancel', style: 'cancel' },
-      { text: 'Newest', onPress: () => setAlphabetical(false) },
-      { text: 'Name A–Z', onPress: () => setAlphabetical(true) },
-    ]);
+  const options = list => setMenuId(list.id);
   return (
     <DesignScreen
       header={
-        <PageHeader title="MyShelf" bordered={false}>
+        <PageHeader title="MyShelf" bordered={false} style={styles.header}>
           <DesignAction
-            name="searchTab"
+            name="shelfSearch"
             label="Search MyShelf"
             onPress={() => {
               if (searching) {
@@ -107,6 +86,7 @@ function MyCollections() {
           </Pressable>
         </PageHeader>
       }
+      contentStyle={styles.content}
     >
       {searching ? (
         <SearchField
@@ -116,14 +96,18 @@ function MyCollections() {
         />
       ) : null}
       <View style={s.between}>
-        <Pressable style={s.row} accessibilityRole="button" onPress={order}>
-          <DesignIcon name="filter" />
+        <Pressable
+          style={styles.sortControl}
+          accessibilityRole="button"
+          onPress={() => setSorting(true)}
+        >
+          <DesignIcon name="shelfFilter" />
           <Text style={designStyles.text}>
             {alphabetical ? 'Name A–Z' : 'Newest'}
           </Text>
         </Pressable>
         <DesignAction
-          name={grid ? 'shelf' : 'list'}
+          name={grid ? 'shelfSelected' : 'list'}
           label={grid ? 'Show list' : 'Show grid'}
           onPress={() => setGrid(!grid)}
         />
@@ -185,11 +169,28 @@ function MyCollections() {
           onAction={create}
         />
       ) : null}
+      {sorting ? (
+        <SortSheet
+          alphabetical={alphabetical}
+          onChange={setAlphabetical}
+          onClose={() => setSorting(false)}
+        />
+      ) : null}
+      {selectedList ? (
+        <ScentlistMenu
+          list={selectedList}
+          onClose={() => setMenuId(null)}
+          onEdit={() => nav.navigate('EditList', { id: selectedList.id })}
+        />
+      ) : null}
     </DesignScreen>
   );
 }
 
 const styles = StyleSheet.create({
+  header: { paddingLeft: 23, paddingRight: 12 },
+  content: { paddingHorizontal: 23, gap: 14 },
+  sortControl: { ...s.row, minHeight: 44, gap: 6 },
   control: {
     width: 44,
     minHeight: 44,

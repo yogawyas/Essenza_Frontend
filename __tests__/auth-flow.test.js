@@ -3,6 +3,7 @@ import ReactTestRenderer, { act } from 'react-test-renderer';
 import {
   Alert,
   Animated,
+  BackHandler,
   PanResponder,
   StyleSheet,
   Text,
@@ -13,6 +14,8 @@ import { EntryFlow } from '../src/navigation/EntryFlow';
 import { AuthScreen } from '../src/screens/AuthScreen';
 import { SplashScreen } from '../src/screens/SplashScreen';
 import { LaunchSplashScreen } from '../src/screens/LaunchSplashScreen';
+import { useSession } from '../src/storage/SessionContext';
+import { DesignAction } from '../src/ui/design';
 import {
   AUTH_SESSION_KEY,
   AuthRepository,
@@ -44,6 +47,9 @@ beforeEach(() => {
   AsyncStorage.setItem.mockImplementation(async (key, value) => {
     stored.set(key, value);
   });
+  AsyncStorage.removeItem.mockImplementation(async key => {
+    stored.delete(key);
+  });
   mockDispatch.mockClear();
   // Advance native transitions deterministically without starting an app.
   jest.spyOn(Animated, 'timing').mockImplementation((value, config) => ({
@@ -63,11 +69,21 @@ afterEach(async () => {
   jest.restoreAllMocks();
 });
 
-async function openApp(props = {}) {
+function SessionProbe() {
+  const { signOut } = useSession();
+  return (
+    <Text testID="session-sign-out" onPress={signOut}>
+      Log Out
+    </Text>
+  );
+}
+
+async function openApp({ showSignOut = false, ...props } = {}) {
   await act(async () => {
     renderer = ReactTestRenderer.create(
       <EntryFlow {...props}>
         <Text>Home aplikasi</Text>
+        {showSignOut ? <SessionProbe /> : null}
       </EntryFlow>,
     );
   });
@@ -126,6 +142,43 @@ test('dummy login persists a session without a password and restores home on res
   expect(renderer.root.findAllByType(AuthScreen)).toHaveLength(0);
   expect(renderer.root.findByType(Text).props.children).toBe('Home aplikasi');
 });
+
+test.each(['on-screen Back', 'Android Back'])(
+  'login after logout returns to the intro with %s',
+  async backControl => {
+    stored.set(
+      AUTH_SESSION_KEY,
+      JSON.stringify({
+        mode: 'dummy',
+        email: DUMMY_ACCOUNT.email,
+        name: DUMMY_ACCOUNT.name,
+      }),
+    );
+    const backListener = jest.spyOn(BackHandler, 'addEventListener');
+    const exitApp = jest.spyOn(BackHandler, 'exitApp');
+    await openApp({ showSignOut: true });
+    await act(async () =>
+      renderer.root.findByProps({ testID: 'session-sign-out' }).props.onPress(),
+    );
+    expect(stored.has(AUTH_SESSION_KEY)).toBe(false);
+    expect(activeAuthScreen().props.mode).toBe('login');
+
+    await act(async () => {
+      if (backControl === 'on-screen Back') {
+        activeAuthScreen().findByType(DesignAction).props.onPress();
+      } else {
+        const [, handleBack] = backListener.mock.calls.at(-1);
+        expect(handleBack()).toBe(true);
+      }
+    });
+
+    expect(exitApp).not.toHaveBeenCalled();
+    const splash = renderer.root.findByType(SplashScreen);
+    expect(splash.props.progress.__getValue()).toBe(0);
+    await act(async () => splash.props.onContinue());
+    expect(activeAuthScreen().props.mode).toBe('login');
+  },
+);
 
 test('wrong login and mismatched registration passwords do not create sessions', async () => {
   const repository = new AuthRepository();

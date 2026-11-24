@@ -20,6 +20,7 @@ import { colors, s } from '../ui/theme';
 import { useNow } from '../ui/useNow';
 import { FragranceTags } from '../ui/FragranceTags';
 import { ShelfEditor } from '../ui/ShelfEditor';
+import { OptionSheet } from '../ui/OptionSheet';
 
 const shelfLabels = {
   have: 'Owned',
@@ -30,13 +31,15 @@ const shelfLabels = {
 
 function Tools({ query, setQuery, placeholder, onSort }) {
   return (
-    <View style={s.row}>
+    <View style={styles.tools}>
       <Pressable
         accessibilityRole="button"
+        accessibilityLabel="Sort"
+        hitSlop={styles.verticalHitSlop}
         onPress={onSort}
         style={styles.sort}
       >
-        <DesignIcon name="sort" />
+        <DesignIcon name="collectionSort" />
         <Text style={designStyles.caption}>Sort</Text>
       </Pressable>
       <View style={s.flex}>
@@ -105,6 +108,7 @@ export function JournalScreen() {
     <DesignScreen
       paper
       header={<PageHeader title="Journal" onBack={nav.goBack} />}
+      contentStyle={styles.journalContent}
     >
       <Tools
         query={query}
@@ -114,11 +118,11 @@ export function JournalScreen() {
           changeSort('Sort journal', 'Most recent', 'Name A–Z', setAlphabetical)
         }
       />
-      <View style={s.wrap}>
+      <View style={styles.journalFilters}>
         {[['all', 'All'], ...Object.entries(shelfLabels).slice(0, 3)].map(
           ([key, label]) => (
             <Chip
-              compact
+              pill
               key={key}
               label={label}
               selected={status === key}
@@ -331,6 +335,7 @@ export function HistoryScreen() {
     <DesignScreen
       paper
       header={<PageHeader title="History" onBack={nav.goBack} />}
+      contentStyle={styles.journalContent}
     >
       <Tools
         query={query}
@@ -381,6 +386,7 @@ export function StatsScreen() {
   const nav = useAppNavigation();
   const [query, setQuery] = useState('');
   const [alphabetical, setAlphabetical] = useState(false);
+  const [sorting, setSorting] = useState(false);
   const rows = journalPerfumes(state).filter(
     row =>
       row.logs.length &&
@@ -395,14 +401,13 @@ export function StatsScreen() {
     <DesignScreen
       paper
       header={<PageHeader title="Perfume Stats" onBack={nav.goBack} />}
+      contentStyle={styles.statsContent}
     >
       <Tools
         query={query}
         setQuery={setQuery}
         placeholder="Search in Stats"
-        onSort={() =>
-          changeSort('Sort perfumes', 'Most worn', 'Name A–Z', setAlphabetical)
-        }
+        onSort={() => setSorting(true)}
       />
       {rows.map(({ fragrance, logs }) => (
         <RecordRow
@@ -415,9 +420,29 @@ export function StatsScreen() {
         />
       ))}
       {!rows.length ? (
-        <Empty
-          title="No statistics yet"
-          body="Statistics are calculated from the wears recorded in your journal."
+        <View style={styles.statsEmpty}>
+          <Text style={styles.statsEmptyTitle}>
+            {query.trim() ? 'No perfumes found' : 'No statistics yet'}
+          </Text>
+          <Text style={styles.statsEmptyText}>
+            {query.trim()
+              ? 'Try another search.'
+              : 'Wear entries from your journal will appear here.'}
+          </Text>
+        </View>
+      ) : null}
+      {sorting ? (
+        <OptionSheet
+          title="Sort By"
+          onClose={() => setSorting(false)}
+          rows={['Most Worn', 'Name A-Z'].map((label, index) => ({
+            label,
+            selected: alphabetical === Boolean(index),
+            onPress: () => {
+              setAlphabetical(Boolean(index));
+              setSorting(false);
+            },
+          }))}
         />
       ) : null}
     </DesignScreen>
@@ -425,13 +450,28 @@ export function StatsScreen() {
 }
 
 const styles = StyleSheet.create({
+  statsContent: { paddingTop: 12, gap: 12 },
+  journalContent: { paddingTop: 12, gap: 8 },
+  tools: { flexDirection: 'row', alignItems: 'center', minHeight: 38, gap: 6 },
+  verticalHitSlop: { top: 10, bottom: 10 },
+  journalFilters: { ...s.wrap, minHeight: 38, alignItems: 'center' },
+  statsEmpty: {
+    paddingHorizontal: 16,
+    paddingVertical: 18,
+    gap: 6,
+    alignItems: 'center',
+  },
+  statsEmptyTitle: { ...s.h3, textAlign: 'center', color: colors.green },
+  statsEmptyText: { ...s.small, textAlign: 'center' },
   sort: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 3,
     borderWidth: StyleSheet.hairlineWidth,
     borderColor: colors.muted,
-    minHeight: 32,
+    minHeight: 24,
+    minWidth: 68,
+    justifyContent: 'center',
     borderRadius: 16,
     paddingHorizontal: 6,
   },

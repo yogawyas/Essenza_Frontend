@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useRef } from 'react';
 import {
   Image,
   Pressable,
@@ -18,21 +18,37 @@ import { colors, s, sans, sansBold } from './theme';
 
 export function DesignIcon({ name, style }) {
   return (
-    <View style={style} pointerEvents="none" importantForAccessibility="no">
+    <View
+      style={[style, name === 'back' && styles.backIcon]}
+      pointerEvents="none"
+      importantForAccessibility="no"
+    >
       <SvgXml xml={figma[name]} />
     </View>
   );
 }
 
-export function DesignAction({ name, label, onPress, style }) {
+export function DesignAction({
+  name,
+  label,
+  onPress,
+  style,
+  disabled,
+  hitSlop,
+  children,
+}) {
   return (
     <Pressable
       accessibilityRole="button"
       accessibilityLabel={label}
+      disabled={disabled}
+      hitSlop={hitSlop}
+      accessibilityState={{ disabled: Boolean(disabled) }}
       onPress={onPress}
       style={[styles.action, style]}
     >
       <DesignIcon name={name} />
+      {children}
     </Pressable>
   );
 }
@@ -43,13 +59,16 @@ export function DesignScreen({
   paper,
   contentStyle,
   scrollRef,
+  style,
+  background,
 }) {
   const { bottom } = useSafeAreaInsets();
   return (
     <SafeAreaView
-      style={[styles.screen, paper && styles.paper]}
+      style={[styles.screen, paper && styles.paper, style]}
       edges={['top', 'left', 'right']}
     >
+      {background}
       {header}
       <ScrollView
         ref={scrollRef}
@@ -95,12 +114,24 @@ export function BrandBar({ navigation }) {
   );
 }
 
-export function PageHeader({ title, onBack, children, bordered = true }) {
+export function PageHeader({
+  title,
+  onBack,
+  children,
+  bordered = true,
+  style,
+}) {
   return (
-    <View style={[styles.bar, bordered && styles.divider]}>
+    <View style={[styles.bar, bordered && styles.divider, style]}>
       <View style={styles.heading}>
         {onBack ? (
-          <DesignAction name="back" label="Back" onPress={onBack} />
+          <DesignAction
+            name="back"
+            label="Back"
+            onPress={onBack}
+            style={styles.back}
+            hitSlop={styles.backHitSlop}
+          />
         ) : null}
         <Text style={[s.h2, styles.title]}>{title}</Text>
       </View>
@@ -114,11 +145,22 @@ export function SearchField({
   onChangeText,
   placeholder,
   compact = false,
+  style,
 }) {
+  const input = useRef(null);
   return (
-    <View style={[styles.search, compact && styles.searchCompact]}>
-      <DesignIcon name="search" style={styles.searchIcon} />
+    <Pressable
+      accessible={false}
+      onPress={() => input.current?.focus()}
+      hitSlop={compact ? styles.searchHitSlop : undefined}
+      style={[styles.search, compact && styles.searchCompact, style]}
+    >
+      <DesignIcon
+        name={compact ? 'journalSearch' : 'search'}
+        style={!compact && styles.searchIcon}
+      />
       <TextInput
+        ref={input}
         accessibilityLabel={placeholder}
         placeholder={placeholder}
         placeholderTextColor={colors.muted}
@@ -138,13 +180,13 @@ export function SearchField({
           <Text style={styles.close}>×</Text>
         </Pressable>
       ) : null}
-    </View>
+    </Pressable>
   );
 }
 
-export function Segmented({ options, value, onChange }) {
+export function Segmented({ options, value, onChange, stacked, style }) {
   return (
-    <View style={styles.segments}>
+    <View style={[styles.segments, stacked && styles.stackedSegments, style]}>
       {options.map(option => (
         <Pressable
           key={option.value}
@@ -153,13 +195,21 @@ export function Segmented({ options, value, onChange }) {
           onPress={() => onChange(option.value)}
           style={[
             styles.segment,
-            value === option.value && styles.segmentActive,
+            stacked && styles.stackedSegment,
+            value === option.value &&
+              (stacked ? styles.stackedActive : styles.segmentActive),
           ]}
         >
-          {option.icon ? <DesignIcon name={option.icon} /> : null}
+          {option.icon ? (
+            <DesignIcon
+              name={option.icon}
+              style={value !== option.value && styles.segmentInactiveIcon}
+            />
+          ) : null}
           <Text
             style={[
               styles.segmentText,
+              stacked && styles.stackedText,
               value === option.value && styles.segmentTextActive,
             ]}
           >
@@ -208,7 +258,10 @@ const styles = StyleSheet.create({
   brand: { flexDirection: 'row', alignItems: 'center' },
   brandName: { fontFamily: sans, color: colors.green, fontSize: 20 },
   heading: { flexDirection: 'row', alignItems: 'center', flexShrink: 1 },
-  title: { color: colors.green },
+  title: { color: colors.green, fontSize: 24, lineHeight: 32 },
+  back: { minWidth: 29, alignItems: 'flex-start' },
+  backIcon: { transform: [{ rotate: '180deg' }] },
+  backHitSlop: { left: 8, right: 8 },
   actions: { flexDirection: 'row', alignItems: 'center' },
   action: {
     minWidth: 44,
@@ -226,12 +279,14 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   searchCompact: {
-    minHeight: 32,
+    minHeight: 24,
     borderWidth: StyleSheet.hairlineWidth,
     backgroundColor: colors.white,
-    borderColor: colors.muted,
+    borderColor: '#B5B5B5',
     paddingHorizontal: 8,
+    gap: 6,
   },
+  searchHitSlop: { top: 10, bottom: 10 },
   searchIcon: { opacity: 0.78 },
   searchInput: {
     flex: 1,
@@ -241,7 +296,7 @@ const styles = StyleSheet.create({
     color: colors.green,
     minHeight: 38,
   },
-  compactInput: { minHeight: 30, fontFamily: sans, fontSize: 12 },
+  compactInput: { minHeight: 22, fontFamily: sans, fontSize: 12 },
   close: { fontSize: 22, color: colors.green, paddingHorizontal: 4 },
   segments: {
     flexDirection: 'row',
@@ -250,13 +305,23 @@ const styles = StyleSheet.create({
   },
   segment: {
     flex: 1,
-    minHeight: 42,
+    minHeight: 47,
     alignItems: 'center',
     justifyContent: 'center',
     borderBottomWidth: 3,
     borderBottomColor: 'transparent',
   },
   segmentActive: { borderBottomColor: colors.green },
+  segmentInactiveIcon: { opacity: 0.48 },
+  stackedSegments: { borderBottomWidth: 0, gap: 2 },
+  stackedSegment: {
+    minHeight: 62,
+    gap: 3,
+    borderBottomWidth: 2,
+    paddingBottom: 8,
+  },
+  stackedActive: { borderBottomColor: '#8BA097' },
+  stackedText: { fontFamily: sans, fontSize: 12, color: '#8BA097' },
   segmentText: { fontFamily: sansBold, fontSize: 15, color: colors.muted },
   segmentTextActive: { color: colors.green },
 });

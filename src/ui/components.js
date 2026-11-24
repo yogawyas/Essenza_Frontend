@@ -190,7 +190,13 @@ export function IconButton({ name, label, onPress, active = false }) {
     </Pressable>
   );
 }
-export function Chip({ label, selected = false, onPress, compact = false }) {
+export function Chip({
+  label,
+  selected = false,
+  onPress,
+  compact = false,
+  pill = false,
+}) {
   return (
     <Pressable
       disabled={!onPress}
@@ -203,16 +209,18 @@ export function Chip({ label, selected = false, onPress, compact = false }) {
           : undefined
       }
       onPress={onPress}
+      hitSlop={pill ? styles.pillHitSlop : undefined}
       style={[
         styles.chip,
         compact && styles.compactChip,
+        pill && styles.pillChip,
         selected && styles.chipSelected,
       ]}
     >
       <Text
         style={[
           styles.chipText,
-          compact && styles.compactChipText,
+          (compact || pill) && styles.compactChipText,
           selected && styles.chipTextSelected,
         ]}
       >
@@ -542,6 +550,15 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10,
     minHeight: 32,
   },
+  pillChip: {
+    minWidth: 66,
+    minHeight: 20,
+    paddingHorizontal: 8,
+    borderRadius: 20,
+    borderColor: '#8BA097',
+    backgroundColor: 'transparent',
+  },
+  pillHitSlop: { top: 12, bottom: 12 },
   compactChipText: {
     fontSize: 11,
     textAlign: 'center',

@@ -8,7 +8,8 @@ import { PerfumeScreen } from '../src/screens/PerfumeScreen';
 import { SearchScreen } from '../src/screens/SearchScreen';
 import { WearScreen } from '../src/screens/WearScreen';
 import { HomeScreen } from '../src/screens/HomeScreen';
-import { Button, IconButton } from '../src/ui/components';
+import { Button } from '../src/ui/components';
+import { DesignAction } from '../src/ui/design';
 const mockNav = {
   navigate: jest.fn(),
   goBack: jest.fn(),
@@ -18,6 +19,7 @@ let mockParams = {
   id: 'ck-one',
 };
 jest.mock('@react-navigation/native', () => ({
+  ...jest.requireActual('@react-navigation/native'),
   useNavigation: () => mockNav,
   useRoute: () => ({
     params: mockParams,
@@ -105,7 +107,7 @@ test('adds to the selected scentlist and opens the perfume journal', async () =>
   await press('Add to MyShelf');
   await act(async () =>
     renderer.root
-      .findAllByType(IconButton)
+      .findAllByType(DesignAction)
       .find(control => control.props.label === 'Add to Rotation')
       .props.onPress(),
   );

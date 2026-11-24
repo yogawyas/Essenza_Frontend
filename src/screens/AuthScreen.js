@@ -9,6 +9,7 @@ import {
   Text,
   TextInput,
   View,
+  useWindowDimensions,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Button } from '../ui/components';
@@ -58,6 +59,9 @@ function AuthField({ label, value, onChangeText, secret = false }) {
 
 export function AuthScreen({ mode, onBack, onSwitchMode, onSubmit }) {
   const insets = useSafeAreaInsets();
+  const { width } = useWindowDimensions();
+  const waveWidthScale = (width + 2) / 437;
+  const heroInset = Math.max(insets.top - 24, 0);
   const register = mode === 'register';
   const [recover, setRecover] = useState(false);
   const [name, setName] = useState('');
@@ -102,16 +106,23 @@ export function AuthScreen({ mode, onBack, onSwitchMode, onSubmit }) {
         contentContainerStyle={{ paddingBottom: insets.bottom + 22 }}
         showsVerticalScrollIndicator={false}
       >
-        <View style={[styles.hero, { paddingTop: insets.top + 22 }]}>
-          <DesignIcon name="authEllipse" style={styles.leftCircle} />
-          <DesignIcon name="authEllipse" style={styles.rightCircle} />
-          <View style={styles.waveClip}>
-            <DesignIcon name="authWave" />
-          </View>
-          <View style={styles.back}>
+        <View style={[styles.heroBackground, { paddingTop: heroInset }]}>
+          <View style={styles.hero}>
+            <DesignIcon name="authEllipse" style={styles.leftCircle} />
+            <DesignIcon name="authEllipse" style={styles.rightCircle} />
+            <View style={styles.waveClip} pointerEvents="none">
+              <DesignIcon
+                name="authWave"
+                style={[
+                  styles.wave,
+                  { transform: [{ scaleX: waveWidthScale }] },
+                ]}
+              />
+            </View>
             <DesignAction
               name="back"
               label="Back"
+              style={styles.back}
               onPress={
                 recover
                   ? () => {
@@ -120,16 +131,17 @@ export function AuthScreen({ mode, onBack, onSwitchMode, onSubmit }) {
                     }
                   : onBack
               }
-            />
-            <Text style={styles.backLabel}>Back</Text>
+            >
+              <Text style={styles.backLabel}>Back</Text>
+            </DesignAction>
+            <DesignIcon name="authLogo" style={styles.logo} />
           </View>
-          <DesignIcon name="authLogo" style={styles.logo} />
         </View>
         <View style={styles.form}>
           <Text style={styles.title}>
-            {recover ? 'Reset Password' : 'Welcome to Essenza!'}
+            {recover ? 'Reset Password' : 'Welcome to\nEssenza!'}
           </Text>
-          <Text style={s.body}>
+          <Text style={styles.description}>
             {recover
               ? 'Enter the email associated with your account.'
               : register
@@ -229,20 +241,29 @@ export function AuthScreen({ mode, onBack, onSwitchMode, onSubmit }) {
 
 const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: colors.white },
-  hero: { minHeight: 224, backgroundColor: colors.ivory, overflow: 'hidden' },
+  heroBackground: { backgroundColor: colors.ivory },
+  hero: { height: 225, overflow: 'hidden', paddingTop: 33 },
   waveClip: {
     position: 'absolute',
     left: 0,
     right: 0,
     bottom: 0,
-    height: 36,
+    height: 35,
     overflow: 'hidden',
+    alignItems: 'center',
   },
+  wave: { width: 437 },
   leftCircle: { position: 'absolute', left: -61, top: 99 },
   rightCircle: { position: 'absolute', right: -33, top: 155 },
-  back: { flexDirection: 'row', alignItems: 'center' },
+  back: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    alignSelf: 'flex-start',
+    gap: 8,
+    paddingHorizontal: 16,
+  },
   backLabel: { fontFamily: serif, color: colors.green, fontSize: 24 },
-  logo: { alignSelf: 'center', marginTop: 3 },
+  logo: { position: 'absolute', top: 71, alignSelf: 'center' },
   form: {
     gap: 14,
     width: '100%',
@@ -256,7 +277,9 @@ const styles = StyleSheet.create({
     color: colors.green,
     fontSize: 36,
     lineHeight: 38,
+    includeFontPadding: false,
   },
+  description: { ...s.body, color: colors.ink, fontSize: 16 },
   field: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -280,7 +303,7 @@ const styles = StyleSheet.create({
   },
   eyeDetail: { position: 'absolute' },
   forgot: { color: colors.green, fontFamily: sans, alignSelf: 'flex-end' },
-  submit: { marginTop: 10, borderRadius: 8 },
+  submit: { marginTop: 8, minHeight: 44, borderRadius: 8 },
   divider: {
     flexDirection: 'row',
     gap: 6,
@@ -301,7 +324,7 @@ const styles = StyleSheet.create({
     borderWidth: 2,
     borderColor: colors.muted,
     borderRadius: 24,
-    minHeight: 42,
+    minHeight: 44,
   },
   googleText: { color: colors.ink, fontFamily: sansBold, fontSize: 18 },
   switch: {

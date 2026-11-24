@@ -30,7 +30,6 @@ export function EntryFlow({ children, onReady, onResume }) {
   const [transitioning, setTransitioning] = useState(false);
   const [homeReady, setHomeReady] = useState(false);
   const [session, setSession] = useState(null);
-  const introAvailable = useRef(false);
   const returningToIntro = useRef(false);
   const locked = useRef(false);
   const mounted = useRef(true);
@@ -77,7 +76,6 @@ export function EntryFlow({ children, onReady, onResume }) {
         if (!active) {
           return;
         }
-        introAvailable.current = !session;
         introProgress.setValue(session ? 1 : 0);
         pageProgress.setValue(0);
         authOpacity.setValue(1);
@@ -94,7 +92,6 @@ export function EntryFlow({ children, onReady, onResume }) {
       })
       .catch(() => {
         if (active) {
-          introAvailable.current = true;
           introProgress.setValue(0);
           pageProgress.setValue(0);
           authOpacity.setValue(1);
@@ -165,15 +162,13 @@ export function EntryFlow({ children, onReady, onResume }) {
     }
     if (screen === 'register') {
       changePage('login');
-    } else if (screen === 'login' && introAvailable.current) {
+    } else if (screen === 'login') {
       locked.current = true;
       returningToIntro.current = true;
       setTransitioning(true);
       Keyboard.dismiss();
       // Mount splash at progress 1 before starting its return animation.
       setScreen('splash');
-    } else {
-      BackHandler.exitApp();
     }
   }, [changePage, screen]);
 
@@ -218,10 +213,7 @@ export function EntryFlow({ children, onReady, onResume }) {
       if (locked.current) {
         return true;
       }
-      if (
-        screen === 'register' ||
-        (screen === 'login' && introAvailable.current)
-      ) {
+      if (screen === 'register' || screen === 'login') {
         back();
         return true;
       }
@@ -287,7 +279,6 @@ export function EntryFlow({ children, onReady, onResume }) {
       await repository.signOut();
       setSession(null);
       setHomeReady(false);
-      introAvailable.current = false;
       introProgress.setValue(1);
       pageProgress.setValue(0);
       authOpacity.setValue(1);

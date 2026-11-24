@@ -2,7 +2,6 @@ import React, { useCallback, useEffect, useMemo, useRef } from 'react';
 import {
   Animated,
   Easing,
-  Image,
   PanResponder,
   StyleSheet,
   Text,
@@ -11,7 +10,7 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { DesignIcon } from '../ui/design';
-import { figma } from '../ui/figmaAssets';
+import { IntroArtwork } from '../ui/IntroArtwork';
 import { colors, sans, serif } from '../ui/theme';
 export function SplashScreen({
   onContinue,
@@ -20,10 +19,10 @@ export function SplashScreen({
 }) {
   const { width, height } = useWindowDimensions();
   const insets = useSafeAreaInsets();
-  const scale = Math.min(
-    width / 360,
-    (height - insets.top - insets.bottom) / 800,
-  );
+  const scale = Math.max(0.01, Math.min(width / 360, height / 800));
+  const canvasTop = (height - 800 * scale) / 2;
+  const logoTop = Math.max(30, (insets.top - canvasTop) / scale);
+  const arrowBottom = Math.max(23, (insets.bottom - canvasTop) / scale);
   const ownProgress = useRef(new Animated.Value(0)).current;
   const progress = sharedProgress ?? ownProgress;
   const dragStart = useRef(0);
@@ -136,55 +135,36 @@ export function SplashScreen({
         style={[
           styles.artworkContainer,
           {
-            paddingTop: insets.top,
-            paddingBottom: insets.bottom,
             transform: [{ translateY }],
           },
         ]}
       >
         <View
-          style={[styles.canvas, { width: 360 * scale, height: 800 * scale }]}
+          style={[
+            styles.canvas,
+            {
+              left: (width - 360) / 2,
+              top: (height - 800) / 2,
+              transform: [{ scale }],
+            },
+          ]}
         >
-          <Image
-            source={figma.splashArtwork}
-            resizeMode="contain"
-            style={[
-              styles.artwork,
-              {
-                width: 627 * scale,
-                height: 499 * scale,
-                left: -128 * scale,
-                top: 62 * scale,
-              },
-            ]}
-          />
-          <View style={[styles.logo, { top: 28 * scale }]}>
+          <IntroArtwork />
+          <View style={[styles.logo, { top: logoTop }]}>
             <DesignIcon name="splashLogoTop" />
             <DesignIcon name="splashLogoBottom" />
             <Text style={styles.brand}>Essenza</Text>
           </View>
-          <View
-            style={[
-              styles.copy,
-              { top: 544 * scale, paddingHorizontal: 18 * scale },
-            ]}
-          >
-            <Text
-              style={[
-                styles.title,
-                { fontSize: 48 * scale, lineHeight: 50 * scale },
-              ]}
-            >
-              Your Scent.{'\n'}Your Story.
-            </Text>
-            <Text style={[styles.subtitle, { fontSize: 14 * scale }]}>
+          <View style={styles.copy}>
+            <Text style={styles.title}>Your Scent.{'\n'}Your Story.</Text>
+            <Text style={styles.subtitle}>
               Collect your favorite scents. Tell your story in a scentlist. Find
               a fragrance for every day.
             </Text>
           </View>
           <DesignIcon
             name="splashArrow"
-            style={[styles.arrow, { bottom: 23 * scale }]}
+            style={[styles.arrow, { bottom: arrowBottom }]}
           />
         </View>
       </Animated.View>
@@ -194,17 +174,27 @@ export function SplashScreen({
 const styles = StyleSheet.create({
   screen: { flex: 1, overflow: 'hidden' },
   artworkContainer: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
+    ...StyleSheet.absoluteFill,
     backgroundColor: colors.ivory,
   },
-  canvas: { overflow: 'hidden' },
-  artwork: { position: 'absolute' },
+  canvas: { position: 'absolute', width: 360, height: 800, overflow: 'hidden' },
   logo: { position: 'absolute', alignSelf: 'center', alignItems: 'center' },
   brand: { fontFamily: sans, color: colors.green, fontSize: 20 },
-  copy: { position: 'absolute', width: '100%', gap: 6 },
-  title: { fontFamily: serif, color: colors.green },
-  subtitle: { fontFamily: sans, color: colors.green },
+  copy: { position: 'absolute', left: 18, top: 543, right: 18, gap: 9 },
+  title: {
+    fontFamily: serif,
+    color: colors.green,
+    fontSize: 48,
+    lineHeight: 50,
+    includeFontPadding: false,
+  },
+  subtitle: {
+    marginHorizontal: 4,
+    maxWidth: 293,
+    fontFamily: sans,
+    color: colors.green,
+    fontSize: 14,
+    lineHeight: 17,
+  },
   arrow: { position: 'absolute', alignSelf: 'center' },
 });

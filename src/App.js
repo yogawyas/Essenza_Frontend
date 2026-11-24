@@ -47,8 +47,8 @@ const Feature = createNativeStackNavigator();
 const Tabs = createBottomTabNavigator();
 const tabIcons = {
   Today: 'home',
-  Discover: 'searchTab',
-  Shelf: 'shelf',
+  Discover: 'searchTabSelected',
+  Shelf: 'shelfSelected',
 };
 const theme = {
   ...DefaultTheme,
@@ -90,6 +90,11 @@ function FeatureStack({ home }) {
       />
       <Feature.Screen name="Scentlists" component={ScentlistsScreen} />
       <Feature.Screen
+        name="EditList"
+        component={EditListScreen}
+        options={{ animation: 'slide_from_bottom' }}
+      />
+      <Feature.Screen
         name="Recipe"
         component={RecipeScreen}
         getId={({ params }) => params.id}
@@ -113,7 +118,7 @@ function TabIcon({ name, focused }) {
   return (
     <View style={[tabStyles.icon, focused && tabStyles.active]}>
       {name === 'Profile' ? (
-        <Avatar size={32} />
+        <Avatar size={32} style={!focused && tabStyles.inactive} />
       ) : (
         <DesignIcon
           name={tabIcons[name]}
@@ -134,11 +139,11 @@ function HomeTabs() {
         popToTopOnBlur: true,
         animation: 'shift',
         tabBarActiveTintColor: colors.green,
-        tabBarInactiveTintColor: colors.muted,
+        tabBarInactiveTintColor: '#163A2C88',
         tabBarStyle: {
           backgroundColor: colors.white,
           borderTopColor: colors.line,
-          height: 71 + insets.bottom,
+          height: 55 + insets.bottom,
           paddingBottom: Math.max(insets.bottom, 8),
         },
         tabBarLabelStyle: { fontSize: 11, fontFamily: sans },
