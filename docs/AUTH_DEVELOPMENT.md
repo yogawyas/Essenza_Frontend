@@ -1,5 +1,7 @@
 # Alur masuk selama development
 
+Untuk akun sungguhan dan Data API, ikuti [panduan Supabase](SUPABASE_SETUP.md). Catatan ini mendokumentasikan mode demo pada debug build tanpa konfigurasi Supabase.
+
 Semua file baru untuk alur ini menggunakan JavaScript (`.js`).
 
 - Setiap aplikasi dimulai ulang, animasi logo dari `LaunchSplashScreen.js` diputar.

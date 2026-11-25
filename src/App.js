@@ -42,6 +42,9 @@ import { Avatar, DesignIcon } from './ui/design';
 import { colors, sans } from './ui/theme';
 import { EntryFlow } from './navigation/EntryFlow';
 import { LaunchSplashScreen } from './screens/LaunchSplashScreen';
+import { getSupabase } from './backend/supabase';
+import { SupabaseAuthRepository } from './backend/auth';
+import { AccountRepository } from './backend/AccountRepository';
 const Root = createNativeStackNavigator();
 const Feature = createNativeStackNavigator();
 const Tabs = createBottomTabNavigator();
@@ -283,6 +286,60 @@ class ErrorBoundary extends React.Component {
     );
   }
 }
+function AccountNavigation({ client, session, signOut }) {
+  const [repository] = useState(() => new AccountRepository(client, session));
+  return (
+    <AppProvider accountRepository={repository} onSignOut={signOut}>
+      <Navigation />
+    </AppProvider>
+  );
+}
+
+function PreparedEntry({ onReady, onResume }) {
+  const [{ client, cloudAuth, configurationError }] = useState(() => {
+    try {
+      const supabase = getSupabase();
+      return supabase
+        ? { client: supabase, cloudAuth: new SupabaseAuthRepository(supabase) }
+        : {};
+    } catch (error) {
+      return { configurationError: error.message };
+    }
+  });
+
+  if (configurationError) {
+    return (
+      <View
+        onLayout={onReady}
+        style={{ flex: 1, justifyContent: 'center', padding: 24 }}
+      >
+        <Text>{configurationError}</Text>
+      </View>
+    );
+  }
+  if (cloudAuth) {
+    return (
+      <EntryFlow cloudAuth={cloudAuth} onReady={onReady} onResume={onResume}>
+        {(session, signOut) => (
+          <AccountNavigation
+            key={session.userId}
+            client={client}
+            session={session}
+            signOut={signOut}
+          />
+        )}
+      </EntryFlow>
+    );
+  }
+  return (
+    <AppProvider>
+      <EntryFlow onReady={onReady} onResume={onResume}>
+        <Navigation />
+      </EntryFlow>
+    </AppProvider>
+  );
+}
+
 export default function App() {
   const [launching, setLaunching] = useState(true);
   const [entryReady, setEntryReady] = useState(false);
@@ -293,11 +350,7 @@ export default function App() {
       <View style={{ flex: 1 }}>
         <StatusBar barStyle="dark-content" />
         <ErrorBoundary onError={finishPreparingEntry}>
-          <AppProvider>
-            <EntryFlow onReady={finishPreparingEntry} onResume={finishLaunch}>
-              <Navigation />
-            </EntryFlow>
-          </AppProvider>
+          <PreparedEntry onReady={finishPreparingEntry} onResume={finishLaunch} />
         </ErrorBoundary>
         {launching && (
           <View style={StyleSheet.absoluteFill}>

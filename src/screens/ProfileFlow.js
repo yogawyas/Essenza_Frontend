@@ -270,7 +270,7 @@ function Count({ value, label }) {
 }
 
 export function SettingsScreen() {
-  const { state, dispatch } = useApp();
+  const { state, dispatch, isCloud } = useApp();
   const { session, signOut } = useSession();
   const nav = useAppNavigation();
   const rows = [
@@ -281,7 +281,7 @@ export function SettingsScreen() {
       'logout',
       'Log Out',
       () =>
-        Alert.alert('Log out?', 'Your data will stay on this device.', [
+        Alert.alert('Log out?', isCloud ? 'Your data will stay in your account.' : 'Your data will stay on this device.', [
           { text: 'Cancel', style: 'cancel' },
           { text: 'Log Out', onPress: signOut },
         ]),
@@ -324,11 +324,13 @@ export function SettingsScreen() {
       <View style={styles.reset}>
         <Button
           variant="danger"
-          label="Delete all local data"
+          label={isCloud ? 'Reset account data' : 'Delete all local data'}
           onPress={() =>
             Alert.alert(
-              'Delete all local data?',
-              'Your collections, saved items and wear history will be removed from this device.',
+              isCloud ? 'Reset account data?' : 'Delete all local data?',
+              isCloud
+                ? 'This removes your profile, collections and wear history across devices. You can still sign in.'
+                : 'Your collections, saved items and wear history will be removed from this device.',
               [
                 { text: 'Cancel', style: 'cancel' },
                 {
@@ -485,7 +487,7 @@ export function PreferenceScreen() {
 }
 
 export function PrivacyScreen() {
-  const { state, dispatch } = useApp();
+  const { state, dispatch, isCloud } = useApp();
   const nav = useAppNavigation();
   return (
     <DesignScreen
@@ -493,10 +495,11 @@ export function PrivacyScreen() {
       header={<PageHeader title="Privacy" onBack={nav.goBack} />}
     >
       <Text style={s.body}>
-        Your wear journal is private. Set your preferences for when your profile
-        is shared.
+        {isCloud
+          ? 'Your profile, collections and wear journal are only accessible through your account.'
+          : 'Your wear journal is private. Set your preferences for when your profile is shared.'}
       </Text>
-      {[
+      {!isCloud && [
         ['shelf', 'Private MyShelf'],
         ['saved', 'Private Saved'],
       ].map(([section, label]) => (

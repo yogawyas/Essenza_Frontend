@@ -37,13 +37,13 @@ const coverColors = [
 
 export function EditListScreen() {
   const { params } = useRoute();
-  const { state, dispatch } = useApp();
+  const { state, dispatch, isCloud } = useApp();
   const nav = useAppNavigation();
   const original = state.lists.find(list => list.id === params?.id);
   const [initial] = useState(() => ({
     title: original?.title ?? 'Scentlist #' + (state.lists.length + 1),
     description: original?.description ?? '',
-    visibility: original?.visibility ?? 'public',
+    visibility: isCloud ? 'private' : original?.visibility ?? 'public',
     color: original?.color ?? colors.green,
     cover: original?.cover ?? null,
   }));
@@ -173,25 +173,27 @@ export function EditListScreen() {
               Create and customize your Scentlist.
             </Text>
           </View>
-          <Pressable
-            accessibilityRole="button"
-            accessibilityLabel="Change Cover"
-            onPress={chooseCover}
-            style={styles.changeCover}
-          >
-            <View style={[styles.preview, { backgroundColor: form.color }]}>
-              {form.cover ? (
-                <CollectionArtwork
-                  list={{ ...form, id, items: [] }}
-                  style={styles.coverImage}
-                />
-              ) : null}
-              <View style={styles.pencil}>
-                <DesignIcon name="coverPencil" />
+          {!isCloud && (
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel="Change Cover"
+              onPress={chooseCover}
+              style={styles.changeCover}
+            >
+              <View style={[styles.preview, { backgroundColor: form.color }]}>
+                {form.cover ? (
+                  <CollectionArtwork
+                    list={{ ...form, id, items: [] }}
+                    style={styles.coverImage}
+                  />
+                ) : null}
+                <View style={styles.pencil}>
+                  <DesignIcon name="coverPencil" />
+                </View>
               </View>
-            </View>
-            <Text style={styles.action}>Change Cover</Text>
-          </Pressable>
+              <Text style={styles.action}>Change Cover</Text>
+            </Pressable>
+          )}
           <ScentlistField
             label="Scentlist Name"
             limit={20}
@@ -244,15 +246,17 @@ export function EditListScreen() {
               <DesignIcon name="coverLock" />
               <Text style={styles.privateText}>Private</Text>
             </View>
-            <Switch
-              accessibilityLabel="Private scentlist"
-              value={privateList}
-              onValueChange={value =>
-                update('visibility', value ? 'private' : 'public')
-              }
-              trackColor={{ false: '#D8D8D8', true: '#92B4A2' }}
-              thumbColor={privateList ? colors.green : '#595959'}
-            />
+            {!isCloud && (
+              <Switch
+                accessibilityLabel="Private scentlist"
+                value={privateList}
+                onValueChange={value =>
+                  update('visibility', value ? 'private' : 'public')
+                }
+                trackColor={{ false: '#D8D8D8', true: '#92B4A2' }}
+                thumbColor={privateList ? colors.green : '#595959'}
+              />
+            )}
           </View>
           <Pressable
             accessibilityRole="button"

@@ -22,10 +22,10 @@ import { useApp } from '../storage/AppProvider';
 import { AuthRepository } from '../storage/auth';
 import { SessionContext } from '../storage/SessionContext';
 
-export function EntryFlow({ children, onReady, onResume }) {
-  const { state, dispatch } = useApp();
+export function EntryFlow({ children, onReady, onResume, cloudAuth }) {
+  const localStore = useApp(Boolean(cloudAuth));
   const { width, height } = useWindowDimensions();
-  const [repository] = useState(() => new AuthRepository());
+  const [repository] = useState(() => cloudAuth || new AuthRepository());
   const [screen, setScreen] = useState('loading');
   const [transitioning, setTransitioning] = useState(false);
   const [homeReady, setHomeReady] = useState(false);
@@ -128,6 +128,21 @@ export function EntryFlow({ children, onReady, onResume }) {
       setTransitioning(false);
     }
   }, []);
+
+  const returnToLogin = useCallback(() => {
+    setSession(null);
+    setHomeReady(false);
+    introProgress.setValue(1);
+    pageProgress.setValue(0);
+    authOpacity.setValue(1);
+    setScreen('login');
+    unlock();
+  }, [authOpacity, introProgress, pageProgress, unlock]);
+
+  useEffect(
+    () => cloudAuth?.subscribe(returnToLogin),
+    [cloudAuth, returnToLogin],
+  );
 
   const changePage = useCallback(
     mode => {
@@ -238,32 +253,47 @@ export function EntryFlow({ children, onReady, onResume }) {
     if (locked.current) {
       return;
     }
-    const session =
-      mode === 'register'
-        ? repository.register(name, email, password, confirmation)
-        : repository.signIn(email, password);
     locked.current = true;
     setTransitioning(true);
     Keyboard.dismiss();
     try {
-      const saved = await dispatch({
-        type: 'profile',
-        profile: {
-          ...state.profile,
-          name:
-            mode === 'register'
-              ? session.name
-              : state.profile.name || session.name,
-        },
-        onboard: true,
-      });
-      if (!saved) {
-        unlock();
+      const nextSession =
+        mode === 'register'
+          ? await repository.register(name, email, password, confirmation)
+          : await repository.signIn(email, password);
+      if (!mounted.current) {
         return;
       }
-      await repository.saveSession(session);
+      if (!nextSession) {
+        unlock();
+        Alert.alert(
+          'Check your email',
+          'Confirm your email address, then return to Essenza and sign in.',
+        );
+        changePage('login');
+        return;
+      }
+      if (!cloudAuth) {
+        const { state, dispatch } = localStore;
+        const saved = await dispatch({
+          type: 'profile',
+          profile: {
+            ...state.profile,
+            name:
+              mode === 'register'
+                ? nextSession.name
+                : state.profile.name || nextSession.name,
+          },
+          onboard: true,
+        });
+        if (!saved) {
+          unlock();
+          return;
+        }
+        await repository.saveSession(nextSession);
+      }
       if (mounted.current) {
-        setSession(session);
+        setSession(nextSession);
         lastAuthMode.current = mode;
         setHomeReady(true);
         setScreen('home-transition');
@@ -277,12 +307,7 @@ export function EntryFlow({ children, onReady, onResume }) {
   const signOut = async () => {
     try {
       await repository.signOut();
-      setSession(null);
-      setHomeReady(false);
-      introProgress.setValue(1);
-      pageProgress.setValue(0);
-      authOpacity.setValue(1);
-      setScreen('login');
+      returnToLogin();
     } catch {
       Alert.alert('Could not log out', 'Please try again.');
     }
@@ -308,7 +333,7 @@ export function EntryFlow({ children, onReady, onResume }) {
           onLayout={reportReady}
         >
           <SessionContext.Provider value={{ session, signOut }}>
-            {children}
+            {cloudAuth ? children(session, signOut) : children}
           </SessionContext.Provider>
         </View>
       )}
@@ -351,6 +376,7 @@ export function EntryFlow({ children, onReady, onResume }) {
             >
               <AuthScreen
                 mode="login"
+                cloudMode={Boolean(cloudAuth)}
                 onBack={back}
                 onSwitchMode={() => changePage('register')}
                 onSubmit={fields => submit('login', fields)}
@@ -383,6 +409,7 @@ export function EntryFlow({ children, onReady, onResume }) {
             >
               <AuthScreen
                 mode="register"
+                cloudMode={Boolean(cloudAuth)}
                 onBack={back}
                 onSwitchMode={() => changePage('login')}
                 onSubmit={fields => submit('register', fields)}

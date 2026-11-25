@@ -57,7 +57,13 @@ function AuthField({ label, value, onChangeText, secret = false }) {
   );
 }
 
-export function AuthScreen({ mode, onBack, onSwitchMode, onSubmit }) {
+export function AuthScreen({
+  mode,
+  onBack,
+  onSwitchMode,
+  onSubmit,
+  cloudMode,
+}) {
   const insets = useSafeAreaInsets();
   const { width } = useWindowDimensions();
   const waveWidthScale = (width + 2) / 437;
@@ -168,7 +174,7 @@ export function AuthScreen({ mode, onBack, onSwitchMode, onSubmit }) {
               secret
             />
           ) : null}
-          {!register && !recover ? (
+          {!cloudMode && !register && !recover ? (
             <Text
               accessibilityRole="button"
               style={styles.forgot}
@@ -199,22 +205,29 @@ export function AuthScreen({ mode, onBack, onSwitchMode, onSubmit }) {
           />
           {!recover ? (
             <>
-              <View style={styles.divider}>
-                <View style={styles.line} />
-                <Text style={styles.hint}>Or continue with</Text>
-                <View style={styles.line} />
-              </View>
-              <Pressable
-                accessibilityRole="button"
-                accessibilityLabel="Google"
-                style={styles.google}
-                onPress={() =>
-                  Alert.alert('Google', 'Google sign-in is not available yet.')
-                }
-              >
-                <DesignIcon name="google" />
-                <Text style={styles.googleText}>Google</Text>
-              </Pressable>
+              {!cloudMode && (
+                <>
+                  <View style={styles.divider}>
+                    <View style={styles.line} />
+                    <Text style={styles.hint}>Or continue with</Text>
+                    <View style={styles.line} />
+                  </View>
+                  <Pressable
+                    accessibilityRole="button"
+                    accessibilityLabel="Google"
+                    style={styles.google}
+                    onPress={() =>
+                      Alert.alert(
+                        'Google',
+                        'Google sign-in is not available yet.',
+                      )
+                    }
+                  >
+                    <DesignIcon name="google" />
+                    <Text style={styles.googleText}>Google</Text>
+                  </Pressable>
+                </>
+              )}
               <Text style={styles.switch}>
                 {register ? 'Already have an account? ' : 'New to Essenza? '}
                 <Text
@@ -228,9 +241,11 @@ export function AuthScreen({ mode, onBack, onSwitchMode, onSubmit }) {
                   {register ? 'Sign in' : 'Create an account'}
                 </Text>
               </Text>
-              <Text style={styles.legal}>
-                Terms of Service · Privacy Policy · Notice at Collection
-              </Text>
+              {!cloudMode && (
+                <Text style={styles.legal}>
+                  Terms of Service · Privacy Policy · Notice at Collection
+                </Text>
+              )}
             </>
           ) : null}
         </View>

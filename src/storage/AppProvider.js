@@ -1,20 +1,23 @@
 import React, {
+  useCallback,
   createContext,
   useContext,
   useEffect,
-  useRef,
   useState,
 } from 'react';
 import { ActivityIndicator, Alert, Text, View } from 'react-native';
 import { createInitialState } from '../domain/models';
 import { LocalRepository } from './repository';
 const Context = createContext(null);
-export function AppProvider({ children }) {
-  const repository = useRef(new LocalRepository()).current;
+export function AppProvider({ children, accountRepository, onSignOut }) {
+  const [localRepository] = useState(() =>
+    accountRepository ? null : new LocalRepository(),
+  );
+  const repository = accountRepository || localRepository;
   const [state, setState] = useState(createInitialState);
   const [ready, setReady] = useState(false);
   const [error, setError] = useState(false);
-  const load = () => {
+  const load = useCallback(() => {
     setError(false);
     repository
       .load()
@@ -23,13 +26,18 @@ export function AppProvider({ children }) {
         setReady(true);
       })
       .catch(() => setError(true));
-  };
-  useEffect(load, [repository]);
+  }, [repository]);
+  useEffect(() => {
+    load();
+  }, [load]);
   const dispatch = async action => {
     try {
       setState(await repository.dispatch(action));
       return true;
     } catch (cause) {
+      if (accountRepository) {
+        setState(repository.state);
+      }
       Alert.alert(
         'Could Not Save',
         cause instanceof Error
@@ -54,41 +62,49 @@ export function AppProvider({ children }) {
         {error ? (
           <>
             <Text>
-              Could not open your local data. Your existing data is still saved.
+              {accountRepository
+                ? 'Could not open your account data. Check your connection.'
+                : 'Could not open your local data. Your existing data is still saved.'}
             </Text>
             <Text accessibilityRole="button" onPress={load}>
               Try Again
             </Text>
-            <Text
-              accessibilityRole="button"
-              onPress={() =>
-                Alert.alert(
-                  'Delete local data?',
-                  'This removes your profile, collections, and entries from this device.',
-                  [
-                    {
-                      text: 'Cancel',
-                      style: 'cancel',
-                    },
-                    {
-                      text: 'Delete',
-                      style: 'destructive',
-                      onPress: async () => {
-                        if (
-                          await dispatch({
-                            type: 'reset',
-                          })
-                        ) {
-                          setReady(true);
-                        }
+            {accountRepository ? (
+              <Text accessibilityRole="button" onPress={onSignOut}>
+                Log Out
+              </Text>
+            ) : (
+              <Text
+                accessibilityRole="button"
+                onPress={() =>
+                  Alert.alert(
+                    'Delete local data?',
+                    'This removes your profile, collections, and entries from this device.',
+                    [
+                      {
+                        text: 'Cancel',
+                        style: 'cancel',
                       },
-                    },
-                  ],
-                )
-              }
-            >
-              Reset Local Data
-            </Text>
+                      {
+                        text: 'Delete',
+                        style: 'destructive',
+                        onPress: async () => {
+                          if (
+                            await dispatch({
+                              type: 'reset',
+                            })
+                          ) {
+                            setReady(true);
+                          }
+                        },
+                      },
+                    ],
+                  )
+                }
+              >
+                Reset Local Data
+              </Text>
+            )}
           </>
         ) : (
           <>
@@ -104,15 +120,16 @@ export function AppProvider({ children }) {
       value={{
         state,
         dispatch,
+        isCloud: Boolean(accountRepository),
       }}
     >
       {children}
     </Context.Provider>
   );
 }
-export function useApp() {
+export function useApp(optional = false) {
   const store = useContext(Context);
-  if (!store) {
+  if (!store && !optional) {
     throw new Error('AppProvider required');
   }
   return store;
