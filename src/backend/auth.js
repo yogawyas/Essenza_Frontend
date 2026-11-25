@@ -1,11 +1,20 @@
 import { AppState } from 'react-native';
+import { GoogleOAuth } from './googleOAuth';
+import { ensurePkceCrypto } from './pkceCrypto';
+import publicConfig from './publicConfig';
+import { createAuthStorage } from './supabase';
 
 function accountSession(session) {
   const user = session?.user;
   if (!user?.id || !user.email) {
     return null;
   }
-  const name = user.user_metadata?.display_name;
+  const metadata = user.user_metadata;
+  const name = [
+    metadata?.display_name,
+    metadata?.full_name,
+    metadata?.name,
+  ].find(value => typeof value === 'string' && value.trim());
   return {
     mode: 'supabase',
     userId: user.id,
@@ -46,8 +55,16 @@ async function request(operation, message) {
 }
 
 export class SupabaseAuthRepository {
-  constructor(client) {
+  constructor(client, storage = createAuthStorage(), config = publicConfig) {
     this.auth = client.auth;
+    this.googleOAuth = new GoogleOAuth(this.auth, storage, config);
+    this.authOperation = Promise.resolve();
+  }
+
+  enqueueAuth(operation) {
+    const next = this.authOperation.then(operation, operation);
+    this.authOperation = next;
+    return next;
   }
 
   async load() {
@@ -60,23 +77,33 @@ export class SupabaseAuthRepository {
 
   finishIntro() {}
 
-  async signIn(email, password) {
-    const { session } = await request(
-      () =>
-        this.auth.signInWithPassword({
-          email: email.trim().toLowerCase(),
-          password,
-        }),
-      'Could not sign in. Check your connection and try again.',
-    );
-    const account = accountSession(session);
-    if (!account) {
-      throw new Error('Could not open your account. Please sign in again.');
-    }
-    return account;
+  signIn(email, password) {
+    return this.enqueueAuth(async () => {
+      await this.googleOAuth.cancel();
+      const { session } = await request(
+        () =>
+          this.auth.signInWithPassword({
+            email: email.trim().toLowerCase(),
+            password,
+          }),
+        'Could not sign in. Check your connection and try again.',
+      );
+      const account = accountSession(session);
+      if (!account) {
+        throw new Error('Could not open your account. Please sign in again.');
+      }
+      return account;
+    });
   }
 
-  async register(name, email, password, confirmation) {
+  register(name, email, password, confirmation) {
+    return this.enqueueAuth(async () => {
+      await this.googleOAuth.cancel();
+      return this.registerAccount(name, email, password, confirmation);
+    });
+  }
+
+  async registerAccount(name, email, password, confirmation) {
     const displayName = name.trim();
     const address = email.trim().toLowerCase();
     if (!displayName || displayName.length > 40) {
@@ -91,26 +118,42 @@ export class SupabaseAuthRepository {
     if (password !== confirmation) {
       throw new Error('Passwords do not match.');
     }
-    const { session } = await request(
-      () =>
-        this.auth.signUp({
-          email: address,
-          password,
-          options: { data: { display_name: displayName } },
-        }),
-      'Could not register. Check your connection and try again.',
-    );
+    const { session } = await request(() => {
+      ensurePkceCrypto();
+      return this.auth.signUp({
+        email: address,
+        password,
+        options: { data: { display_name: displayName } },
+      });
+    }, 'Could not register. Check your connection and try again.');
     return accountSession(session);
   }
 
   // Supabase persists the session through its secure storage adapter.
   saveSession() {}
 
-  async signOut() {
-    await request(
-      () => this.auth.signOut({ scope: 'local' }),
-      'Could not log out. Please try again.',
+  signOut() {
+    return this.enqueueAuth(async () => {
+      await this.googleOAuth.cancel();
+      await request(
+        () => this.auth.signOut({ scope: 'local' }),
+        'Could not log out. Please try again.',
+      );
+    });
+  }
+
+  startGoogleSignIn() {
+    return this.enqueueAuth(() => this.googleOAuth.start());
+  }
+
+  completeGoogleSignIn(url) {
+    return this.enqueueAuth(async () =>
+      accountSession(await this.googleOAuth.complete(url)),
     );
+  }
+
+  cancelGoogleSignIn() {
+    return this.enqueueAuth(() => this.googleOAuth.cancel());
   }
 
   subscribe(onSignedOut) {

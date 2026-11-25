@@ -1,6 +1,6 @@
 # Alur masuk selama development
 
-Untuk akun sungguhan dan Data API, ikuti [panduan Supabase](SUPABASE_SETUP.md). Catatan ini mendokumentasikan mode demo pada debug build tanpa konfigurasi Supabase.
+Untuk akun sungguhan dan Data API, ikuti [panduan Supabase](SUPABASE_SETUP.md). Catatan ini mendokumentasikan debug build dengan `ESSENZA_LOCAL_DEMO=true`.
 
 Semua file baru untuk alur ini menggunakan JavaScript (`.js`).
 
@@ -15,11 +15,11 @@ Semua file baru untuk alur ini menggunakan JavaScript (`.js`).
 - Login dummy: email **essenza@test.com**, kata sandi **12345678**.
 - Sesi dummy tersimpan lokal. Setelah profil dilengkapi, aplikasi yang dibuka ulang menuju Beranda setelah animasi logo.
 - Halaman register dapat dicoba dengan nama, email valid, kata sandi minimal 8 karakter, serta konfirmasi yang sama. Registrasi demo mengembalikan pengguna ke formulir login dengan banner berhasil. Kredensial registrasi hanya berlaku dalam sesi aplikasi itu sampai login pertama.
-- Tombol Google dan lupa kata sandi adalah placeholder. Belum ada OAuth, backend, atau pengiriman email.
+- Di mode demo, tombol Google dan lupa kata sandi menampilkan informasi bahwa fitur tersebut tidak tersedia.
 - Teks kebijakan mengikuti desain; tujuan tautannya belum diberikan.
 
 Ilustrasi intro, header, judul, label Google, dan banner berhasil menggunakan SVG dari ekspor final. Kolom isian, tombol, navigasi, dan gesture adalah komponen React Native yang berfungsi. Pada layar pendek atau saat keyboard terbuka, form dapat digulir.
 
 Status intro memakai `@essenza/intro-seen-v1`; sesi dummy memakai `@essenza/auth-session-v1`. Hanya sesi login yang valid dapat melewati splash desain. Kata sandi tidak disimpan. Koleksi lama tetap menggunakan penyimpanan yang sudah ada. Tombol Log Out di Setelan menghapus sesi login. Koleksi lokal tetap tersimpan.
 
-Integrasi akun asli nantinya mengganti validasi dan penyimpanan sesi di `src/storage/auth.js`, dengan alur tampilan yang sama.
+Mode cloud memakai Supabase Auth melalui `src/backend/auth.js`.

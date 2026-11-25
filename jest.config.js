@@ -6,6 +6,6 @@ module.exports = {
   // Native component transforms can take longer on a cold Windows cache.
   testTimeout: 30000,
   transformIgnorePatterns: [
-    'node_modules/(?!((jest-)?react-native[^/]*|@react-native[^/]*|@react-navigation)/)',
+    'node_modules/(?!((jest-)?react-native[^/]*|@react-native[^/]*|@react-navigation|@noble/hashes)/)',
   ],
 };

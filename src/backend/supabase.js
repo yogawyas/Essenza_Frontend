@@ -1,32 +1,12 @@
 import publicConfig from './publicConfig';
 
-let client;
-
-export function getSupabase() {
-  if (publicConfig.error) {
-    throw new Error(publicConfig.error);
-  }
-  if (!publicConfig.url) {
-    if (__DEV__) {
-      return null;
-    }
-    throw new Error('Supabase configuration is required for this build.');
-  }
-  if (publicConfig.localHttp && !__DEV__) {
-    throw new Error('Use an HTTPS Supabase project URL for this build.');
-  }
-  if (client) {
-    return client;
-  }
-
-  require('react-native-url-polyfill/auto');
-  const { createClient } = require('@supabase/supabase-js');
+export function createAuthStorage() {
   const keychain = require('react-native-keychain');
   const options = key => ({
     service: 'com.essenza.app.' + key,
     accessible: keychain.ACCESSIBLE.WHEN_UNLOCKED_THIS_DEVICE_ONLY,
   });
-  const storage = {
+  return {
     async getItem(key) {
       const credentials = await keychain.getGenericPassword(options(key));
       return credentials ? credentials.password : null;
@@ -47,11 +27,37 @@ export function getSupabase() {
       }
     },
   };
+}
 
+let client;
+
+export function getSupabase() {
+  if (publicConfig.error) {
+    throw new Error(publicConfig.error);
+  }
+  if (publicConfig.developmentDefault && !__DEV__) {
+    throw new Error('Configure an explicit Supabase project for this build.');
+  }
+  if (!publicConfig.url) {
+    if (__DEV__) {
+      return null;
+    }
+    throw new Error('Supabase configuration is required for this build.');
+  }
+  if (publicConfig.localHttp && !__DEV__) {
+    throw new Error('Use an HTTPS Supabase project URL for this build.');
+  }
+  if (client) {
+    return client;
+  }
+
+  require('react-native-url-polyfill/auto');
+  const { createClient } = require('@supabase/supabase-js');
   client = createClient(publicConfig.url, publicConfig.publishableKey, {
     auth: {
-      storage,
+      storage: createAuthStorage(),
       storageKey: 'supabase.' + publicConfig.url,
+      flowType: 'pkce',
       persistSession: true,
       autoRefreshToken: false,
       detectSessionInUrl: false,

@@ -11,11 +11,13 @@ import {
   BackHandler,
   Easing,
   Keyboard,
+  Linking,
   StatusBar,
   StyleSheet,
   useWindowDimensions,
   View,
 } from 'react-native';
+import { isGoogleCallbackUrl } from '../backend/googleOAuth';
 import { AuthScreen } from '../screens/AuthScreen';
 import { SplashScreen } from '../screens/SplashScreen';
 import { useApp } from '../storage/AppProvider';
@@ -30,6 +32,9 @@ export function EntryFlow({ children, onReady, onResume, cloudAuth }) {
   const [transitioning, setTransitioning] = useState(false);
   const [homeReady, setHomeReady] = useState(false);
   const [session, setSession] = useState(null);
+  const activeSession = useRef(null);
+  const authRequest = useRef(false);
+  const openingGoogle = useRef(false);
   const returningToIntro = useRef(false);
   const locked = useRef(false);
   const mounted = useRef(true);
@@ -68,43 +73,6 @@ export function EntryFlow({ children, onReady, onResume, cloudAuth }) {
     [pageProgress, width],
   );
 
-  useEffect(() => {
-    let active = true;
-    repository
-      .load()
-      .then(({ session }) => {
-        if (!active) {
-          return;
-        }
-        introProgress.setValue(session ? 1 : 0);
-        pageProgress.setValue(0);
-        authOpacity.setValue(1);
-        locked.current = false;
-        setTransitioning(false);
-        setHomeReady(Boolean(session));
-        setSession(session);
-        // Swiping the design once is not a completed login. Keep both splash
-        // screens on startup until there is an actual saved session.
-        setScreen(session ? 'home' : 'splash');
-        if (session) {
-          onResume?.();
-        }
-      })
-      .catch(() => {
-        if (active) {
-          introProgress.setValue(0);
-          pageProgress.setValue(0);
-          authOpacity.setValue(1);
-          locked.current = false;
-          setTransitioning(false);
-          setScreen('splash');
-        }
-      });
-    return () => {
-      active = false;
-    };
-  }, [authOpacity, introProgress, onResume, pageProgress, repository]);
-
   const reportReady = useCallback(() => {
     if (screen !== 'loading' && !readyReported.current) {
       readyReported.current = true;
@@ -129,15 +97,112 @@ export function EntryFlow({ children, onReady, onResume, cloudAuth }) {
     }
   }, []);
 
+  const updateSession = useCallback(nextSession => {
+    activeSession.current = nextSession;
+    setSession(nextSession);
+  }, []);
+
+  const openStartupScreen = useCallback(
+    nextSession => {
+      returningToIntro.current = false;
+      introProgress.setValue(nextSession ? 1 : 0);
+      pageProgress.setValue(0);
+      authOpacity.setValue(1);
+      unlock();
+      setHomeReady(Boolean(nextSession));
+      updateSession(nextSession);
+      setScreen(nextSession ? 'home' : 'splash');
+      if (nextSession) {
+        onResume?.();
+      }
+    },
+    [authOpacity, introProgress, onResume, pageProgress, unlock, updateSession],
+  );
+
+  useEffect(() => {
+    let active = true;
+    let restoring = true;
+    let queuedUrl = null;
+
+    async function completeGoogle(url) {
+      if (
+        !active ||
+        activeSession.current ||
+        authRequest.current ||
+        !isGoogleCallbackUrl(url)
+      ) {
+        return null;
+      }
+      authRequest.current = true;
+      try {
+        const nextSession = await repository.completeGoogleSignIn(url);
+        if (active && nextSession) {
+          activeSession.current = nextSession;
+        }
+        return nextSession;
+      } catch (error) {
+        if (active) {
+          Alert.alert(
+            'Google sign-in',
+            error instanceof Error ? error.message : 'Please try again.',
+          );
+        }
+        return null;
+      } finally {
+        authRequest.current = false;
+      }
+    }
+
+    async function handleLink({ url }) {
+      if (restoring) {
+        if (isGoogleCallbackUrl(url)) {
+          queuedUrl = url;
+        }
+        return;
+      }
+      const nextSession = await completeGoogle(url);
+      if (active && nextSession) {
+        openStartupScreen(nextSession);
+      }
+    }
+
+    const linkSubscription = cloudAuth
+      ? Linking.addEventListener('url', handleLink)
+      : null;
+    async function restore() {
+      const restored = await repository.load().catch(() => null);
+      let nextSession = restored?.session;
+      let startupUrl;
+      if (active && cloudAuth && !nextSession) {
+        const initialUrl = await Linking.getInitialURL().catch(() => null);
+        startupUrl = queuedUrl ?? initialUrl;
+        queuedUrl = null;
+        nextSession = await completeGoogle(startupUrl);
+      }
+      if (active) {
+        restoring = false;
+        openStartupScreen(nextSession ?? null);
+        if (!nextSession && queuedUrl && queuedUrl !== startupUrl) {
+          handleLink({ url: queuedUrl });
+        }
+      }
+    }
+    restore();
+    return () => {
+      active = false;
+      linkSubscription?.remove();
+    };
+  }, [cloudAuth, openStartupScreen, repository]);
+
   const returnToLogin = useCallback(() => {
-    setSession(null);
+    updateSession(null);
     setHomeReady(false);
     introProgress.setValue(1);
     pageProgress.setValue(0);
     authOpacity.setValue(1);
     setScreen('login');
     unlock();
-  }, [authOpacity, introProgress, pageProgress, unlock]);
+  }, [authOpacity, introProgress, pageProgress, unlock, updateSession]);
 
   useEffect(
     () => cloudAuth?.subscribe(returnToLogin),
@@ -161,7 +226,7 @@ export function EntryFlow({ children, onReady, onResume, cloudAuth }) {
         if (!mounted.current) {
           return;
         }
-        if (finished) {
+        if (finished && !activeSession.current) {
           lastAuthMode.current = mode;
           setScreen(mode);
         }
@@ -240,8 +305,10 @@ export function EntryFlow({ children, onReady, onResume, cloudAuth }) {
   const finishIntro = async () => {
     try {
       await repository.finishIntro();
-      introProgress.setValue(1);
-      setScreen('login');
+      if (!activeSession.current) {
+        introProgress.setValue(1);
+        setScreen('login');
+      }
       return true;
     } catch {
       Alert.alert('Could Not Save', 'Swipe again to open sign in.');
@@ -250,9 +317,10 @@ export function EntryFlow({ children, onReady, onResume, cloudAuth }) {
   };
 
   const submit = async (mode, { name, email, password, confirmation }) => {
-    if (locked.current) {
+    if (locked.current || authRequest.current || openingGoogle.current) {
       return;
     }
+    authRequest.current = true;
     locked.current = true;
     setTransitioning(true);
     Keyboard.dismiss();
@@ -293,7 +361,7 @@ export function EntryFlow({ children, onReady, onResume, cloudAuth }) {
         await repository.saveSession(nextSession);
       }
       if (mounted.current) {
-        setSession(nextSession);
+        updateSession(nextSession);
         lastAuthMode.current = mode;
         setHomeReady(true);
         setScreen('home-transition');
@@ -301,6 +369,26 @@ export function EntryFlow({ children, onReady, onResume, cloudAuth }) {
     } catch (error) {
       unlock();
       throw error;
+    } finally {
+      authRequest.current = false;
+    }
+  };
+
+  const startGoogleSignIn = async () => {
+    if (
+      locked.current ||
+      authRequest.current ||
+      openingGoogle.current ||
+      activeSession.current
+    ) {
+      return;
+    }
+    openingGoogle.current = true;
+    Keyboard.dismiss();
+    try {
+      await repository.startGoogleSignIn();
+    } finally {
+      openingGoogle.current = false;
     }
   };
 
@@ -380,6 +468,7 @@ export function EntryFlow({ children, onReady, onResume, cloudAuth }) {
                 onBack={back}
                 onSwitchMode={() => changePage('register')}
                 onSubmit={fields => submit('login', fields)}
+                onGoogleSignIn={cloudAuth ? startGoogleSignIn : undefined}
               />
             </Animated.View>
             <Animated.View
@@ -413,6 +502,7 @@ export function EntryFlow({ children, onReady, onResume, cloudAuth }) {
                 onBack={back}
                 onSwitchMode={() => changePage('login')}
                 onSubmit={fields => submit('register', fields)}
+                onGoogleSignIn={cloudAuth ? startGoogleSignIn : undefined}
               />
             </Animated.View>
           </Animated.View>

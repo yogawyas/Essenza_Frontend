@@ -62,6 +62,7 @@ export function AuthScreen({
   onBack,
   onSwitchMode,
   onSubmit,
+  onGoogleSignIn,
   cloudMode,
 }) {
   const insets = useSafeAreaInsets();
@@ -74,13 +75,27 @@ export function AuthScreen({
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmation, setConfirmation] = useState('');
-  const [busy, setBusy] = useState(false);
+  const [busy, setBusy] = useState(null);
   const [error, setError] = useState('');
   const submitting = useRef(false);
-  const submit = async () => {
+  const runAuthAction = async (method, action) => {
     if (submitting.current) {
       return;
     }
+    submitting.current = true;
+    setBusy(method);
+    setError('');
+    try {
+      await action();
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : 'Please try again.');
+    } finally {
+      submitting.current = false;
+      setBusy(null);
+    }
+  };
+
+  const submit = () => {
     if (recover) {
       setError(
         /^\S+@\S+\.\S+$/.test(email.trim())
@@ -89,17 +104,16 @@ export function AuthScreen({
       );
       return;
     }
-    submitting.current = true;
-    setBusy(true);
-    setError('');
-    try {
-      await onSubmit({ name, email, password, confirmation });
-    } catch (cause) {
-      setError(cause instanceof Error ? cause.message : 'Please try again.');
-    } finally {
-      submitting.current = false;
-      setBusy(false);
+    return runAuthAction('email', () =>
+      onSubmit({ name, email, password, confirmation }),
+    );
+  };
+
+  const googleSignIn = () => {
+    if (onGoogleSignIn) {
+      return runAuthAction('google', onGoogleSignIn);
     }
+    Alert.alert('Google', 'Google sign-in is not available yet.');
   };
 
   return (
@@ -199,13 +213,14 @@ export function AuthScreen({
                 ? 'Create Account'
                 : 'Sign In'
             }
-            loading={busy}
+            disabled={Boolean(busy)}
+            loading={busy === 'email'}
             style={styles.submit}
             onPress={submit}
           />
           {!recover ? (
             <>
-              {!cloudMode && (
+              {(!cloudMode || onGoogleSignIn) && (
                 <>
                   <View style={styles.divider}>
                     <View style={styles.line} />
@@ -214,17 +229,25 @@ export function AuthScreen({
                   </View>
                   <Pressable
                     accessibilityRole="button"
-                    accessibilityLabel="Google"
-                    style={styles.google}
-                    onPress={() =>
-                      Alert.alert(
-                        'Google',
-                        'Google sign-in is not available yet.',
-                      )
+                    accessibilityLabel={
+                      cloudMode ? 'Continue with Google' : 'Google'
                     }
+                    accessibilityState={{
+                      busy: busy === 'google',
+                      disabled: Boolean(busy),
+                    }}
+                    disabled={Boolean(busy)}
+                    style={styles.google}
+                    onPress={googleSignIn}
                   >
                     <DesignIcon name="google" />
-                    <Text style={styles.googleText}>Google</Text>
+                    <Text style={styles.googleText}>
+                      {busy === 'google'
+                        ? 'Opening Google…'
+                        : cloudMode
+                        ? 'Continue with Google'
+                        : 'Google'}
+                    </Text>
                   </Pressable>
                 </>
               )}

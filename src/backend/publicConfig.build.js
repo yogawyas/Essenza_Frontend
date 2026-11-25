@@ -1,6 +1,7 @@
 const { readFileSync } = require('node:fs');
 const { join } = require('node:path');
 const { parseEnv } = require('node:util');
+const developmentConfig = require('./supabaseDevelopment.json');
 
 function readPublicConfig(projectRoot, environment = process.env) {
   let fileEnv = {};
@@ -12,18 +13,17 @@ function readPublicConfig(projectRoot, environment = process.env) {
     }
   }
 
-  const url = (
-    environment.ESSENZA_SUPABASE_URL ??
-    fileEnv.ESSENZA_SUPABASE_URL ??
-    ''
-  ).trim();
-  const key = (
-    environment.ESSENZA_SUPABASE_PUBLISHABLE_KEY ??
-    fileEnv.ESSENZA_SUPABASE_PUBLISHABLE_KEY ??
-    ''
-  ).trim();
-  if (!url && !key) {
+  if ((environment.ESSENZA_LOCAL_DEMO ?? fileEnv.ESSENZA_LOCAL_DEMO) === 'true') {
     return {};
+  }
+  const useEnvironment =
+    environment.ESSENZA_SUPABASE_URL !== undefined ||
+    environment.ESSENZA_SUPABASE_PUBLISHABLE_KEY !== undefined;
+  const settings = useEnvironment ? environment : fileEnv;
+  const url = (settings.ESSENZA_SUPABASE_URL ?? '').trim();
+  const key = (settings.ESSENZA_SUPABASE_PUBLISHABLE_KEY ?? '').trim();
+  if (!url && !key) {
+    return { ...developmentConfig, localHttp: false, developmentDefault: true };
   }
   if (!/^sb_publishable_[A-Za-z0-9_-]+$/.test(key)) {
     return {

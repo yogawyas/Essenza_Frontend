@@ -4,6 +4,7 @@ import {
   Alert,
   Animated,
   BackHandler,
+  Linking,
   PanResponder,
   StyleSheet,
   Text,
@@ -272,6 +273,139 @@ test('Google remains a placeholder and cannot authenticate a session', async () 
     expect.stringContaining('not available yet'),
   );
   expect(stored.has(AUTH_SESSION_KEY)).toBe(false);
+});
+
+const googleCallback = 'com.essenza.app://auth/callback?code=fixture-code';
+const googleSession = {
+  userId: 'test-google-user',
+  email: 'test@example.invalid',
+};
+
+async function openCloudApp({ initialUrl = null, overrides } = {}) {
+  let listener;
+  jest.spyOn(Linking, 'getInitialURL').mockResolvedValue(initialUrl);
+  jest
+    .spyOn(Linking, 'addEventListener')
+    .mockImplementation((event, callback) => {
+      expect(event).toBe('url');
+      listener = callback;
+      return { remove: jest.fn() };
+    });
+  const cloudAuth = {
+    load: jest.fn().mockResolvedValue({ session: null }),
+    subscribe: jest.fn(() => () => {}),
+    finishIntro: jest.fn(),
+    startGoogleSignIn: jest.fn().mockResolvedValue(undefined),
+    completeGoogleSignIn: jest.fn().mockResolvedValue(googleSession),
+    ...overrides,
+  };
+  await act(async () => {
+    renderer = ReactTestRenderer.create(
+      <EntryFlow cloudAuth={cloudAuth}>
+        {session => <Text>{session.userId}</Text>}
+      </EntryFlow>,
+    );
+  });
+  return { cloudAuth, listener };
+}
+
+test('Google opens from the login screen and a warm callback starts the account', async () => {
+  const { cloudAuth, listener } = await openCloudApp();
+  await act(async () =>
+    renderer.root.findByType(SplashScreen).props.onContinue(),
+  );
+  const google = activeAuthScreen().findAll(
+    node =>
+      node.props.accessibilityLabel === 'Continue with Google' &&
+      typeof node.props.onPress === 'function',
+  )[0];
+  await act(async () => google.props.onPress());
+  expect(cloudAuth.startGoogleSignIn).toHaveBeenCalledTimes(1);
+  expect(activeAuthScreen().props.mode).toBe('login');
+
+  await act(async () =>
+    listener({ url: 'com.essenza.app://auth/other?code=unused' }),
+  );
+  expect(cloudAuth.completeGoogleSignIn).not.toHaveBeenCalled();
+  await act(async () => listener({ url: googleCallback }));
+  expect(cloudAuth.completeGoogleSignIn).toHaveBeenCalledWith(googleCallback);
+  expect(renderer.root.findByType(Text).props.children).toBe(
+    googleSession.userId,
+  );
+
+  await act(async () => listener({ url: googleCallback }));
+  expect(cloudAuth.completeGoogleSignIn).toHaveBeenCalledTimes(1);
+});
+
+test('a startup callback is exchanged once when it also arrives as an event', async () => {
+  let resolveLoad;
+  const load = jest.fn(
+    () =>
+      new Promise(resolve => {
+        resolveLoad = resolve;
+      }),
+  );
+  const { cloudAuth, listener } = await openCloudApp({
+    initialUrl: googleCallback,
+    overrides: { load },
+  });
+  await act(async () => {
+    await listener({ url: googleCallback });
+    resolveLoad({ session: null });
+  });
+  expect(cloudAuth.completeGoogleSignIn).toHaveBeenCalledTimes(1);
+  expect(renderer.root.findByType(Text).props.children).toBe(
+    googleSession.userId,
+  );
+});
+
+test('a declined Google callback reports the error without leaving the login screen', async () => {
+  const message = 'Google sign-in was canceled or declined. Try again.';
+  const alert = jest.spyOn(Alert, 'alert').mockImplementation(() => {});
+  const completeGoogleSignIn = jest.fn().mockRejectedValue(new Error(message));
+  const { listener } = await openCloudApp({
+    overrides: { completeGoogleSignIn },
+  });
+  await act(async () =>
+    renderer.root.findByType(SplashScreen).props.onContinue(),
+  );
+  const declined =
+    'com.essenza.app://auth/callback?error=access_denied#error=access_denied';
+  await act(async () => listener({ url: declined }));
+  expect(completeGoogleSignIn).toHaveBeenCalledWith(declined);
+  expect(alert).toHaveBeenCalledWith('Google sign-in', message);
+  expect(activeAuthScreen().props.mode).toBe('login');
+});
+
+test('a late Google callback cannot replace an email sign-in in progress', async () => {
+  let resolveSignIn;
+  const emailSession = { userId: 'test-email-user' };
+  const signIn = jest.fn(
+    () =>
+      new Promise(resolve => {
+        resolveSignIn = resolve;
+      }),
+  );
+  const { cloudAuth, listener } = await openCloudApp({ overrides: { signIn } });
+  await act(async () =>
+    renderer.root.findByType(SplashScreen).props.onContinue(),
+  );
+  let submission;
+  await act(async () => {
+    submission = activeAuthScreen().props.onSubmit({
+      email: 'mail@example.invalid',
+      password: 'fixture-password',
+    });
+    await listener({ url: googleCallback });
+  });
+  await act(async () => {
+    resolveSignIn(emailSession);
+    await submission;
+  });
+  expect(cloudAuth.completeGoogleSignIn).not.toHaveBeenCalled();
+  expect(renderer.root.findByType(Text).props.children).toBe(
+    emailSession.userId,
+  );
 });
 
 test('a corrupt session safely returns to the design splash before login', async () => {
