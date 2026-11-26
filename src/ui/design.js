@@ -221,10 +221,17 @@ export function Segmented({ options, value, onChange, stacked, style }) {
   );
 }
 
-export function Avatar({ other = false, size = 52, style }) {
+export function Avatar({ photoUri, other = false, size = 52, style }) {
   return (
     <Image
-      source={other ? figma.otherAvatar : figma.profileAvatar}
+      source={
+        photoUri
+          ? { uri: photoUri }
+          : other
+          ? figma.otherAvatar
+          : figma.profileAvatar
+      }
+      resizeMode="cover"
       style={[{ width: size, height: size, borderRadius: size / 2 }, style]}
     />
   );

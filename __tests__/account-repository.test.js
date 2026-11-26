@@ -1,4 +1,4 @@
-import { AccountRepository } from '../src/backend/AccountRepository';
+import { AccountRepository } from '../backend/client/AccountRepository';
 import { createInitialState } from '../src/domain/models';
 
 const firstUser = { userId: 'first-user', name: 'Explorer' };

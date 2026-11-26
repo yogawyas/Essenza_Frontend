@@ -1,5 +1,5 @@
-import { createInitialState } from '../domain/models';
-import { parseState, reduceState } from '../domain/state';
+import { createInitialState } from '../../src/domain/models';
+import { parseState, reduceState } from '../../src/domain/state';
 
 export class AccountRepository {
   state = createInitialState();

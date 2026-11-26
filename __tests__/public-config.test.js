@@ -1,7 +1,7 @@
 const fs = require('node:fs');
 const os = require('node:os');
 const path = require('node:path');
-const { readPublicConfig } = require('../src/backend/publicConfig.build');
+const { readPublicConfig } = require('../backend/client/publicConfig.build');
 
 const projectUrl = 'https://example-essenza.supabase.co';
 const publishableKey = 'sb_publishable_test_fixture';

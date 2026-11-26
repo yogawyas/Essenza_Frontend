@@ -10,15 +10,15 @@ import {
   View,
 } from 'react-native';
 import { usePreventRemove, useRoute } from '@react-navigation/native';
-import { launchImageLibrary } from 'react-native-image-picker';
 import { fragranceById } from '../domain/catalog';
 import { makeId } from '../domain/models';
 import { openShelf, useAppNavigation } from '../navigation/types';
 import { useApp } from '../storage/AppProvider';
 import { CollectionArtwork } from '../ui/CollectionRow';
-import { Empty } from '../ui/components';
+import { Empty, Icon } from '../ui/components';
 import { DesignIcon, DesignScreen, PageHeader } from '../ui/design';
 import { figma } from '../ui/figmaAssets';
+import { pickLibraryPhoto } from '../ui/photoLibrary';
 import { Sheet } from '../ui/Sheet';
 import { colors, s, sans, sansBold, serif } from '../ui/theme';
 
@@ -89,25 +89,10 @@ export function EditListScreen() {
     }
     choosingPhoto.current = true;
     try {
-      const result = await launchImageLibrary({
-        mediaType: 'photo',
-        maxWidth: 512,
-        maxHeight: 512,
-        quality: 0.72,
-        includeBase64: true,
-        assetRepresentationMode: 'compatible',
-      });
-      if (result.didCancel) {
-        return;
+      const photo = await pickLibraryPhoto();
+      if (photo) {
+        update('cover', photo);
       }
-      const image = result.assets?.[0];
-      if (!image?.base64 || !/^image\/(jpe?g|png|webp)$/i.test(image.type)) {
-        throw new Error('Choose a JPG, PNG, or WebP image.');
-      }
-      if (image.base64.length > 400000) {
-        throw new Error('Choose a smaller photo.');
-      }
-      update('cover', 'data:' + image.type + ';base64,' + image.base64);
     } catch (error) {
       Alert.alert('Could Not Open Photo', error.message);
     } finally {
@@ -149,7 +134,9 @@ export function EditListScreen() {
   };
 
   const primary = coverColors.slice(0, 3);
-  const selectedColor = coverColors.find(option => option.value === form.color);
+  const customColor = primary.some(option => option.value === form.color)
+    ? null
+    : form.color;
   const privateList = form.visibility === 'private';
   const header = (
     <PageHeader
@@ -222,6 +209,7 @@ export function EditListScreen() {
               <Pressable
                 accessibilityRole="button"
                 accessibilityLabel="More cover colors"
+                accessibilityState={{ selected: Boolean(customColor) }}
                 onPress={() => setShowColors(true)}
                 style={styles.wheel}
               >
@@ -230,13 +218,16 @@ export function EditListScreen() {
                   style={[styles.wheel, styles.wheelImage]}
                 />
                 <Text style={styles.wheelPlus}>+</Text>
-                {selectedColor && !selectedColor.icon ? (
+                {customColor ? (
                   <View
+                    pointerEvents="none"
                     style={[
-                      styles.customDot,
-                      { backgroundColor: selectedColor.value },
+                      styles.customBadge,
+                      { backgroundColor: customColor },
                     ]}
-                  />
+                  >
+                    <Icon name="check" size={17} color={colors.white} />
+                  </View>
                 ) : null}
               </Pressable>
             </View>
@@ -335,6 +326,11 @@ function ColorSwatch({ option, selected, onPress }) {
       style={[styles.wheel, { backgroundColor: option.value }]}
     >
       {option.icon ? <DesignIcon name={option.icon} /> : null}
+      {selected ? (
+        <View pointerEvents="none" style={styles.swatchCheck}>
+          <Icon name="check" size={25} color={colors.white} />
+        </View>
+      ) : null}
     </Pressable>
   );
 }
@@ -411,15 +407,22 @@ const styles = StyleSheet.create({
     lineHeight: 37,
     includeFontPadding: false,
   },
-  customDot: {
+  swatchCheck: {
+    ...StyleSheet.absoluteFill,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  customBadge: {
     position: 'absolute',
-    width: 11,
-    height: 11,
-    borderRadius: 6,
-    borderWidth: 1,
+    width: 22,
+    height: 22,
+    borderRadius: 11,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1.5,
     borderColor: colors.white,
-    bottom: 2,
-    right: 2,
+    bottom: 0,
+    right: 0,
   },
   privateLabel: { flexDirection: 'row', alignItems: 'center', gap: 4 },
   privateText: { color: colors.ink, fontFamily: sans, fontSize: 14 },

@@ -31,6 +31,7 @@ import {
   OtherProfileScreen,
   PreferenceScreen,
   PrivacyScreen,
+  ProfileDirectoryScreen,
   SettingsScreen,
   UserProfileScreen,
 } from './screens/ProfileFlow';
@@ -42,9 +43,9 @@ import { Avatar, DesignIcon } from './ui/design';
 import { colors, sans } from './ui/theme';
 import { EntryFlow } from './navigation/EntryFlow';
 import { LaunchSplashScreen } from './screens/LaunchSplashScreen';
-import { getSupabase } from './backend/supabase';
-import { SupabaseAuthRepository } from './backend/auth';
-import { AccountRepository } from './backend/AccountRepository';
+import { getSupabase } from '../backend/client/supabase';
+import { SupabaseAuthRepository } from '../backend/client/auth';
+import { AccountRepository } from '../backend/client/AccountRepository';
 const Root = createNativeStackNavigator();
 const Feature = createNativeStackNavigator();
 const Tabs = createBottomTabNavigator();
@@ -117,11 +118,15 @@ function ProfileStack() {
 function ShelfStack() {
   return <FeatureStack home="ShelfHome" />;
 }
-function TabIcon({ name, focused }) {
+function TabIcon({ name, focused, photoUri }) {
   return (
     <View style={[tabStyles.icon, focused && tabStyles.active]}>
       {name === 'Profile' ? (
-        <Avatar size={32} style={!focused && tabStyles.inactive} />
+        <Avatar
+          photoUri={photoUri}
+          size={32}
+          style={!focused && tabStyles.inactive}
+        />
       ) : (
         <DesignIcon
           name={tabIcons[name]}
@@ -133,6 +138,7 @@ function TabIcon({ name, focused }) {
 }
 function HomeTabs() {
   const insets = useSafeAreaInsets();
+  const { state } = useApp();
   return (
     <Tabs.Navigator
       id="EssenzaTabs"
@@ -151,7 +157,11 @@ function HomeTabs() {
         },
         tabBarLabelStyle: { fontSize: 11, fontFamily: sans },
         tabBarIcon: ({ focused }) => (
-          <TabIcon name={route.name} focused={focused} />
+          <TabIcon
+            name={route.name}
+            focused={focused}
+            photoUri={state.profile.photoUri}
+          />
         ),
         tabBarHideOnKeyboard: true,
       })}
@@ -220,6 +230,20 @@ function Navigation() {
             <Root.Screen
               name="OtherProfile"
               component={OtherProfileScreen}
+              getId={({ params }) => params.id}
+            />
+            <Root.Screen
+              name="ProfileDirectory"
+              component={ProfileDirectoryScreen}
+            />
+            <Root.Screen
+              name="List"
+              component={CollectionScreen}
+              getId={({ params }) => params.id}
+            />
+            <Root.Screen
+              name="Fragrance"
+              component={PerfumeScreen}
               getId={({ params }) => params.id}
             />
             <Root.Screen name="EditProfile" component={EditProfileScreen} />

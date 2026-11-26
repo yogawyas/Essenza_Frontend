@@ -22,4 +22,4 @@ Ilustrasi intro, header, judul, label Google, dan banner berhasil menggunakan SV
 
 Status intro memakai `@essenza/intro-seen-v1`; sesi dummy memakai `@essenza/auth-session-v1`. Hanya sesi login yang valid dapat melewati splash desain. Kata sandi tidak disimpan. Koleksi lama tetap menggunakan penyimpanan yang sudah ada. Tombol Log Out di Setelan menghapus sesi login. Koleksi lokal tetap tersimpan.
 
-Mode cloud memakai Supabase Auth melalui `src/backend/auth.js`.
+Mode cloud memakai Supabase Auth melalui `backend/client/auth.js`.

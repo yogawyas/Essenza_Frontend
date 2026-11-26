@@ -1,6 +1,13 @@
 pluginManagement { includeBuild("../node_modules/@react-native/gradle-plugin") }
 plugins { id("com.facebook.react.settings") }
-extensions.configure(com.facebook.react.ReactSettingsExtension){ ex -> ex.autolinkLibrariesFromCommand() }
+extensions.configure(com.facebook.react.ReactSettingsExtension) { ex ->
+    // Re-scan installed native packages on every Gradle configuration.
+    def autolinkingCache = file("$rootDir/build/generated/autolinking/autolinking.json")
+    if (autolinkingCache.exists() && !autolinkingCache.delete()) {
+        throw new GradleException("Could not refresh the React Native autolinking cache: $autolinkingCache")
+    }
+    ex.autolinkLibrariesFromCommand()
+}
 rootProject.name = 'com.essenza.app'
 include ':app'
 includeBuild('../node_modules/@react-native/gradle-plugin')

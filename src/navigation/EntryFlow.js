@@ -17,7 +17,7 @@ import {
   useWindowDimensions,
   View,
 } from 'react-native';
-import { isGoogleCallbackUrl } from '../backend/googleOAuth';
+import { isGoogleCallbackUrl } from '../../backend/client/googleOAuth';
 import { AuthScreen } from '../screens/AuthScreen';
 import { SplashScreen } from '../screens/SplashScreen';
 import { useApp } from '../storage/AppProvider';

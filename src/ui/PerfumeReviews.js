@@ -93,7 +93,7 @@ export function PerfumeReviews({ fragranceId }) {
       </View>
       <View style={styles.form}>
         <View style={styles.authorBar}>
-          <Avatar size={32} />
+          <Avatar photoUri={state.profile.photoUri} size={32} />
           <Text numberOfLines={1} style={[s.flex, designStyles.strong]}>
             {state.profile.name}
           </Text>
@@ -135,7 +135,7 @@ export function PerfumeReviews({ fragranceId }) {
             }}
             style={styles.review}
           >
-            <Avatar size={36} />
+            <Avatar photoUri={state.profile.photoUri} size={36} />
             <View style={s.flex}>
               <View style={styles.reviewMeta}>
                 <Text style={designStyles.strong}>{state.profile.name}</Text>

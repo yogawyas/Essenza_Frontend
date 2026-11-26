@@ -2,9 +2,9 @@ import { createHash, randomFillSync } from 'node:crypto';
 import { TextEncoder as NodeTextEncoder } from 'node:util';
 import { Linking } from 'react-native';
 import { createClient } from '@supabase/supabase-js';
-import { SupabaseAuthRepository } from '../src/backend/auth';
-import { GOOGLE_REDIRECT_URL } from '../src/backend/googleOAuth';
-import { ensurePkceCrypto } from '../src/backend/pkceCrypto';
+import { SupabaseAuthRepository } from '../backend/client/auth';
+import { GOOGLE_REDIRECT_URL } from '../backend/client/googleOAuth';
+import { ensurePkceCrypto } from '../backend/client/pkceCrypto';
 
 const config = {
   url: 'https://essenza.example',

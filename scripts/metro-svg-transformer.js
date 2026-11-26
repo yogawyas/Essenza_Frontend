@@ -1,9 +1,9 @@
 const { createHash } = require('node:crypto');
 const { join, resolve } = require('node:path');
 const upstream = require('@react-native/metro-babel-transformer');
-const { readPublicConfig } = require('../src/backend/publicConfig.build');
+const { readPublicConfig } = require('../backend/client/publicConfig.build');
 const projectRoot = join(__dirname, '..');
-const publicConfigPath = join(projectRoot, 'src', 'backend', 'publicConfig.js');
+const publicConfigPath = join(projectRoot, 'backend', 'client', 'publicConfig.js');
 
 exports.transform = ({ src, filename, ...options }) => {
   if (filename.endsWith('.svg')) {

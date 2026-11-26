@@ -2,14 +2,21 @@ import React from 'react';
 import ReactTestRenderer, { act } from 'react-test-renderer';
 import { Image, Text, TextInput } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { launchImageLibrary } from 'react-native-image-picker';
 import { AppProvider } from '../src/storage/AppProvider';
 import { createInitialState } from '../src/domain/models';
 import { PerfumeScreen } from '../src/screens/PerfumeScreen';
 import { SearchScreen } from '../src/screens/SearchScreen';
 import { WearScreen } from '../src/screens/WearScreen';
 import { HomeScreen } from '../src/screens/HomeScreen';
+import {
+  EditProfileScreen,
+  ProfileDirectoryScreen,
+  UserProfileScreen,
+} from '../src/screens/ProfileFlow';
 import { Button } from '../src/ui/components';
-import { DesignAction } from '../src/ui/design';
+import { CollectionRow } from '../src/ui/CollectionRow';
+import { DesignAction, Segmented } from '../src/ui/design';
 const mockNav = {
   navigate: jest.fn(),
   goBack: jest.fn(),
@@ -18,6 +25,9 @@ const mockNav = {
 let mockParams = {
   id: 'ck-one',
 };
+jest.mock('react-native-image-picker', () => ({
+  launchImageLibrary: jest.fn(),
+}));
 jest.mock('@react-navigation/native', () => ({
   ...jest.requireActual('@react-navigation/native'),
   useNavigation: () => mockNav,
@@ -59,6 +69,106 @@ afterEach(async () => {
   jest.restoreAllMocks();
   jest.useRealTimers();
 });
+
+test('profile counts open their lists and the directory links to profiles and collections', async () => {
+  const state = createInitialState();
+  state.following = ['demo-nara'];
+  state.lists = [
+    {
+      id: 'private-shelf',
+      authorId: state.profile.id,
+      title: 'My private shelf',
+      description: '',
+      visibility: 'private',
+      color: '#163A2C',
+      updatedAt: '2025-04-10T12:00:00Z',
+      items: [],
+    },
+  ];
+  AsyncStorage.getItem.mockResolvedValue(JSON.stringify(state));
+  const tap = async label => {
+    const control = renderer.root.findAll(
+      node =>
+        node.props.accessibilityLabel === label &&
+        typeof node.props.onPress === 'function',
+    );
+    expect(control.length).toBeGreaterThan(0);
+    await act(async () => control[0].props.onPress());
+  };
+
+  await mount(<UserProfileScreen />);
+  await tap('0 Followers');
+  await tap('1 Following');
+  await tap('1 Collections');
+  expect(mockNav.navigate.mock.calls).toEqual([
+    ['ProfileDirectory', { section: 'followers' }],
+    ['ProfileDirectory', { section: 'following' }],
+    ['ProfileDirectory', { section: 'collections' }],
+  ]);
+
+  await act(async () => renderer.unmount());
+  mockParams = { section: 'following' };
+  await mount(<ProfileDirectoryScreen />);
+  const tabs = renderer.root.findByType(Segmented);
+  expect(tabs.props.value).toBe('following');
+  await tap('View profile: Nara');
+  expect(mockNav.navigate).toHaveBeenLastCalledWith('OtherProfile', {
+    id: 'demo-nara',
+  });
+  await act(async () => tabs.props.onChange('followers'));
+  expect(
+    renderer.root
+      .findAllByType(Text)
+      .some(node => node.props.children === 'No followers to show.'),
+  ).toBe(true);
+
+  await act(async () => renderer.unmount());
+  mockParams = { section: 'collections' };
+  await mount(<ProfileDirectoryScreen />);
+  const row = renderer.root.findByType(CollectionRow);
+  expect(row.props.list.id).toBe('private-shelf');
+  await act(async () => row.props.onPress());
+  expect(mockNav.navigate).toHaveBeenLastCalledWith('List', {
+    id: 'private-shelf',
+  });
+});
+
+test('Edit Profile previews an image and restores it after saving and reopening', async () => {
+  const state = createInitialState();
+  state.onboarded = true;
+  state.profile.name = 'Nara';
+  AsyncStorage.getItem.mockResolvedValue(JSON.stringify(state));
+  const base64 =
+    'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+jUXkAAAAASUVORK5CYII=';
+  const uri = 'data:image/png;base64,' + base64;
+  launchImageLibrary.mockResolvedValueOnce({
+    assets: [{ type: 'image/png', base64 }],
+  });
+
+  await mount(<EditProfileScreen />);
+  const choosePhoto = renderer.root.findAll(
+    node =>
+      node.props.accessibilityLabel === 'Change Photo' &&
+      typeof node.props.onPress === 'function',
+  )[0];
+  await act(async () => choosePhoto.props.onPress());
+  const displaysPhoto = () =>
+    renderer.root
+      .findAllByType(Image)
+      .some(photo => photo.props.source?.uri === uri);
+  expect(displaysPhoto()).toBe(true);
+  expect(AsyncStorage.setItem).not.toHaveBeenCalled();
+  await press('Save Changes');
+  expect(mockNav.goBack).toHaveBeenCalled();
+  const [, saved] = AsyncStorage.setItem.mock.calls.at(-1);
+  expect(JSON.parse(saved).profile.photoUri).toBe(uri);
+
+  await act(async () => renderer.unmount());
+  AsyncStorage.getItem.mockResolvedValue(saved);
+  await mount(<UserProfileScreen />);
+  expect(displaysPhoto()).toBe(true);
+});
+
 test('Discover finds a fragrance by note and detail shows its local bottle photo', async () => {
   await mount(<SearchScreen />);
   const search = renderer.root

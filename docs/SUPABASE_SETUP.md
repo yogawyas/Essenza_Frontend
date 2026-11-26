@@ -6,10 +6,12 @@ Checkout `Essenza-MCP`, jalankan `npm ci` dengan Node 22.11 atau lebih baru, lal
 
 Setiap anggota tim masuk memakai akun sendiri. Google Provider perlu diaktifkan satu kali oleh pemilik project. Setelah itu, anggota tim dapat login Google tanpa menyalin Client Secret atau mengubah konfigurasi lokal.
 
+File migrasi dan tes database berada di backend/supabase. Saat menjalankan Supabase CLI dari root proyek, tambahkan opsi --workdir backend agar CLI menemukan folder Supabase yang baru.
+
 ## Pakai project sendiri atau siapkan release
 
 1. Buat project development di organisasi Supabase tim. Gunakan project terpisah dari database produksi.
-2. Terapkan [migrasi akun](../supabase/migrations/20261124123447_essenza_account_state.sql) satu kali melalui Supabase CLI atau SQL Editor. Gunakan file yang sama saat menyiapkan database pengembangan baru.
+2. Terapkan [migrasi akun](../backend/supabase/migrations/20261124123447_essenza_account_state.sql) satu kali melalui Supabase CLI atau SQL Editor. Gunakan file yang sama saat menyiapkan database pengembangan baru.
 3. Pastikan **Data API** mengekspos schema `public`. Untuk Auth, aktifkan **Email** dan pertahankan **Confirm email**. Biarkan anonymous sign-in nonaktif.
 4. Buka **Connect** dan salin **Project URL** serta **Publishable key** (`sb_publishable_...`). Dari root repo, siapkan file konfigurasi lokal.
 
@@ -69,6 +71,6 @@ Katalog dan inferensi Studio tetap lokal. Scentlist cloud bersifat privat dan me
 ## Verifikasi
 
 - Jalankan `npm run test:ci`. Tes repository mencakup antrean, konflik revisi, penanganan kegagalan, dan identitas akun.
-- Jalankan [tes SQL](../supabase/tests/essenza_account_state.sql) pada database development setelah migrasi. Skrip memakai dua akun fixture dalam transaksi yang diakhiri `ROLLBACK`.
+- Jalankan [tes SQL](../backend/supabase/tests/essenza_account_state.sql) pada database development setelah migrasi. Skrip memakai dua akun fixture dalam transaksi yang diakhiri `ROLLBACK`.
 - Di Android, masuk sebagai akun uji A, selesaikan onboarding, tambahkan parfum dan catatan pemakaian, tutup lalu buka aplikasi. Logout dan masuk sebagai akun B. Pastikan daftar awal kosong. Masuk kembali sebagai A dan periksa data awalnya.
 - Untuk menguji konflik, buka akun A di dua perangkat, simpan dari perangkat pertama lalu ubah koleksi dari perangkat kedua. Perangkat kedua perlu memuat ulang data terbaru sebelum perubahan tersebut dicoba lagi.

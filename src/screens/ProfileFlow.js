@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useRef, useState } from 'react';
 import {
   Alert,
   Pressable,
@@ -20,6 +20,7 @@ import { useSession } from '../storage/SessionContext';
 import { CollectionRow } from '../ui/CollectionRow';
 import { ScentlistMenu } from '../ui/ScentlistMenu';
 import { OptionSheet } from '../ui/OptionSheet';
+import { pickLibraryPhoto } from '../ui/photoLibrary';
 import { Button, Chip, Empty, FragranceRow } from '../ui/components';
 import {
   Avatar,
@@ -37,6 +38,29 @@ const tabs = [
   { value: 'saved', label: 'Saved', icon: 'bookmarkFill' },
 ];
 
+function profileActivity(state, authorId, lists) {
+  const own = !authorId;
+  const curators = CURATORS.filter(
+    account => !state.blocked.includes(account.id),
+  );
+  const profile = own
+    ? state.profile
+    : curators.find(account => account.id === authorId);
+  const follows = !own && state.following.includes(authorId);
+  return {
+    profile,
+    follows,
+    collections:
+      profile && (own || !profile.privacy?.shelf)
+        ? lists.filter(list => list.authorId === profile.id)
+        : [],
+    followers: profile && follows ? [state.profile] : [],
+    following: own
+      ? curators.filter(account => state.following.includes(account.id))
+      : [],
+  };
+}
+
 export function UserProfileScreen() {
   return <ProfileView />;
 }
@@ -52,15 +76,9 @@ function ProfileView({ authorId }) {
   const [tab, setTab] = useState('shelf');
   const [menuId, setMenuId] = useState(null);
   const own = !authorId;
-  const profile = own
-    ? state.profile
-    : CURATORS.find(
-        item => item.id === authorId && !state.blocked.includes(authorId),
-      );
   const lists = visibleLists(state);
-  const collections = profile
-    ? lists.filter(list => list.authorId === profile.id)
-    : [];
+  const { profile, follows, collections, followers, following } =
+    profileActivity(state, authorId, lists);
   const entries =
     tab === 'shelf'
       ? collections
@@ -72,7 +90,8 @@ function ProfileView({ authorId }) {
       ? state.favorites.map(fragranceById).filter(Boolean)
       : [];
   const hidden = !own && profile?.privacy?.[tab] === true;
-  const follows = state.following.includes(authorId);
+  const openDirectory = section =>
+    nav.navigate('ProfileDirectory', { authorId, section });
 
   const share = async () => {
     try {
@@ -133,7 +152,7 @@ function ProfileView({ authorId }) {
             ) : null}
             <View style={styles.identity}>
               <View style={styles.avatarGroup}>
-                <Avatar other={!own} size={84} />
+                <Avatar photoUri={profile.photoUri} other={!own} size={84} />
                 {own ? (
                   <Pressable
                     accessibilityRole="button"
@@ -154,11 +173,20 @@ function ProfileView({ authorId }) {
                   </Text>
                 ) : null}
                 <View style={styles.counts}>
-                  <Count value={collections.length} label="Collections" />
-                  <Count value={own ? 0 : Number(follows)} label="Followers" />
                   <Count
-                    value={own ? state.following.length : 0}
+                    value={collections.length}
+                    label="Collections"
+                    onPress={() => openDirectory('collections')}
+                  />
+                  <Count
+                    value={followers.length}
+                    label="Followers"
+                    onPress={() => openDirectory('followers')}
+                  />
+                  <Count
+                    value={following.length}
                     label="Following"
+                    onPress={() => openDirectory('following')}
                   />
                 </View>
               </View>
@@ -260,12 +288,124 @@ function ProfileView({ authorId }) {
   );
 }
 
-function Count({ value, label }) {
+export function ProfileDirectoryScreen() {
+  const { params } = useRoute();
+  const { state } = useApp();
+  const nav = useAppNavigation();
+  const { authorId, section } = params ?? {};
+  const showCollections = section === 'collections';
+  const [tab, setTab] = useState(
+    section === 'following' ? 'following' : 'followers',
+  );
+  const { profile, collections, followers, following } = profileActivity(
+    state,
+    authorId,
+    visibleLists(state),
+  );
+  const accounts = tab === 'followers' ? followers : following;
+  const openProfile = id => {
+    if (id === state.profile.id) {
+      nav.popTo('Home', {
+        screen: 'Profile',
+        params: { screen: 'ProfileHome', pop: true },
+      });
+    } else {
+      nav.navigate('OtherProfile', { id });
+    }
+  };
+
   return (
-    <View style={styles.count}>
+    <DesignScreen
+      paper
+      contentStyle={showCollections && styles.collectionsContent}
+      header={
+        <PageHeader
+          title={showCollections ? 'Collections' : profile?.name || 'Profile'}
+          onBack={nav.goBack}
+        />
+      }
+    >
+      {!profile ? (
+        <Text style={designStyles.caption}>
+          This profile could not be found.
+        </Text>
+      ) : showCollections ? (
+        authorId && profile.privacy?.shelf ? (
+          <Text style={designStyles.caption}>
+            These collections are private.
+          </Text>
+        ) : collections.length ? (
+          collections.map(list => (
+            <CollectionRow
+              key={list.id}
+              list={list}
+              onPress={() => nav.navigate('List', { id: list.id })}
+            />
+          ))
+        ) : (
+          <Text style={designStyles.caption}>No collections to show.</Text>
+        )
+      ) : (
+        <>
+          <Segmented
+            value={tab}
+            onChange={setTab}
+            options={[
+              { value: 'followers', label: followers.length + ' Followers' },
+              { value: 'following', label: following.length + ' Following' },
+            ]}
+          />
+          {accounts.length ? (
+            accounts.map(account => (
+              <Pressable
+                key={account.id}
+                accessibilityRole="button"
+                accessibilityLabel={'View profile: ' + account.name}
+                onPress={() => openProfile(account.id)}
+                style={styles.accountRow}
+              >
+                <Avatar
+                  photoUri={account.photoUri}
+                  size={44}
+                  other={account.id !== state.profile.id}
+                />
+                <View style={s.flex}>
+                  <Text numberOfLines={1} style={designStyles.strong}>
+                    {account.name}
+                  </Text>
+                  {account.bio ? (
+                    <Text numberOfLines={2} style={designStyles.caption}>
+                      {account.bio}
+                    </Text>
+                  ) : null}
+                </View>
+                <DesignIcon name="chevron" />
+              </Pressable>
+            ))
+          ) : (
+            <Text style={designStyles.caption}>
+              {tab === 'followers'
+                ? 'No followers to show.'
+                : 'No accounts to show.'}
+            </Text>
+          )}
+        </>
+      )}
+    </DesignScreen>
+  );
+}
+
+function Count({ value, label, onPress }) {
+  return (
+    <Pressable
+      accessibilityRole="button"
+      accessibilityLabel={value + ' ' + label}
+      onPress={onPress}
+      style={styles.count}
+    >
       <Text style={designStyles.text}>{value}</Text>
       <Text style={designStyles.caption}>{label}</Text>
-    </View>
+    </Pressable>
   );
 }
 
@@ -297,7 +437,7 @@ export function SettingsScreen() {
         accessibilityRole="button"
         onPress={() => nav.popTo('Home', { screen: 'Profile' })}
       >
-        <Avatar />
+        <Avatar photoUri={state.profile.photoUri} />
         <View style={s.flex}>
           <Text style={designStyles.strong}>{state.profile.name}</Text>
           <Text style={s.small}>{session?.email}</Text>
@@ -357,12 +497,47 @@ export function EditProfileScreen() {
   const nav = useAppNavigation();
   const [name, setName] = useState(state.profile.name);
   const [bio, setBio] = useState(state.profile.bio);
+  const [photoUri, setPhotoUri] = useState(state.profile.photoUri);
   const [busy, setBusy] = useState(false);
+  const canSave =
+    Boolean(name.trim()) &&
+    (name === state.profile.name || name.trim().length <= 20) &&
+    (bio === state.profile.bio || bio.length <= 50);
+  const pickingPhoto = useRef(false);
+  const choosePhoto = async () => {
+    if (busy || pickingPhoto.current) {
+      return;
+    }
+    pickingPhoto.current = true;
+    try {
+      // Keep the photo small in the private account snapshot.
+      const photo = await pickLibraryPhoto({
+        size: 256,
+        maxEncodedLength: 96000,
+      });
+      if (photo) {
+        setPhotoUri(photo);
+      }
+    } catch (error) {
+      Alert.alert('Could Not Open Photo', error.message);
+    } finally {
+      pickingPhoto.current = false;
+    }
+  };
+
   const save = async () => {
+    if (!canSave || busy || pickingPhoto.current) {
+      return;
+    }
     setBusy(true);
     const saved = await dispatch({
       type: 'profile',
-      profile: { ...state.profile, name, bio },
+      profile: {
+        ...state.profile,
+        name,
+        bio,
+        ...(photoUri ? { photoUri } : {}),
+      },
     });
     setBusy(false);
     if (saved) {
@@ -378,7 +553,17 @@ export function EditProfileScreen() {
     >
       <View style={styles.editHero}>
         <DesignIcon name="profileWave" style={styles.wave} />
-        <Avatar size={105} />
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel="Change Photo"
+          accessibilityState={{ disabled: busy }}
+          disabled={busy}
+          onPress={choosePhoto}
+          style={styles.photoAction}
+        >
+          <Avatar photoUri={photoUri} size={105} />
+          <Text style={designStyles.text}>Change Photo</Text>
+        </Pressable>
       </View>
       <ProfileField
         label="Username"
@@ -397,7 +582,7 @@ export function EditProfileScreen() {
       <Button
         label="Save Changes"
         loading={busy}
-        disabled={!name.trim() || name.trim().length > 20 || bio.length > 50}
+        disabled={!canSave}
         onPress={save}
       />
     </DesignScreen>
@@ -609,7 +794,20 @@ const styles = StyleSheet.create({
     gap: 4,
     marginTop: 10,
   },
-  count: { alignItems: 'center', flexShrink: 1 },
+  count: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    minHeight: 44,
+    minWidth: 44,
+    flexShrink: 1,
+  },
+  collectionsContent: { paddingTop: 16 },
+  accountRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    minHeight: 52,
+    gap: 12,
+  },
   edit: {
     paddingHorizontal: 14,
     paddingVertical: 6,
@@ -645,6 +843,7 @@ const styles = StyleSheet.create({
     paddingBottom: 28,
     minHeight: 170,
   },
+  photoAction: { alignItems: 'center', gap: 8 },
   field: { gap: 4 },
   inputBox: { borderWidth: 1, borderColor: '#BFBFBF', borderRadius: 8 },
   input: {

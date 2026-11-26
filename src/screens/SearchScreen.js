@@ -243,7 +243,10 @@ export function SearchScreen() {
                   : nav.navigate('OtherProfile', { id: account.id })
               }
             >
-              <Avatar other={account.id !== state.profile.id} />
+              <Avatar
+                photoUri={account.photoUri}
+                other={account.id !== state.profile.id}
+              />
               <Text style={designStyles.strong}>{account.name}</Text>
             </Pressable>
           ))}
