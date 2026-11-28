@@ -1,5 +1,20 @@
 import { CATALOG } from './catalog';
+import { scentLabel } from './models';
+import { canonicalNoteId } from './noteArtwork';
+
+const noteCache = new Map();
+function noteIds(fragrance) {
+  if (!noteCache.has(fragrance.id)) {
+    const names = Object.values(fragrance.notes || {})
+      .flat()
+      .map(note => canonicalNoteId(note.name || note.id || ''));
+    noteCache.set(fragrance.id, new Set(names));
+  }
+  return noteCache.get(fragrance.id);
+}
+
 export function recommend(state, source, occasion, mood, now = new Date()) {
+  const { likes, avoids } = state.profile;
   const owned = new Set(
     state.shelf
       .filter(item => item.status === 'have')
@@ -8,16 +23,24 @@ export function recommend(state, source, occasion, mood, now = new Date()) {
   return CATALOG.filter(
     item =>
       (source === 'owned' ? owned.has(item.id) : !owned.has(item.id)) &&
-      !item.accords.some(accord => state.profile.avoids.includes(accord)),
+      !item.accords.some(accord => avoids.includes(accord)) &&
+      !avoids.some(scent => noteIds(item).has(scent)),
   )
     .map(fragrance => {
       const matches = fragrance.accords.filter(accord =>
-        state.profile.likes.includes(accord),
+        likes.includes(accord),
       );
-      let score = matches.length * 3;
+      const noteMatches = likes.filter(
+        scent => !fragrance.accords.includes(scent) && noteIds(fragrance).has(scent),
+      );
+      let score = matches.length * 3 + noteMatches.length * 2;
       const reasons = [];
-      if (matches.length) {
-        reasons.push(`Selaras dengan preferensi ${matches.join(' & ')}.`);
+      if (matches.length || noteMatches.length) {
+        const names = [
+          ...matches,
+          ...noteMatches.map(scent => scentLabel(scent).toLowerCase()),
+        ];
+        reasons.push(`Selaras dengan preferensi ${names.join(' & ')}.`);
       }
       if (fragrance.occasions.includes(occasion)) {
         score += 2;

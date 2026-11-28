@@ -71,6 +71,173 @@ const products = {
     scento: 'mugler-angel',
     accords: ['sweet', 'woody'],
   },
+
+  // Added from the Scento dataset (descriptions and notes, CC BY 4.0).
+  // `openfumePhoto` only borrows the openly licensed bottle photo from Openfume.
+  'creed-aventus': {
+    scento: 'creed-aventus',
+    accords: ['citrus', 'woody', 'fresh'],
+    occasions: ['Kerja', 'Santai'],
+  },
+  'pdm-layton': {
+    scento: 'parfums-de-marly-layton',
+    accords: ['sweet', 'spicy', 'fresh'],
+    occasions: ['Kerja', 'Malam'],
+  },
+  'dior-jadore': {
+    scento: 'dior-jadore',
+    openfumePhoto: 'christian-dior-jadore',
+    accords: ['floral', 'sweet'],
+    occasions: ['Kerja', 'Malam'],
+  },
+  'black-opium': {
+    scento: 'ysl-black-opium',
+    accords: ['sweet', 'floral', 'spicy'],
+    occasions: ['Malam'],
+  },
+  'tobacco-vanille': {
+    scento: 'tom-ford-tobacco-vanille',
+    accords: ['sweet', 'spicy', 'woody'],
+    occasions: ['Malam', 'Kerja'],
+  },
+  'gypsy-water': {
+    scento: 'byredo-gypsy-water',
+    accords: ['fresh', 'citrus', 'woody'],
+    occasions: ['Kuliah', 'Santai'],
+  },
+  'english-pear-freesia': {
+    scento: 'jo-malone-english-pear-and-freesia',
+    concentration: 'EDC',
+    accords: ['floral', 'fresh'],
+    occasions: ['Kuliah', 'Santai'],
+  },
+  'pdm-delina': {
+    scento: 'parfums-de-marly-delina',
+    accords: ['floral', 'fresh', 'spicy'],
+    occasions: ['Kerja', 'Santai'],
+  },
+  'prada-paradoxe': {
+    scento: 'prada-paradoxe',
+    commons: [
+      '2023_Woda_perfumowana_Prada_Paradoxe_(1).jpg',
+      'Jacek Halicki',
+      'CC BY-SA 4.0',
+    ],
+    accords: ['floral', 'musky', 'sweet'],
+    occasions: ['Kerja', 'Santai'],
+  },
+  'angels-share': {
+    scento: 'kilian-angels-share',
+    accords: ['sweet', 'woody', 'spicy'],
+    occasions: ['Malam'],
+  },
+  'wood-sage-sea-salt': {
+    scento: 'jo-malone-wood-sage-and-sea-salt',
+    concentration: 'EDC',
+    accords: ['fresh', 'green', 'musky'],
+    occasions: ['Kuliah', 'Santai'],
+  },
+  'vanilla-28': {
+    scento: 'kayali-vanilla-28',
+    accords: ['sweet', 'musky'],
+    occasions: ['Malam', 'Santai'],
+  },
+  'by-the-fireplace': {
+    scento: 'maison-margiela-replica-by-the-fireplace',
+    accords: ['woody', 'spicy', 'sweet'],
+    occasions: ['Malam', 'Santai'],
+  },
+  'dylan-blue': {
+    scento: 'versace-dylan-blue',
+    accords: ['fresh', 'citrus', 'woody'],
+    occasions: ['Kuliah', 'Kerja'],
+  },
+  'born-in-roma-donna': {
+    scento: 'valentino-donna-born-in-roma',
+    accords: ['floral', 'sweet', 'woody'],
+    occasions: ['Malam', 'Santai'],
+  },
+  idole: {
+    scento: 'lancome-idole',
+    accords: ['floral', 'citrus', 'musky'],
+    occasions: ['Kuliah', 'Kerja'],
+  },
+  'la-nuit-de-lhomme': {
+    scento: 'ysl-la-nuit-de-lhomme',
+    accords: ['spicy', 'woody', 'fresh'],
+    occasions: ['Malam', 'Kerja'],
+  },
+  alien: {
+    scento: 'mugler-alien',
+    accords: ['floral', 'woody', 'sweet'],
+    occasions: ['Malam', 'Kerja'],
+  },
+  'lost-cherry': {
+    scento: 'tom-ford-lost-cherry',
+    accords: ['sweet', 'floral'],
+    occasions: ['Malam'],
+  },
+  'club-de-nuit-intense': {
+    scento: 'armaf-club-de-nuit-intense-man',
+    openfumePhoto: 'armaf-club-de-nuit-intense-man-edt-men-new-in-box',
+    concentration: 'EDT',
+    accords: ['citrus', 'woody', 'fresh'],
+    occasions: ['Kerja', 'Malam'],
+  },
+  '212-vip': {
+    scento: 'carolina-herrera-212-vip',
+    accords: ['sweet', 'floral', 'citrus'],
+    occasions: ['Malam'],
+  },
+  '9pm-night-out': {
+    scento: 'afnan-9pm',
+    concentration: 'Extrait',
+    accords: ['sweet', 'woody', 'spicy'],
+    occasions: ['Malam'],
+  },
+  'armani-code': {
+    scento: 'armani-armani-code',
+    accords: ['citrus', 'fresh', 'green'],
+    occasions: ['Kerja', 'Kuliah'],
+  },
+  'gucci-bloom': {
+    scento: 'gucci-bloom',
+    accords: ['floral'],
+    occasions: ['Kerja', 'Santai'],
+  },
+  'burberry-her': {
+    scento: 'burberry-her',
+    accords: ['sweet', 'floral', 'musky'],
+    occasions: ['Kuliah', 'Santai'],
+  },
+  'mon-paris': {
+    scento: 'ysl-mon-paris',
+    openfumePhoto: 'yves-saint-laurent-ysl-mon-paris',
+    accords: ['floral', 'sweet', 'citrus'],
+    occasions: ['Santai', 'Malam'],
+  },
+  'lattafa-yara': {
+    scento: 'lattafa-yara',
+    concentration: 'EDP',
+    accords: ['sweet', 'musky', 'floral'],
+    occasions: ['Kuliah', 'Santai'],
+  },
+  scandal: {
+    scento: 'jean-paul-gaultier-scandal',
+    accords: ['sweet', 'floral', 'citrus'],
+    occasions: ['Malam', 'Santai'],
+  },
+  linterdit: {
+    scento: 'givenchy-linterdit',
+    openfumePhoto: 'givenchy-linterdit',
+    accords: ['floral', 'woody'],
+    occasions: ['Kerja', 'Malam'],
+  },
+  'lazy-sunday-morning': {
+    scento: 'maison-margiela-replica-lazy-sunday-morning',
+    accords: ['floral', 'musky', 'fresh'],
+    occasions: ['Santai', 'Kuliah'],
+  },
 };
 
 module.exports = { OPENFUME, SCENTO, products };

@@ -1,4 +1,12 @@
-import { createInitialState, LOCAL_USER_ID } from '../src/domain/models';
+import {
+  ACCORDS,
+  createInitialState,
+  LOCAL_USER_ID,
+  OCCASIONS,
+  PREFERENCE_SCENTS,
+} from '../src/domain/models';
+import { CATALOG } from '../src/domain/catalog';
+import { canonicalNoteId, getNoteArtwork } from '../src/domain/noteArtwork';
 import { parseState, reduceState, visibleLists } from '../src/domain/state';
 import { recommend } from '../src/domain/recommendations';
 import { LocalRepository } from '../src/storage/repository';
@@ -111,6 +119,62 @@ test('discovery excludes owned fragrances and explains cold start', () => {
       item => item.fragrance.id !== 'ck-one' && item.reasons.length > 0,
     ),
   ).toBe(true);
+});
+test('note preferences score matching perfumes and avoided notes are excluded', () => {
+  const hasVanilla = fragrance =>
+    Object.values(fragrance.notes || {})
+      .flat()
+      .some(note => canonicalNoteId(note.name) === 'vanilla');
+  expect(CATALOG.some(hasVanilla)).toBe(true);
+
+  let state = reduceState(createInitialState(), {
+    type: 'profile',
+    profile: { ...profile, likes: ['vanilla'], avoids: [] },
+  });
+  const liked = recommend(state, 'discovery', 'Kuliah', null).filter(item =>
+    hasVanilla(item.fragrance),
+  );
+  expect(liked.length).toBeGreaterThan(0);
+  expect(
+    liked.every(item => item.reasons.some(reason => reason.includes('vanilla'))),
+  ).toBe(true);
+
+  state = reduceState(state, {
+    type: 'profile',
+    profile: { ...profile, likes: [], avoids: ['vanilla'] },
+  });
+  expect(
+    recommend(state, 'discovery', 'Kuliah', null).some(item =>
+      hasVanilla(item.fragrance),
+    ),
+  ).toBe(false);
+
+  expect(() =>
+    reduceState(state, {
+      type: 'profile',
+      profile: { ...profile, likes: ['not-a-scent'], avoids: [] },
+    }),
+  ).toThrow();
+});
+test('every catalog perfume has complete, valid data', () => {
+  expect(new Set(CATALOG.map(item => item.id)).size).toBe(CATALOG.length);
+  for (const item of CATALOG) {
+    expect(item.name).toBeTruthy();
+    expect(item.brand).toBeTruthy();
+    expect(item.description).toBeTruthy();
+    expect(item.accords.length).toBeGreaterThan(0);
+    expect(item.accords.every(accord => ACCORDS.includes(accord))).toBe(true);
+    expect(item.occasions.every(o => OCCASIONS.includes(o))).toBe(true);
+  }
+});
+test('every preference scent has artwork', () => {
+  for (const scent of PREFERENCE_SCENTS) {
+    const artwork = getNoteArtwork(
+      scent,
+      ACCORDS.includes(scent) ? scent : undefined,
+    );
+    expect(artwork.source).toBeTruthy();
+  }
 });
 test('scentlist cannot impersonate a curator or contain duplicate fragrances', () => {
   expect(() =>

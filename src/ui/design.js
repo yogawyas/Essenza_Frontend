@@ -61,6 +61,7 @@ export function DesignScreen({
   scrollRef,
   style,
   background,
+  onScroll,
 }) {
   const { bottom } = useSafeAreaInsets();
   return (
@@ -72,6 +73,8 @@ export function DesignScreen({
       {header}
       <ScrollView
         ref={scrollRef}
+        onScroll={onScroll}
+        scrollEventThrottle={onScroll ? 100 : undefined}
         keyboardShouldPersistTaps="handled"
         contentContainerStyle={[
           styles.content,

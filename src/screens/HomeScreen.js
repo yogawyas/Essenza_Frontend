@@ -1,6 +1,7 @@
 import React, { useEffect, useRef } from 'react';
 import {
   Alert,
+  Image,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -23,6 +24,7 @@ import {
   DesignScreen,
   designStyles,
 } from '../ui/design';
+import { figma } from '../ui/figmaAssets';
 import { useNow } from '../ui/useNow';
 import { colors, s, sans, sansBold, serif } from '../ui/theme';
 
@@ -153,21 +155,42 @@ export function HomeScreen() {
           </ScrollView>
         ) : (
           <View style={styles.emptyWear}>
-            <Text style={designStyles.text}>
-              {pick ? pick.fragrance.name : 'Your wear history starts here.'}
-            </Text>
-            <Button
-              label={pick ? 'Log wear today' : 'Find a fragrance'}
-              variant="secondary"
-              onPress={() =>
-                pick
-                  ? nav.navigate('Wear', {
-                      fragranceId: pick.fragrance.id,
-                      quick: true,
-                    })
-                  : nav.navigate('Home', { screen: 'Discover' })
-              }
-            />
+            <View style={styles.emptyCopy}>
+              <Text style={styles.eyebrow}>
+                {pick ? "Today's pick" : 'Start your journal'}
+              </Text>
+              <Text style={styles.emptyTitle} numberOfLines={2}>
+                {pick ? pick.fragrance.name : 'Your wear history starts here.'}
+              </Text>
+              <Text style={styles.emptyBody} numberOfLines={3}>
+                {pick
+                  ? pick.reasons[0]
+                  : 'Log what you wear each day and watch your signature scents take shape.'}
+              </Text>
+              <Button
+                label={pick ? 'Log wear today' : 'Find a fragrance'}
+                style={styles.emptyButton}
+                onPress={() =>
+                  pick
+                    ? nav.navigate('Wear', {
+                        fragranceId: pick.fragrance.id,
+                        quick: true,
+                      })
+                    : nav.navigate('Home', { screen: 'Discover' })
+                }
+              />
+            </View>
+            <View style={styles.emptyArt} importantForAccessibility="no">
+              {pick ? (
+                <Bottle fragrance={pick.fragrance} size={78} />
+              ) : (
+                <Image
+                  source={figma.introBottle}
+                  style={styles.emptyBottle}
+                  resizeMode="contain"
+                />
+              )}
+            </View>
           </View>
         )}
       </HomeSection>
@@ -229,13 +252,16 @@ export function HomeScreen() {
               style={styles.suggestion}
             >
               <CollectionArtwork list={list} style={styles.suggestionImage} />
-              <Text style={styles.miniTitle} numberOfLines={2}>
-                {list.title}
-              </Text>
-              <Text style={styles.onGreen} numberOfLines={1}>
-                {CURATORS.find(author => author.id === list.authorId)?.name}
-              </Text>
-              <Text style={styles.onGreen}>{list.items.length} perfumes</Text>
+              <View style={styles.suggestionText}>
+                <Text style={styles.suggestionTitle} numberOfLines={2}>
+                  {list.title}
+                </Text>
+                <Text style={styles.suggestionMeta} numberOfLines={1}>
+                  {CURATORS.find(author => author.id === list.authorId)?.name}
+                  {' · '}
+                  {list.items.length} perfumes
+                </Text>
+              </View>
             </Pressable>
           ))}
         </ScrollView>
@@ -294,11 +320,45 @@ const styles = StyleSheet.create({
   wearName: { fontFamily: serif, color: colors.white, fontSize: 16 },
   onGreen: { color: colors.ivory, fontFamily: sans, fontSize: 10 },
   emptyWear: {
-    padding: 12,
-    gap: 8,
-    borderRadius: 8,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    paddingVertical: 18,
+    paddingLeft: 18,
+    paddingRight: 10,
+    borderRadius: 16,
     backgroundColor: colors.sage,
+    overflow: 'hidden',
   },
+  emptyCopy: { flex: 1, gap: 6 },
+  eyebrow: {
+    fontFamily: sansBold,
+    fontSize: 10,
+    letterSpacing: 1.2,
+    textTransform: 'uppercase',
+    color: colors.muted,
+  },
+  emptyTitle: {
+    fontFamily: serif,
+    fontSize: 20,
+    lineHeight: 25,
+    color: colors.green,
+  },
+  emptyBody: {
+    fontFamily: sans,
+    fontSize: 12,
+    lineHeight: 17,
+    color: colors.ink,
+    opacity: 0.75,
+  },
+  emptyButton: {
+    alignSelf: 'flex-start',
+    minHeight: 40,
+    paddingHorizontal: 18,
+    marginTop: 6,
+  },
+  emptyArt: { width: 92, alignItems: 'center', justifyContent: 'center' },
+  emptyBottle: { width: 92, height: 120 },
   shelfGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
   miniList: {
     flexBasis: '47%',
@@ -322,6 +382,20 @@ const styles = StyleSheet.create({
     borderColor: colors.muted,
     borderRadius: 8,
   },
-  suggestion: { width: 92, backgroundColor: colors.green, gap: 3, padding: 6 },
-  suggestionImage: { width: 80, height: 73, borderRadius: 0 },
+  suggestion: {
+    width: 128,
+    backgroundColor: colors.green,
+    borderRadius: 12,
+    padding: 8,
+    gap: 8,
+  },
+  suggestionImage: { width: 112, height: 96, borderRadius: 8 },
+  suggestionText: { gap: 3, paddingHorizontal: 2, paddingBottom: 2 },
+  suggestionTitle: {
+    color: colors.white,
+    fontFamily: sansBold,
+    fontSize: 13,
+    lineHeight: 17,
+  },
+  suggestionMeta: { color: colors.sage, fontFamily: sans, fontSize: 11 },
 });

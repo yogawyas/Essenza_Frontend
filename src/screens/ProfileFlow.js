@@ -1,6 +1,7 @@
 import React, { useRef, useState } from 'react';
 import {
   Alert,
+  Image,
   Pressable,
   Share,
   StyleSheet,
@@ -10,9 +11,11 @@ import {
   View,
 } from 'react-native';
 import { useRoute } from '@react-navigation/native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import LinearGradient from 'react-native-linear-gradient';
 import { CURATORS, fragranceById } from '../domain/catalog';
-import { ACCORDS } from '../domain/models';
+import { ACCORDS, SCENT_FAMILIES, scentLabel } from '../domain/models';
+import { getNoteArtwork } from '../domain/noteArtwork';
 import { visibleLists } from '../domain/state';
 import { useAppNavigation } from '../navigation/types';
 import { useApp } from '../storage/AppProvider';
@@ -21,7 +24,7 @@ import { CollectionRow } from '../ui/CollectionRow';
 import { ScentlistMenu } from '../ui/ScentlistMenu';
 import { OptionSheet } from '../ui/OptionSheet';
 import { pickLibraryPhoto } from '../ui/photoLibrary';
-import { Button, Chip, Empty, FragranceRow } from '../ui/components';
+import { Button, Empty, FragranceRow } from '../ui/components';
 import {
   Avatar,
   DesignAction,
@@ -431,20 +434,25 @@ export function SettingsScreen() {
     <DesignScreen
       paper
       header={<PageHeader title="Settings" onBack={nav.goBack} />}
+      contentStyle={styles.settingsContent}
     >
       <Pressable
-        style={styles.settingsRow}
+        style={styles.profileCard}
         accessibilityRole="button"
         onPress={() => nav.popTo('Home', { screen: 'Profile' })}
       >
-        <Avatar photoUri={state.profile.photoUri} />
-        <View style={s.flex}>
-          <Text style={designStyles.strong}>{state.profile.name}</Text>
-          <Text style={s.small}>{session?.email}</Text>
+        <Avatar photoUri={state.profile.photoUri} size={60} />
+        <View style={styles.profileCardText}>
+          <Text numberOfLines={1} style={designStyles.strong}>
+            {state.profile.name}
+          </Text>
+          <Text numberOfLines={1} style={s.small}>
+            {session?.email}
+          </Text>
         </View>
         <DesignIcon name="chevron" />
       </Pressable>
-      <Text style={s.h2}>General Settings</Text>
+      <Text style={[s.h2, styles.settingsHeading]}>General Settings</Text>
       {rows.map(([icon, label, action]) => (
         <Pressable
           style={styles.settingsRow}
@@ -613,61 +621,134 @@ function ProfileField({ label, value, onChangeText, limit, multiline }) {
   );
 }
 
+function ScentTile({ scent, status, onPress, last }) {
+  const label = scentLabel(scent);
+  const accent = status === 'avoid' ? colors.danger : colors.green;
+  const artwork = getNoteArtwork(
+    scent,
+    ACCORDS.includes(scent) ? scent : undefined,
+  );
+  return (
+    <Pressable
+      accessibilityRole="button"
+      accessibilityLabel={
+        status ? `${label}, ${status === 'like' ? 'liked' : 'avoided'}` : label
+      }
+      accessibilityState={{ selected: Boolean(status) }}
+      onPress={onPress}
+      style={[styles.scentTile, last && styles.scentTileLast]}
+    >
+      <View style={[styles.scentFrame, status && { borderColor: accent }]}>
+        <Image
+          source={artwork.source}
+          style={[styles.scentImage, !status && styles.scentIdle]}
+          resizeMode="cover"
+        />
+        {status ? (
+          <View style={[styles.scentBadge, { backgroundColor: accent }]}>
+            <Text style={styles.scentBadgeText}>
+              {status === 'avoid' ? '✕' : '✓'}
+            </Text>
+          </View>
+        ) : null}
+      </View>
+      <Text
+        numberOfLines={2}
+        style={[
+          styles.scentLabel,
+          status && { color: accent, fontFamily: sansBold },
+        ]}
+      >
+        {label}
+      </Text>
+    </Pressable>
+  );
+}
+
 export function PreferenceScreen() {
   const { state, dispatch } = useApp();
   const nav = useAppNavigation();
+  const { bottom } = useSafeAreaInsets();
   const [likes, setLikes] = useState(state.profile.likes);
   const [avoids, setAvoids] = useState(state.profile.avoids);
+  const [mode, setMode] = useState('like');
   const [busy, setBusy] = useState(false);
-  const toggle = (accord, preferred) => {
+  const toggle = scent => {
     const update = items =>
-      items.includes(accord)
-        ? items.filter(item => item !== accord)
-        : [...items, accord];
-    const clear = items => items.filter(item => item !== accord);
-    setLikes(preferred ? update : clear);
-    setAvoids(preferred ? clear : update);
+      items.includes(scent)
+        ? items.filter(item => item !== scent)
+        : [...items, scent];
+    const clear = items => items.filter(item => item !== scent);
+    setLikes(mode === 'like' ? update : clear);
+    setAvoids(mode === 'like' ? clear : update);
   };
+  const statusOf = scent =>
+    likes.includes(scent) ? 'like' : avoids.includes(scent) ? 'avoid' : null;
   return (
-    <DesignScreen
-      paper
-      header={<PageHeader title="Scent Preference" onBack={nav.goBack} />}
-    >
-      {[
-        ['Scents you like', likes, true],
-        ['Scents you avoid', avoids, false],
-      ].map(([label, selected, preferred]) => (
-        <View key={label} style={designStyles.stack}>
-          <Text style={designStyles.strong}>{label}</Text>
-          <View style={s.wrap}>
-            {ACCORDS.map(accord => (
-              <Chip
-                key={accord}
-                compact
-                label={accord[0].toUpperCase() + accord.slice(1)}
-                selected={selected.includes(accord)}
-                onPress={() => toggle(accord, preferred)}
+    <View style={styles.preferencePage}>
+      <DesignScreen
+        paper
+        header={
+          <View style={styles.preferenceHeader}>
+            <PageHeader
+              title="Scent Preference"
+              onBack={nav.goBack}
+              bordered={false}
+            />
+            <View style={styles.modeBar}>
+              <Segmented
+                value={mode}
+                onChange={setMode}
+                options={[
+                  { value: 'like', label: `Like · ${likes.length}` },
+                  { value: 'avoid', label: `Avoid · ${avoids.length}` },
+                ]}
               />
-            ))}
+              <Text style={designStyles.caption}>
+                {mode === 'like'
+                  ? 'Tap the scents you enjoy.'
+                  : 'Tap the scents you want to stay away from.'}
+              </Text>
+            </View>
           </View>
-        </View>
-      ))}
-      <Button
-        label="Save Preferences"
-        loading={busy}
-        onPress={async () => {
-          setBusy(true);
-          const saved = await dispatch({
-            type: 'profile',
-            profile: { ...state.profile, likes, avoids },
-          });
-          setBusy(false);
-          if (saved) {
-            nav.goBack();
-          }
-        }}
-      />
-    </DesignScreen>
+        }
+        contentStyle={styles.preferenceContent}
+      >
+        {SCENT_FAMILIES.map(family => (
+          <View key={family.label} style={designStyles.stack}>
+            <Text style={designStyles.strong}>{family.label}</Text>
+            <View style={styles.scentGrid}>
+              {family.scents.map((scent, index) => (
+                <ScentTile
+                  key={scent}
+                  scent={scent}
+                  status={statusOf(scent)}
+                  last={index % 4 === 3}
+                  onPress={() => toggle(scent)}
+                />
+              ))}
+            </View>
+          </View>
+        ))}
+      </DesignScreen>
+      <View style={[styles.preferenceFooter, { paddingBottom: bottom + 12 }]}>
+        <Button
+          label="Save Preferences"
+          loading={busy}
+          onPress={async () => {
+            setBusy(true);
+            const saved = await dispatch({
+              type: 'profile',
+              profile: { ...state.profile, likes, avoids },
+            });
+            setBusy(false);
+            if (saved) {
+              nav.goBack();
+            }
+          }}
+        />
+      </View>
+    </View>
   );
 }
 
@@ -831,6 +912,19 @@ const styles = StyleSheet.create({
     gap: 12,
     minHeight: 42,
   },
+  settingsContent: { paddingTop: 20, paddingHorizontal: 20 },
+  profileCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 14,
+    padding: 14,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: colors.line,
+    backgroundColor: colors.canvas,
+  },
+  profileCardText: { flex: 1, gap: 2 },
+  settingsHeading: { marginTop: 12 },
   reset: {
     marginTop: 'auto',
     paddingVertical: 12,
@@ -860,5 +954,56 @@ const styles = StyleSheet.create({
     textAlign: 'right',
     paddingRight: 8,
     paddingBottom: 5,
+  },
+  preferencePage: { flex: 1, backgroundColor: colors.white },
+  preferenceHeader: {
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: colors.muted,
+  },
+  modeBar: { paddingHorizontal: 20, paddingBottom: 14, gap: 8 },
+  preferenceContent: { paddingTop: 20, paddingHorizontal: 20, gap: 28 },
+  scentGrid: { flexDirection: 'row', flexWrap: 'wrap', rowGap: 14 },
+  scentTile: {
+    width: '23.5%',
+    marginRight: '2%',
+    alignItems: 'center',
+    gap: 6,
+  },
+  scentTileLast: { marginRight: 0 },
+  scentFrame: {
+    width: '100%',
+    aspectRatio: 1,
+    borderRadius: 14,
+    borderWidth: 2,
+    borderColor: colors.line,
+    overflow: 'hidden',
+    backgroundColor: colors.canvas,
+  },
+  scentImage: { width: '100%', height: '100%' },
+  scentIdle: { opacity: 0.55 },
+  scentBadge: {
+    position: 'absolute',
+    top: 4,
+    right: 4,
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  scentBadgeText: { color: colors.white, fontSize: 11, fontFamily: sansBold },
+  scentLabel: {
+    fontFamily: sans,
+    fontSize: 12,
+    lineHeight: 15,
+    color: colors.muted,
+    textAlign: 'center',
+  },
+  preferenceFooter: {
+    paddingHorizontal: 20,
+    paddingTop: 12,
+    backgroundColor: colors.white,
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: colors.line,
   },
 });

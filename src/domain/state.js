@@ -1,5 +1,5 @@
 import {
-  ACCORDS,
+  PREFERENCE_SCENTS,
   LOCAL_USER_ID,
   OCCASIONS,
   createInitialState,
@@ -38,7 +38,9 @@ export function reduceState(state, action) {
         );
       }
       if (
-        [...profile.likes, ...profile.avoids].some(a => !ACCORDS.includes(a)) ||
+        [...profile.likes, ...profile.avoids].some(
+          a => !PREFERENCE_SCENTS.includes(a),
+        ) ||
         profile.likes.some(a => profile.avoids.includes(a))
       ) {
         throw new Error('Choose different notes for likes and avoids.');

@@ -16,6 +16,8 @@ export const scrapedProducts = [
         { id: 'cedarwood', name: 'Cedarwood' },
       ],
     },
+    description:
+      'Australian sandalwood and cedarwood are spiced with cardamom and powdered by iris and violet, with papyrus giving a dry edge.',
   },
   {
     id: 'light-blue',
@@ -39,6 +41,8 @@ export const scrapedProducts = [
         { id: 'lemon', name: 'Lemon' },
       ],
     },
+    description:
+      'Apple and cedarwood open crisp, with bamboo, jasmine and rose in the heart. Amber and musk soften the finish, giving a breezy, green-floral scent with a lemony brightness.',
   },
   {
     id: 'chanel-5',
@@ -67,6 +71,8 @@ export const scrapedProducts = [
         { id: 'patchouli', name: 'Patchouli' },
       ],
     },
+    description:
+      'A dark, truffled floral: black truffle and ylang ylang with orchid and plum, deepened by rum and patchouli.',
   },
   {
     id: 'flowerbomb',
@@ -81,6 +87,8 @@ export const scrapedProducts = [
         { id: 'vanilla', name: 'Vanilla' },
       ],
     },
+    description:
+      'A floral bouquet that opens with peony, moves to centifolia rose and settles on freesia and vanilla. Soft, sweet and ambery.',
   },
   {
     id: 'acqua-di-gio',
@@ -119,6 +127,8 @@ export const scrapedProducts = [
         { id: 'amber', name: 'Amber' },
       ],
     },
+    description:
+      'A marine freshness of sea notes and citrus, with jasmine, rosemary and freesia in the heart. Musk, cedarwood, oakmoss and amber finish clean and soft.',
   },
   {
     id: 'la-vie',
@@ -142,6 +152,8 @@ export const scrapedProducts = [
         { id: 'praline', name: 'Praline' },
       ],
     },
+    description:
+      'Pear and blackcurrant lead into iris, orange blossom and jasmine sambac, ending in a sweet blend of praline, vanilla and patchouli.',
   },
   {
     id: 'oud-wood',
@@ -158,6 +170,8 @@ export const scrapedProducts = [
         { id: 'tonka-bean', name: 'Tonka Bean' },
       ],
     },
+    description:
+      'Smooth woods and spice: cardamom and pink pepper open into patchouli, amber and oud, warmed by tonka bean.',
   },
   {
     id: 'ck-one',
@@ -190,6 +204,8 @@ export const scrapedProducts = [
         { id: 'oakmoss', name: 'Oakmoss' },
       ],
     },
+    description:
+      'A bright burst of pineapple, mandarin and bergamot opens it, with violet, iris and jasmine in a light floral heart. Sandalwood, musk and oakmoss leave a clean, airy, slightly powdery finish.',
   },
   {
     id: 'gucci-guilty',
@@ -204,6 +220,8 @@ export const scrapedProducts = [
       heart: [{ id: 'lilac', name: 'Lilac' }],
       base: [{ id: 'patchouli', name: 'Patchouli' }],
     },
+    description:
+      'Mandora and pink pepper start bright and spiced, a lilac heart follows, and an earthy base of patchouli closes the scent.',
   },
   {
     id: 'lattafa-khamrah',
@@ -280,6 +298,8 @@ export const scrapedProducts = [
         { id: 'oakmoss', name: 'Oakmoss' },
       ],
     },
+    description:
+      'A cool rush of mint, lavender, rosemary and sea notes opens, with jasmine and geranium softening the heart. Sandalwood, musk and oakmoss give it a clean, mossy base.',
   },
   {
     id: 'libre',
@@ -302,6 +322,8 @@ export const scrapedProducts = [
         { id: 'vanilla', name: 'Vanilla' },
       ],
     },
+    description:
+      'Mandarin and neroli brighten a creamy bloom of orange blossom and jasmine sambac, settling into a quiet base of musk and vanilla.',
   },
   {
     id: 'crystal-noir',
@@ -334,7 +356,6 @@ export const scrapedProducts = [
     id: 'eternity',
     name: 'Eternity',
     brand: 'Calvin Klein',
-    concentration: '',
     accords: ['floral', 'fresh', 'green'],
     notes: {
       general: [
@@ -371,6 +392,8 @@ export const scrapedProducts = [
       heart: [{ id: 'cedarwood', name: 'Cedarwood' }],
       base: [{ id: 'ambergris', name: 'Ambergris' }],
     },
+    description:
+      'Jasmine and saffron open airy and golden, held together by cedarwood and an ambergris accord.',
   },
   {
     id: 'angel',
@@ -385,10 +408,702 @@ export const scrapedProducts = [
         { id: 'patchouli', name: 'Patchouli' },
       ],
     },
+    description:
+      'Sweet praline and earthy patchouli sit under a bright flash of bergamot, giving a gourmand scent with a surprisingly fresh lift.',
+  },
+  {
+    id: 'creed-aventus',
+    name: 'Aventus',
+    brand: 'Creed',
+    concentration: 'EDP',
+    accords: ['citrus', 'woody', 'fresh'],
+    notes: {
+      top: [
+        { id: 'lemon', name: 'Lemon' },
+        { id: 'pink-pepper', name: 'Pink Pepper' },
+        { id: 'apple', name: 'Apple' },
+        { id: 'bergamot', name: 'Bergamot' },
+        { id: 'blackcurrant', name: 'Blackcurrant' },
+      ],
+      heart: [
+        { id: 'pineapple', name: 'Pineapple' },
+        { id: 'jasmine', name: 'Jasmine' },
+        { id: 'patchouli', name: 'Patchouli' },
+      ],
+      base: [
+        { id: 'birch', name: 'Birch' },
+        { id: 'ambroxan', name: 'Ambroxan' },
+        { id: 'cedarwood', name: 'Cedarwood' },
+        { id: 'oakmoss', name: 'Oakmoss' },
+        { id: 'musk', name: 'Musk' },
+      ],
+    },
+    occasions: ['Kerja', 'Santai'],
+    description:
+      'Sparkling lemon and blackcurrant open onto pineapple and jasmine, while birch and oakmoss give the base a smoky, earthy edge.',
+  },
+  {
+    id: 'pdm-layton',
+    name: 'Layton',
+    brand: 'Parfums de Marly',
+    concentration: 'EDP',
+    accords: ['sweet', 'spicy', 'fresh'],
+    notes: {
+      top: [
+        { id: 'apple', name: 'Apple' },
+        { id: 'bergamot', name: 'Bergamot' },
+        { id: 'cardamom', name: 'Cardamom' },
+      ],
+      heart: [
+        { id: 'lavender', name: 'Lavender' },
+        { id: 'violet', name: 'Violet' },
+        { id: 'geranium', name: 'Geranium' },
+      ],
+      base: [
+        { id: 'patchouli', name: 'Patchouli' },
+        { id: 'vanilla', name: 'Vanilla' },
+        { id: 'guaiac-wood', name: 'Guaiac Wood' },
+        { id: 'praline', name: 'Praline' },
+      ],
+    },
+    occasions: ['Kerja', 'Malam'],
+    description:
+      'An apple-and-lavender blend: bergamot and cardamom up top, violet and geranium in the middle, patchouli, vanilla and praline below.',
+  },
+  {
+    id: 'dior-jadore',
+    name: "J'adore",
+    brand: 'Dior',
+    concentration: 'EDP',
+    accords: ['floral', 'sweet'],
+    notes: {
+      general: [
+        { id: 'ylang-ylang', name: 'Ylang-Ylang' },
+        { id: 'rose', name: 'Rose' },
+        { id: 'jasmine', name: 'Jasmine' },
+      ],
+    },
+    occasions: ['Kerja', 'Malam'],
+    description:
+      'Ylang ylang, Damascus rose and jasmine form a rounded, creamy floral bouquet with a smooth finish.',
+  },
+  {
+    id: 'black-opium',
+    name: 'Black Opium',
+    brand: 'Yves Saint Laurent',
+    concentration: 'EDP',
+    accords: ['sweet', 'floral', 'spicy'],
+    notes: {
+      general: [
+        { id: 'coffee', name: 'Coffee' },
+        { id: 'white-flowers', name: 'White Flowers' },
+        { id: 'vanilla', name: 'Vanilla' },
+      ],
+    },
+    occasions: ['Malam'],
+    description:
+      'Coffee and white flowers are drawn together by a soft, sweet vanilla.',
+  },
+  {
+    id: 'tobacco-vanille',
+    name: 'Tobacco Vanille',
+    brand: 'Tom Ford',
+    concentration: 'EDP',
+    accords: ['sweet', 'spicy', 'woody'],
+    notes: {
+      general: [
+        { id: 'tobacco', name: 'Tobacco' },
+        { id: 'ginger', name: 'Ginger' },
+        { id: 'spice', name: 'Spice' },
+        { id: 'tonka-bean', name: 'Tonka Bean' },
+        { id: 'chocolate', name: 'Chocolate' },
+        { id: 'fruit', name: 'Fruit' },
+      ],
+    },
+    occasions: ['Malam', 'Kerja'],
+    description:
+      'Rich and sweet: tobacco leaf and ginger with spice, tonka and cocoa, plus a dried-fruit accord.',
+  },
+  {
+    id: 'gypsy-water',
+    name: 'Gypsy Water',
+    brand: 'Byredo',
+    concentration: 'EDP',
+    accords: ['fresh', 'citrus', 'woody'],
+    notes: {
+      top: [
+        { id: 'bergamot', name: 'Bergamot' },
+        { id: 'juniper', name: 'Juniper' },
+        { id: 'lemon', name: 'Lemon' },
+        { id: 'pepper', name: 'Pepper' },
+      ],
+      heart: [
+        { id: 'incense', name: 'Incense' },
+        { id: 'iris', name: 'Iris' },
+        { id: 'pine-needle', name: 'Pine Needle' },
+      ],
+      base: [
+        { id: 'amber', name: 'Amber' },
+        { id: 'sandalwood', name: 'Sandalwood' },
+        { id: 'vanilla', name: 'Vanilla' },
+      ],
+    },
+    occasions: ['Kuliah', 'Santai'],
+    description:
+      'Woody and aromatic: bergamot, juniper, lemon and pepper, then incense, orris and pine needle over amber, sandalwood and vanilla.',
+  },
+  {
+    id: 'english-pear-freesia',
+    name: 'English Pear & Freesia',
+    brand: 'Jo Malone London',
+    concentration: 'EDC',
+    accords: ['floral', 'fresh'],
+    notes: {
+      top: [{ id: 'pear', name: 'Pear' }],
+      heart: [{ id: 'freesia', name: 'Freesia' }],
+      base: [{ id: 'patchouli', name: 'Patchouli' }],
+    },
+    occasions: ['Kuliah', 'Santai'],
+    description:
+      'Ripe pear leads to a delicate freesia heart, grounded by patchouli. Light, juicy and quietly earthy.',
+  },
+  {
+    id: 'pdm-delina',
+    name: 'Delina',
+    brand: 'Parfums de Marly',
+    concentration: 'EDP',
+    accords: ['floral', 'fresh', 'spicy'],
+    notes: {
+      top: [
+        { id: 'bergamot', name: 'Bergamot' },
+        { id: 'lychee', name: 'Lychee' },
+        { id: 'rhubarb', name: 'Rhubarb' },
+      ],
+      heart: [
+        { id: 'rose', name: 'Rose' },
+        { id: 'nutmeg', name: 'Nutmeg' },
+      ],
+      base: [
+        { id: 'cashmeran', name: 'Cashmeran' },
+        { id: 'musk', name: 'Musk' },
+        { id: 'vetiver', name: 'Vetiver' },
+      ],
+    },
+    occasions: ['Kerja', 'Santai'],
+    description:
+      'A rosy, fruity-floral built on lychee and rhubarb over damascena rose, resting on soft musks, cashmeran and vetiver.',
+  },
+  {
+    id: 'prada-paradoxe',
+    name: 'Paradoxe',
+    brand: 'Prada',
+    concentration: 'EDP',
+    accords: ['floral', 'musky', 'sweet'],
+    notes: {
+      general: [
+        { id: 'neroli', name: 'Neroli' },
+        { id: 'amber', name: 'Amber' },
+        { id: 'musk', name: 'Musk' },
+      ],
+    },
+    occasions: ['Kerja', 'Santai'],
+    description:
+      'Neroli bud adds a green floral lift above a smooth, glowing mix of white amber and white musk.',
+  },
+  {
+    id: 'angels-share',
+    name: "Angels' Share",
+    brand: 'Kilian Paris',
+    concentration: 'EDP',
+    accords: ['sweet', 'woody', 'spicy'],
+    notes: {
+      top: [{ id: 'cognac', name: 'Cognac' }],
+      heart: [
+        { id: 'oakwood', name: 'Oakwood' },
+        { id: 'cinnamon', name: 'Cinnamon' },
+      ],
+      base: [
+        { id: 'tonka-bean', name: 'Tonka Bean' },
+        { id: 'sandalwood', name: 'Sandalwood' },
+        { id: 'praline', name: 'Praline' },
+      ],
+    },
+    occasions: ['Malam'],
+    description:
+      'Cognac and oak give a boozy opening, followed by cinnamon and a sweet, nutty base of tonka bean, sandalwood and praline.',
+  },
+  {
+    id: 'wood-sage-sea-salt',
+    name: 'Wood Sage & Sea Salt',
+    brand: 'Jo Malone London',
+    concentration: 'EDC',
+    accords: ['fresh', 'green', 'musky'],
+    notes: {
+      top: [{ id: 'ambrette', name: 'Ambrette' }],
+      heart: [{ id: 'salt', name: 'Salt' }],
+      base: [{ id: 'sage', name: 'Sage' }],
+    },
+    occasions: ['Kuliah', 'Santai'],
+    description:
+      'Ambrette, salt and sage create a breezy, mineral calm. Herbal and musky, with the feel of a cool coastal walk.',
+  },
+  {
+    id: 'vanilla-28',
+    name: 'Vanilla 28',
+    brand: 'Kayali',
+    concentration: 'EDP',
+    accords: ['sweet', 'musky'],
+    notes: {
+      general: [
+        { id: 'vanilla', name: 'Vanilla' },
+        { id: 'tonka-bean', name: 'Tonka Bean' },
+        { id: 'amberwood', name: 'Amberwood' },
+        { id: 'musk', name: 'Musk' },
+        { id: 'brown-sugar', name: 'Brown Sugar' },
+      ],
+    },
+    occasions: ['Malam', 'Santai'],
+    description:
+      'Vanilla orchid and brown sugar lead a deep, sweet blend with tonka absolute, amber woods and a soft layer of musk.',
+  },
+  {
+    id: 'by-the-fireplace',
+    name: 'Replica By the Fireplace',
+    brand: 'Maison Margiela Fragrances',
+    concentration: 'EDT',
+    accords: ['woody', 'spicy', 'sweet'],
+    notes: {
+      top: [
+        { id: 'pink-pepper', name: 'Pink Pepper' },
+        { id: 'orange-blossom', name: 'Orange Blossom' },
+        { id: 'clove', name: 'Clove' },
+      ],
+      heart: [
+        { id: 'chestnut', name: 'Chestnut' },
+        { id: 'guaiac-wood', name: 'Guaiac Wood' },
+        { id: 'cade', name: 'Cade' },
+      ],
+      base: [
+        { id: 'vanilla', name: 'Vanilla' },
+        { id: 'balsam-of-peru', name: 'Balsam of Peru' },
+        { id: 'cashmeran', name: 'Cashmeran' },
+      ],
+    },
+    occasions: ['Malam', 'Santai'],
+    description:
+      'A cosy, smoky winter scent. Pink pepper, orange flower and clove lead to chestnut, guaiac wood and cade, ending on vanilla, Peru balsam and cashmeran. Warm and sweet.',
+  },
+  {
+    id: 'dylan-blue',
+    name: 'Dylan Blue',
+    brand: 'Versace',
+    concentration: 'EDT',
+    accords: ['fresh', 'citrus', 'woody'],
+    notes: {
+      top: [
+        { id: 'bergamot', name: 'Bergamot' },
+        { id: 'grapefruit', name: 'Grapefruit' },
+        { id: 'fig', name: 'Fig' },
+        { id: 'aquatic-accord', name: 'Aquatic Accord' },
+      ],
+      heart: [
+        { id: 'violet-leaf', name: 'Violet Leaf' },
+        { id: 'pepper', name: 'Pepper' },
+        { id: 'papyrus', name: 'Papyrus' },
+        { id: 'ambroxan', name: 'Ambroxan' },
+        { id: 'patchouli', name: 'Patchouli' },
+      ],
+      base: [
+        { id: 'musk', name: 'Musk' },
+        { id: 'tonka-bean', name: 'Tonka Bean' },
+        { id: 'saffron', name: 'Saffron' },
+        { id: 'incense', name: 'Incense' },
+      ],
+    },
+    occasions: ['Kuliah', 'Kerja'],
+    description:
+      'Bergamot, grapefruit and fig meet an aquatic accord, with pepper and violet leaf in the middle. Patchouli, musk, tonka bean and incense give a warm, spiced base.',
+  },
+  {
+    id: 'born-in-roma-donna',
+    name: 'Donna Born in Roma',
+    brand: 'Valentino',
+    concentration: 'EDP',
+    accords: ['floral', 'sweet', 'woody'],
+    notes: {
+      general: [
+        { id: 'jasmine-sambac', name: 'Jasmine Sambac' },
+        { id: 'cashmeran', name: 'Cashmeran' },
+        { id: 'vanilla', name: 'Vanilla' },
+      ],
+    },
+    occasions: ['Malam', 'Santai'],
+    description:
+      'Jasmine sambac and vanilla are rounded by cashmeran, giving a sweet, creamy floral with a smooth woody backdrop.',
+  },
+  {
+    id: 'idole',
+    name: 'Idôle',
+    brand: 'Lancôme',
+    concentration: 'EDP',
+    accords: ['floral', 'citrus', 'musky'],
+    notes: {
+      top: [
+        { id: 'bergamot', name: 'Bergamot' },
+        { id: 'pear', name: 'Pear' },
+        { id: 'pink-pepper', name: 'Pink Pepper' },
+      ],
+      heart: [
+        { id: 'rose', name: 'Rose' },
+        { id: 'jasmine', name: 'Jasmine' },
+      ],
+      base: [
+        { id: 'musk', name: 'Musk' },
+        { id: 'vanilla', name: 'Vanilla' },
+        { id: 'patchouli', name: 'Patchouli' },
+        { id: 'cedarwood', name: 'Cedarwood' },
+      ],
+    },
+    occasions: ['Kuliah', 'Kerja'],
+    description:
+      'Bergamot, juicy pear and pink peppercorn open onto rose and jasmine, ending in white musk, vanilla, patchouli and cedarwood.',
+  },
+  {
+    id: 'la-nuit-de-lhomme',
+    name: "La Nuit de L'Homme",
+    brand: 'Yves Saint Laurent',
+    concentration: 'EDP',
+    accords: ['spicy', 'woody', 'fresh'],
+    notes: {
+      top: [
+        { id: 'pepper', name: 'Pepper' },
+        { id: 'anise', name: 'Anise' },
+        { id: 'bergamot', name: 'Bergamot' },
+      ],
+      heart: [
+        { id: 'lavender', name: 'Lavender' },
+        { id: 'labdanum', name: 'Labdanum' },
+      ],
+      base: [
+        { id: 'vanilla', name: 'Vanilla' },
+        { id: 'patchouli', name: 'Patchouli' },
+        { id: 'vetiver', name: 'Vetiver' },
+      ],
+    },
+    occasions: ['Malam', 'Kerja'],
+    description:
+      'Anise, black pepper and bergamot lead to lavender and labdanum, finishing on vanilla, patchouli and vetiver.',
+  },
+  {
+    id: 'alien',
+    name: 'Alien',
+    brand: 'Mugler',
+    concentration: 'EDP',
+    accords: ['floral', 'woody', 'sweet'],
+    notes: {
+      general: [
+        { id: 'jasmine-sambac', name: 'Jasmine Sambac' },
+        { id: 'cashmeran', name: 'Cashmeran' },
+        { id: 'amber', name: 'Amber' },
+      ],
+    },
+    occasions: ['Malam', 'Kerja'],
+    description:
+      'Jasmine sambac turns creamy and radiant here, resting on a woody cashmeran core and a soft amber glow that lingers close to the skin.',
+  },
+  {
+    id: 'lost-cherry',
+    name: 'Lost Cherry',
+    brand: 'Tom Ford',
+    concentration: 'EDP',
+    accords: ['sweet', 'floral'],
+    notes: {
+      general: [
+        { id: 'cherry', name: 'Cherry' },
+        { id: 'almond', name: 'Almond' },
+        { id: 'griotte-syrup', name: 'Griotte Syrup' },
+        { id: 'rose', name: 'Rose' },
+        { id: 'balsam-of-peru', name: 'Balsam of Peru' },
+        { id: 'tonka-bean', name: 'Tonka Bean' },
+      ],
+    },
+    occasions: ['Malam'],
+    description:
+      'A boozy cherry gourmand: black cherry and cherry syrup with bitter almond, rose, balsam and roasted tonka.',
+  },
+  {
+    id: 'club-de-nuit-intense',
+    name: 'Club de Nuit Intense Man',
+    brand: 'Armaf',
+    concentration: 'EDP',
+    accords: ['citrus', 'woody', 'fresh'],
+    notes: {
+      top: [
+        { id: 'apple', name: 'Apple' },
+        { id: 'bergamot', name: 'Bergamot' },
+        { id: 'blackcurrant', name: 'Blackcurrant' },
+        { id: 'pineapple', name: 'Pineapple' },
+        { id: 'lemon', name: 'Lemon' },
+      ],
+      heart: [
+        { id: 'rose', name: 'Rose' },
+        { id: 'birch', name: 'Birch' },
+        { id: 'jasmine', name: 'Jasmine' },
+      ],
+      base: [
+        { id: 'musk', name: 'Musk' },
+        { id: 'ambergris', name: 'Ambergris' },
+        { id: 'patchouli', name: 'Patchouli' },
+        { id: 'vanilla', name: 'Vanilla' },
+      ],
+    },
+    occasions: ['Kerja', 'Malam'],
+    description:
+      'A fresh fruity opening of apple, bergamot and blackcurrant leads to rose, birch and jasmine, with a smoky-musky base of ambergris and patchouli.',
+  },
+  {
+    id: '212-vip',
+    name: '212 VIP',
+    brand: 'Carolina Herrera',
+    concentration: 'EDP',
+    accords: ['sweet', 'floral', 'citrus'],
+    notes: {
+      top: [
+        { id: 'bergamot', name: 'Bergamot' },
+        { id: 'passion-fruit', name: 'Passion fruit' },
+      ],
+      heart: [
+        { id: 'gardenia', name: 'Gardenia' },
+        { id: 'rum', name: 'Rum' },
+      ],
+      base: [
+        { id: 'benzoin', name: 'Benzoin' },
+        { id: 'musk', name: 'Musk' },
+      ],
+    },
+    occasions: ['Malam'],
+    description:
+      'Passion fruit and bergamot sparkle over gardenia and a boozy hint of rum, leaving benzoin and musk to warm the base.',
+  },
+  {
+    id: '9pm-night-out',
+    name: '9 PM Night Out',
+    brand: 'Afnan',
+    concentration: 'Extrait',
+    accords: ['sweet', 'woody', 'spicy'],
+    notes: {
+      top: [
+        { id: 'dragon-fruit', name: 'Dragon fruit' },
+        { id: 'bergamot', name: 'Bergamot' },
+        { id: 'cognac', name: 'Cognac' },
+        { id: 'lavender', name: 'Lavender' },
+        { id: 'apple', name: 'Apple' },
+      ],
+      heart: [
+        { id: 'cardamom', name: 'Cardamom' },
+        { id: 'mahonial', name: 'Mahonial' },
+        { id: 'suede', name: 'Suede' },
+        { id: 'toffee', name: 'Toffee' },
+        { id: 'cedarwood', name: 'Cedarwood' },
+      ],
+      base: [
+        { id: 'tonka-bean', name: 'Tonka Bean' },
+        { id: 'akigalawood', name: 'Akigalawood' },
+        { id: 'ambrofix', name: 'Ambrofix' },
+        { id: 'patchouli', name: 'Patchouli' },
+      ],
+    },
+    occasions: ['Malam'],
+    description:
+      'A sweet, warm evening scent: dragon fruit, bergamot and cognac up front, cardamom, suede and toffee in the middle, then tonka, patchouli and woody-amber materials at the finish.',
+  },
+  {
+    id: 'armani-code',
+    name: 'Armani Code',
+    brand: 'Giorgio Armani',
+    concentration: 'EDP',
+    accords: ['citrus', 'fresh', 'green'],
+    notes: {
+      general: [
+        { id: 'mandarin', name: 'Mandarin' },
+        { id: 'bergamot', name: 'Bergamot' },
+        { id: 'tarragon', name: 'Tarragon' },
+      ],
+    },
+    occasions: ['Kerja', 'Kuliah'],
+    description:
+      'Clean citrus from mandarin and bergamot meets a herbal edge of tarragon, keeping the mood cool and composed.',
+  },
+  {
+    id: 'gucci-bloom',
+    name: 'Bloom',
+    brand: 'Gucci',
+    concentration: 'EDP',
+    accords: ['floral'],
+    notes: {
+      top: [{ id: 'rangoon-creeper', name: 'Rangoon creeper' }],
+      heart: [{ id: 'tuberose', name: 'Tuberose' }],
+      base: [{ id: 'jasmine', name: 'Jasmine' }],
+    },
+    occasions: ['Kerja', 'Santai'],
+    description:
+      'Creamy and floral throughout, built around Rangoon creeper, tuberose and jasmine in a slow, rounded progression.',
+  },
+  {
+    id: 'burberry-her',
+    name: 'Her',
+    brand: 'Burberry',
+    concentration: 'EDP',
+    accords: ['sweet', 'floral', 'musky'],
+    notes: {
+      top: [
+        { id: 'blackcurrant', name: 'Blackcurrant' },
+        { id: 'blueberry', name: 'Blueberry' },
+        { id: 'raspberry', name: 'Raspberry' },
+      ],
+      heart: [
+        { id: 'jasmine', name: 'Jasmine' },
+        { id: 'violet', name: 'Violet' },
+      ],
+      base: [
+        { id: 'white-woods', name: 'White Woods' },
+        { id: 'musk', name: 'Musk' },
+        { id: 'amber', name: 'Amber' },
+      ],
+    },
+    occasions: ['Kuliah', 'Santai'],
+    description:
+      'Dark berries of blackcurrant, blueberry and raspberry lead into violet and jasmine, then dry to powdery white woods, musk and amber.',
+  },
+  {
+    id: 'mon-paris',
+    name: 'Mon Paris',
+    brand: 'Yves Saint Laurent',
+    concentration: 'EDP',
+    accords: ['floral', 'sweet', 'citrus'],
+    notes: {
+      top: [
+        { id: 'strawberry', name: 'Strawberry' },
+        { id: 'raspberry', name: 'Raspberry' },
+        { id: 'pear', name: 'Pear' },
+        { id: 'bergamot', name: 'Bergamot' },
+        { id: 'orange', name: 'Orange' },
+      ],
+      heart: [
+        { id: 'datura-flower', name: 'Datura flower' },
+        { id: 'peony', name: 'Peony' },
+        { id: 'orange-blossom', name: 'Orange Blossom' },
+        { id: 'jasmine-sambac', name: 'Jasmine Sambac' },
+      ],
+      base: [
+        { id: 'patchouli', name: 'Patchouli' },
+        { id: 'musk', name: 'Musk' },
+        { id: 'ambroxan', name: 'Ambroxan' },
+        { id: 'cedarwood', name: 'Cedarwood' },
+        { id: 'oakmoss', name: 'Oakmoss' },
+        { id: 'vanilla', name: 'Vanilla' },
+      ],
+    },
+    occasions: ['Santai', 'Malam'],
+    description:
+      'Juicy strawberry and pear lead into peony and orange blossom, then dry down to soft musk, patchouli and vanilla. Fruity, floral and creamy.',
+  },
+  {
+    id: 'lattafa-yara',
+    name: 'Yara',
+    brand: 'Lattafa',
+    concentration: 'EDP',
+    accords: ['sweet', 'musky', 'floral'],
+    notes: {
+      top: [
+        { id: 'orchid', name: 'Orchid' },
+        { id: 'heliotrope', name: 'Heliotrope' },
+        { id: 'mandarin', name: 'Mandarin' },
+      ],
+      heart: [
+        { id: 'gourmand-accord', name: 'Gourmand accord' },
+        { id: 'tropical-fruits', name: 'Tropical fruits' },
+      ],
+      base: [
+        { id: 'vanilla', name: 'Vanilla' },
+        { id: 'musk', name: 'Musk' },
+        { id: 'sandalwood', name: 'Sandalwood' },
+      ],
+    },
+    occasions: ['Kuliah', 'Santai'],
+    description:
+      'Soft, sweet and fruity-floral: orchid, heliotrope and tangerine up top, a creamy gourmand and tropical fruit heart, then vanilla, musk and sandalwood.',
+  },
+  {
+    id: 'scandal',
+    name: 'Scandal',
+    brand: 'Jean Paul Gaultier',
+    concentration: 'EDP',
+    accords: ['sweet', 'floral', 'citrus'],
+    notes: {
+      general: [
+        { id: 'honey', name: 'Honey' },
+        { id: 'gardenia', name: 'Gardenia' },
+        { id: 'blood-orange', name: 'Blood Orange' },
+        { id: 'patchouli', name: 'Patchouli' },
+      ],
+    },
+    occasions: ['Malam', 'Santai'],
+    description:
+      'Honey and gardenia lend a rich, sweet floral tone, brightened by blood orange and grounded by an earthy patchouli.',
+  },
+  {
+    id: 'linterdit',
+    name: "L'Interdit",
+    brand: 'Givenchy',
+    concentration: 'EDP',
+    accords: ['floral', 'woody'],
+    notes: {
+      top: [{ id: 'orange-blossom', name: 'Orange Blossom' }],
+      heart: [
+        { id: 'jasmine', name: 'Jasmine' },
+        { id: 'tuberose', name: 'Tuberose' },
+      ],
+      base: [
+        { id: 'vetiver', name: 'Vetiver' },
+        { id: 'patchouli', name: 'Patchouli' },
+      ],
+    },
+    occasions: ['Kerja', 'Malam'],
+    description:
+      'Orange blossom opens into creamy jasmine and tuberose, while vetiver and patchouli give the white flowers an earthy, shadowed edge. Rich, smooth and slightly dark.',
+  },
+  {
+    id: 'lazy-sunday-morning',
+    name: 'Replica Lazy Sunday Morning',
+    brand: 'Maison Margiela Fragrances',
+    concentration: 'EDT',
+    accords: ['floral', 'musky', 'fresh'],
+    notes: {
+      top: [
+        { id: 'pear', name: 'Pear' },
+        { id: 'lily-of-the-valley', name: 'Lily of the Valley' },
+        { id: 'aldehydes', name: 'Aldehydes' },
+      ],
+      heart: [
+        { id: 'iris', name: 'Iris' },
+        { id: 'rose', name: 'Rose' },
+        { id: 'orange-blossom', name: 'Orange Blossom' },
+      ],
+      base: [
+        { id: 'patchouli', name: 'Patchouli' },
+        { id: 'ambrette', name: 'Ambrette' },
+        { id: 'musk', name: 'Musk' },
+      ],
+    },
+    occasions: ['Santai', 'Kuliah'],
+    description:
+      'A soft linen-fresh floral. Pear, lily of the valley and aldehydes open, iris, rose and orange flower follow, and patchouli, ambrette seeds and white musks keep it clean and quiet.',
   },
 ];
 export const bottlePhotos = {
   'santal-33': require('../../assets/catalog/bottle-santal-33.jpg'),
+  'light-blue': require('../../assets/catalog/bottle-light-blue.jpg'),
   flowerbomb: require('../../assets/catalog/bottle-flowerbomb.jpg'),
   'acqua-di-gio': require('../../assets/catalog/bottle-acqua-di-gio.jpg'),
   'la-vie': require('../../assets/catalog/bottle-la-vie.jpg'),
@@ -398,11 +1113,19 @@ export const bottlePhotos = {
   libre: require('../../assets/catalog/bottle-libre.jpg'),
   'baccarat-rouge-540': require('../../assets/catalog/bottle-baccarat-rouge-540.jpg'),
   angel: require('../../assets/catalog/bottle-angel.jpg'),
+  'dior-jadore': require('../../assets/catalog/bottle-dior-jadore.jpg'),
+  'prada-paradoxe': require('../../assets/catalog/bottle-prada-paradoxe.jpg'),
+  'club-de-nuit-intense': require('../../assets/catalog/bottle-club-de-nuit-intense.jpg'),
+  'mon-paris': require('../../assets/catalog/bottle-mon-paris.jpg'),
+  linterdit: require('../../assets/catalog/bottle-linterdit.jpg'),
 };
 export const notePhotos = {
-  violet: require('../../assets/catalog/note-violet.jpg'),
   sandalwood: require('../../assets/catalog/note-sandalwood.jpg'),
+  jasmine: require('../../assets/catalog/note-jasmine.jpg'),
   rose: require('../../assets/catalog/note-rose.jpg'),
   lemon: require('../../assets/catalog/note-lemon.jpg'),
+  'ylang-ylang': require('../../assets/catalog/note-ylang-ylang.jpg'),
   pear: require('../../assets/catalog/note-pear.jpg'),
+  clove: require('../../assets/catalog/note-clove.jpg'),
+  violet: require('../../assets/catalog/note-violet.jpg'),
 };

@@ -9,7 +9,8 @@
     "start": "react-native start --host 127.0.0.1",
     "test": "jest",
     "test:ci": "jest --runInBand",
-    "scrape:catalog": "node scripts/scrape-catalog.js"
+    "scrape:catalog": "node scripts/scrape-catalog.js",
+    "import:scento": "node scripts/import-scento.js"
   },
   "dependencies": {
     "@noble/hashes": "2.2.0",

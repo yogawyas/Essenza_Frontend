@@ -28,6 +28,7 @@ import {
   designStyles,
 } from '../ui/design';
 import { SortSheet } from '../ui/OptionSheet';
+import { LoadMoreFooter, useIncrementalList } from '../ui/useIncrementalList';
 import { colors, s, serif } from '../ui/theme';
 
 const categories = [
@@ -101,11 +102,15 @@ export function SearchScreen() {
     setCategory(value);
     nav.setParams({ category: value });
   };
+  const paged = useIncrementalList(perfumes, {
+    resetKey: [query, accord, alphabetical].join('|'),
+  });
 
   return (
     <DesignScreen
       header={<BrandBar navigation={nav} />}
       contentStyle={styles.content}
+      onScroll={category === 'perfumes' ? paged.onScroll : undefined}
     >
       <SearchField
         value={query}
@@ -160,7 +165,7 @@ export function SearchScreen() {
       ) : null}
       {category === 'perfumes' ? (
         <View style={styles.grid}>
-          {items.map(fragrance => (
+          {paged.visible.map(fragrance => (
             <View key={fragrance.id} style={styles.card}>
               <Pressable
                 accessibilityRole="button"
@@ -172,7 +177,7 @@ export function SearchScreen() {
                   {fragrance.photo ? (
                     <Image
                       source={fragrance.photo}
-                      resizeMode="cover"
+                      resizeMode="contain"
                       style={styles.productImage}
                     />
                   ) : (
@@ -206,6 +211,9 @@ export function SearchScreen() {
             </View>
           ))}
         </View>
+      ) : null}
+      {category === 'perfumes' && paged.total ? (
+        <LoadMoreFooter {...paged} noun="perfumes" />
       ) : null}
       {category === 'lists' ? (
         <View style={styles.results}>
@@ -292,7 +300,8 @@ const styles = StyleSheet.create({
     minWidth: 42,
     minHeight: 42,
   },
-  productImage: { width: '100%', height: '100%' },
+  // Show the whole bottle with a small margin instead of cropping it.
+  productImage: { width: '88%', height: '88%' },
   grid: {
     flexDirection: 'row',
     flexWrap: 'wrap',

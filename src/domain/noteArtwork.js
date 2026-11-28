@@ -83,7 +83,7 @@ const accordImages = {
   floral: require('../../assets/notes/accord-floral.jpg'),
   fresh: require('../../assets/notes/accord-fresh.jpg'),
   green: require('../../assets/notes/accord-green.jpg'),
-  musky: require('../../assets/notes/musk.jpg'),
+  musky: require('../../assets/notes/accord-musky.jpg'),
   spicy: require('../../assets/notes/accord-spicy.jpg'),
   sweet: require('../../assets/notes/accord-sweet.jpg'),
   woody: require('../../assets/notes/accord-woody.jpg'),
@@ -171,11 +171,8 @@ const aliases = {
   ylangylang: 'ylang-ylang',
 };
 
-export function getNoteArtwork(label, accord) {
-  if (accord) {
-    return { source: accordImages[accord] };
-  }
-
+// Turns a note name such as "Madagascar Vanilla" into its canonical id ("vanilla").
+export function canonicalNoteId(label) {
   const key = label
     .normalize('NFKD')
     .replace(/[\u0300-\u036f]/g, '')
@@ -183,7 +180,15 @@ export function getNoteArtwork(label, accord) {
     .trim()
     .replace(/[^a-z0-9]+/g, '-')
     .replace(/^-|-$/g, '');
-  const id = Object.hasOwn(aliases, key) ? aliases[key] : key;
+  return Object.hasOwn(aliases, key) ? aliases[key] : key;
+}
+
+export function getNoteArtwork(label, accord) {
+  if (accord) {
+    return { source: accordImages[accord] };
+  }
+
+  const id = canonicalNoteId(label);
   if (!Object.hasOwn(noteImages, id)) return {};
   return { source: noteImages[id], credit: credits[id] };
 }

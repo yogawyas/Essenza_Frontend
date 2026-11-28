@@ -172,6 +172,10 @@ async function loadProduct(id, config, scentoById) {
   const page = config.openfume
     ? await scrapeOpenfume(config.openfume)
     : undefined;
+  // Some Openfume pages only contribute an openly licensed bottle photo.
+  const photoPage = config.openfumePhoto
+    ? await scrapeOpenfume(config.openfumePhoto)
+    : undefined;
   const row = config.scento ? scentoById.get(config.scento) : undefined;
   if (config.scento && !row) {
     throw new Error(`Scento entry ${config.scento} was not found`);
@@ -198,12 +202,17 @@ async function loadProduct(id, config, scentoById) {
       id,
       name: config.displayName || row?.name || page?.name,
       brand: row?.house || page?.brand,
-      concentration: listedStrength || page?.concentration,
+      concentration:
+        listedStrength || page?.concentration || config.concentration,
       accords: config.accords,
       notes: tiers,
+      ...(config.occasions ? { occasions: config.occasions } : {}),
+      ...(row?.description ? { description: row.description } : {}),
     },
     notesSource: row?.url || page?.url || config.notes.url,
-    photo: config.commons ? commonsPhoto(config.commons) : page?.photo,
+    photo: config.commons
+      ? commonsPhoto(config.commons)
+      : page?.photo || photoPage?.photo,
   };
 }
 

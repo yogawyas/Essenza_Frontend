@@ -23,6 +23,10 @@ import {
 import { Sheet } from '../ui/Sheet';
 import { StudioProfile } from '../ui/StudioProfile';
 import { s } from '../ui/theme';
+
+// The catalog has well over a thousand perfumes; list them in pages.
+const OPTION_PAGE = 30;
+
 export function StudioEditorScreen() {
   const { params } = useRoute();
   const nav = useAppNavigation();
@@ -53,6 +57,7 @@ export function StudioEditorScreen() {
   const [prediction, setPrediction] = useState(null);
   const [picker, setPicker] = useState(null);
   const [query, setQuery] = useState('');
+  const [optionLimit, setOptionLimit] = useState(OPTION_PAGE);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
   const [saved, setSaved] = useState(false);
@@ -269,6 +274,7 @@ export function StudioEditorScreen() {
                   onPress={() => {
                     setPicker(slot);
                     setQuery('');
+                    setOptionLimit(OPTION_PAGE);
                   }}
                 >
                   <Text style={s.label}>PERFUME {index === 0 ? 'A' : 'B'}</Text>
@@ -399,10 +405,13 @@ export function StudioEditorScreen() {
           <Field
             label="Search Studio Fragrances"
             value={query}
-            onChangeText={setQuery}
+            onChangeText={text => {
+              setQuery(text);
+              setOptionLimit(OPTION_PAGE);
+            }}
             placeholder="Name or brand"
           />
-          {options.map(item => (
+          {options.slice(0, optionLimit).map(item => (
             <Button
               key={item.id}
               label={
@@ -424,6 +433,13 @@ export function StudioEditorScreen() {
               }}
             />
           ))}
+          {options.length > optionLimit && (
+            <Button
+              label={`Show more (${options.length - optionLimit} left)`}
+              variant="ghost"
+              onPress={() => setOptionLimit(limit => limit + OPTION_PAGE)}
+            />
+          )}
           {!options.length && (
             <Text style={s.body}>
               No results. Try another search and choose two different
